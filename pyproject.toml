@@ -1,0 +1,215 @@
+# SPDX-FileCopyrightText: 2021 ImpulsoGov <contato@impulsogov.org>
+#
+# SPDX-License-Identifier: MIT
+
+
+[tool.poetry]
+
+name = "impulsoetl"
+version = "0.1.0"
+description = "Ingestão, tratamento e caregamento de dados dos serviços de saúde mental do SUS."
+# readme = "README.md"
+license = "MIT"
+
+authors = ["ImpulsoGov <contato@impulsogov.org>"]
+
+[tool.poetry.dependencies]
+
+python = ">=3.8.1, <3.10"
+pandas = "1.3.3"
+selenium = "4.1.0"
+
+# dependencias impulsoprevine
+"backports.entry-points-selectable" = { version = "1.1.0", optional = true }
+beautifulsoup4 = { version = "4.10.0", optional = true }
+bs4 = { version = "0.0.1", optional = true }
+CacheControl = { version = "0.12.6", optional = true }
+cachy = { version = "0.3.0", optional = true }
+certifi = { version = "2021.5.30", optional = true }
+charset-normalizer = { version = "2.0.6", optional = true }
+cleo = { version = "0.8.1", optional = true }
+clikit = { version = "0.6.2", optional = true }
+crashtest = { version = "0.3.1", optional = true }
+distlib = { version = "0.3.3", optional = true }
+filelock = { version = "3.0.12", optional = true }
+html5lib = { version = "1.1", optional = true }
+idna = { version = "3.2", optional = true }
+keyring = { version = "21.8.0", optional = true }
+lockfile = { version = "0.12.2", optional = true }
+msgpack = { version = "1.0.2", optional = true }
+numpy = { version = "1.21.2", optional = true }
+packaging = { version = "20.9", optional = true }
+pastel = { version = "0.2.1", optional = true }
+pathlib = { version = "1.0.1", optional = true }
+pexpect = { version = "4.8.0", optional = true }
+pkginfo = { version = "1.7.1", optional = true }
+platformdirs = { version = "2.3.0", optional = true }
+ptyprocess = { version = "0.7.0", optional = true }
+pylev = { version = "1.4.0", optional = true }
+pyparsing = { version = "2.4.7", optional = true }
+python-dateutil = { version = "2.8.2", optional = true }
+pytz = { version = "2021.1", optional = true }
+pywin32-ctypes = { version = "0.2.0", optional = true }
+requests = { version = "2.26.0", optional = true }
+requests-toolbelt = { version = "0.9.1", optional = true }
+shellingham = { version = "1.4.0", optional = true }
+six = { version = "1.16.0", optional = true }
+soupsieve = { version = "2.2.1", optional = true }
+tomlkit = { version = "0.7.2", optional = true }
+urllib3 = { version = "1.26.7", optional = true }
+uuid = { version = "1.30", optional = true }
+virtualenv = { version = "20.8.0", optional = true }
+webencodings = { version = "0.5.1", optional = true }
+
+# dependencias impulsoetl
+frozendict = { version = "2.1.1", optional = true }
+frozenlist = { version = "1.2.0", optional = true }
+loguru = { version = "0.5.3", optional = true }
+pyjanitor = { version = "0.21.2", optional = true }
+pysus = { version = "0.5.10", optional = true }
+psycopg2-binary = { version = "2.9.2", optional = true }
+python-dotenv = { version = "0.19.2", optional = true }
+selenium-driver-updater = { version = "5.1.3", optional = true }
+SQLAlchemy = {extras = ["mypy"], "version" = "1.4.27", optional = true }
+SQLAlchemy-Continuum = { version = "1.3.11", optional = true }
+toolz = { version = "0.11.2", optional = true }
+types-frozendict = { version = "0.1.6", optional = true }
+types-requests = { version = "2.26.1", optional = true }
+Unidecode = { version = "1.3.2", optional = true }
+
+# NOTE: A instalação do PySUS depende da biblioteca GDAL, que pode precisar ser
+# adicionada manualmente. Ver
+# https://gist.github.com/cspanring/5680334#gistcomment-1675829
+# e https://github.com/python-poetry/poetry/issues/845
+# GDAL = { version = "3.1.4", optional = true }
+
+[tool.poetry.dev-dependencies]
+
+bandit = "1.7.1"
+black = "==20.8b1"
+coverage = { git = "https://github.com/nedbat/coveragepy.git", tag = "6.0b1" }
+dlint = "0.12.0"
+flake8 = "4.0.1"
+isort = "5.10.1"
+mypy = "0.910"
+pre-commit = "2.15.0"
+pycln = "1.1.0"
+pytest = "6.2.5"
+pytest-cov = "2.12.1"
+pyupgrade = "2.29.1"
+reuse = "0.13.0"
+safety = "1.10.3"
+wemake-python-styleguide="0.0.1"
+
+[tool.poetry.extras]
+
+impulsoprevine = [
+    "backports.entry-points-selectable",
+    "beautifulsoup4",
+    "bs4",
+    "CacheControl",
+    "cachy",
+    "certifi",
+    "charset-normalizer",
+    "cleo",
+    "clikit",
+    "crashtest",
+    "distlib",
+    "filelock",
+    "html5lib",
+    "idna",
+    "keyring",
+    "lockfile",
+    "msgpack",
+    "numpy",
+    "packaging",
+    "pastel",
+    "pathlib",
+    "pexpect",
+    "pkginfo",
+    "platformdirs",
+    "ptyprocess",
+    "pylev",
+    "pyparsing",
+    "python-dateutil",
+    "pytz",
+    "pywin32-ctypes",
+    "requests",
+    "requests-toolbelt",
+    "shellingham",
+    "six",
+    "soupsieve",
+    "tomlkit",
+    "urllib3",
+    "uuid",
+    "virtualenv",
+    "webencodings"
+]
+
+impulsoetl = [
+    "frozendict",
+    "frozenlist",
+    "loguru",
+    "pyjanitor",
+    "psycopg2-binary",
+    "pysus",
+    "python-dotenv",
+    "selenium-driver-updater",
+    "SQLAlchemy",
+    "SQLAlchemy-Continuum",
+    "toolz",
+    "types-frozendict",
+    "types-requests",
+    "Unidecode"
+]
+
+[tool.bandit]
+skips = ["B101"]
+
+[tool.black]
+
+line-length = 79
+target-version = ["py36", "py37", "py38"]
+
+[tool.isort]
+
+multi_line_output = 3
+include_trailing_comma = true
+force_grid_wrap = 0
+use_parentheses = true
+line_length = 79
+combine_as_imports = true
+
+[tool.mypy]
+
+files=["src/impulsoetl/**/*.py", "tests/**/*.py"]
+ignore_missing_imports=true
+plugins = ["sqlalchemy.ext.mypy.plugin"]
+
+[[tool.mypy.overrides]]
+module = "tests.*"
+
+[tool.pytest.ini_options]
+
+testpaths = [
+    "tests"
+]
+python_files = [
+    "teste_*.py",
+]
+python_classes = [
+    "Teste*",
+]
+python_functions = [
+    "teste_*",
+]
+markers = [
+    "unitario",
+    "integracao",
+]
+log_cli = true
+
+[build-system]
+
+requires = ["poetry_core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"

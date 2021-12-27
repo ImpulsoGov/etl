@@ -1,0 +1,8 @@
+# SPDX-FileCopyrightText: 2021 ImpulsoGov <contato@impulsogov.org>
+#
+# SPDX-License-Identifier: MIT
+
+
+[bandit]
+exclude = /tests,/.venv
+tests = B104,B105,B106,B107,B108,B608

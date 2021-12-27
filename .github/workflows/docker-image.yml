@@ -1,0 +1,29 @@
+name: Docker Image CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: Docker login
+      env:
+        DOCKER_USER: ${{secrets.DOCKER_USER}}
+        DOCKER_SENHA: ${{secrets.DOCKER_SENHA}}
+        SLACK_WEBHOOK_URL: ${{secrets.SLACK_WEBHOOK_URL}}
+      run: docker login -u $DOCKER_USER -p $DOCKER_SENHA
+    - name: Build the Docker image
+      run: docker build -t impulsogov/impulsoprevine:latest .
+    - name: Push the Docker image
+      run: docker push impulsogov/impulsoprevine
+    - name: Construir imagem do ImpulsoETL
+      run: >
+        docker build -t impulsogov/impulsoetl:latest
+        -f "./impulsoetl.Dockerfile" .
+    - name: Enviar imagem do ImpulsoETL
+      run: docker push impulsogov/impulsoetl

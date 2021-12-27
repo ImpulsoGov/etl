@@ -1,0 +1,37 @@
+{
+  "python.venvPath": "${workspaceFolder}/.venv",
+  "python.defaultInterpreterPath": "${workspaceFolder}/.venv/bin/python3",
+  "python.formatting.blackArgs": [
+    "--config=${workspaceFolder}/pyproject.toml"
+  ],
+  "python.formatting.provider": "black",
+  "python.formatting.blackPath": "${workspaceFolder}/.venv/bin/black",
+  "python.linting.banditEnabled": true,
+  "python.linting.banditPath": "${workspaceFolder}/.venv/bin/bandit",
+  "python.linting.flake8Args": [
+    "--config=${workspaceFolder}/setup.cfg"
+  ],
+  "python.linting.flake8Enabled": true,
+  "python.linting.flake8Path": "${workspaceFolder}/.venv/bin/flake8",
+  "python.linting.ignorePatterns": [
+    ".vscode/*.py",
+    "**/site-packages/**/*.py",
+    ".venv/**/*.py"
+  ],
+  "python.sortImports.args": [
+    "--config=${workspaceFolder}/pyproject.toml"
+  ],
+  "python.sortImports.path": "${workspaceFolder}/.venv/bin/isort",
+  "python.linting.mypyArgs": [
+    "--config-file=${workspaceFolder}/pyproject.toml"
+  ],
+  "python.linting.mypyEnabled": true,
+  "python.linting.mypyPath": "${workspaceFolder}/.venv/bin/mypy",
+  "python.linting.pylintEnabled": false,
+  "python.testing.pytestArgs": [
+    "--rootdir=${workspaceFolder}"
+  ],
+  "python.testing.pytestEnabled": true,
+  "python.testing.pytestPath": "${workspaceFolder}/.venv/bin/pytest",
+  "python.pythonPath": "${workspaceFolder}/.venv/bin/python3.9"
+}

@@ -1,0 +1,124 @@
+# SPDX-FileCopyrightText: 2021 ImpulsoGov <contato@impulsogov.org>
+#
+# SPDX-License-Identifier: MIT
+
+
+# See https://pre-commit.com/ for usage and config
+exclude: 'LICENSES|CODE_OF_CONDUCT'
+repos:
+- repo: https://github.com/alessandrojcm/commitlint-pre-commit-hook
+  rev: v5.0.0
+  hooks:
+  - id: commitlint
+    stages: [commit-msg]
+    additional_dependencies: ['@commitlint/config-conventional']
+- repo: https://github.com/pre-commit/pre-commit-hooks
+  rev: v4.0.1
+  hooks:
+  - id: check-added-large-files
+    args: ['--maxkb=100000']
+  - id: check-case-conflict
+  - id: check-json
+  - id: check-shebang-scripts-are-executable
+  - id: check-symlinks
+  - id: check-toml
+  - id: check-xml
+  - id: check-yaml
+  - id: destroyed-symlinks
+  - id: end-of-file-fixer
+  - id: fix-byte-order-marker
+  - id: fix-encoding-pragma
+    args: ['--remove']
+  - id: mixed-line-ending
+  - id: no-commit-to-branch
+    args: [
+      '-b dev',
+      '-b devel',
+      '-b main',
+      '-b master',
+      '-b prod',
+      '-b production',
+      '-b stable',
+      '-b staging',
+    ]
+    stages: [commit]
+  - id: pretty-format-json
+    args: ['--autofix', '--no-ensure-ascii', '--no-sort-keys']
+  - id: requirements-txt-fixer
+    files: '^requirements.*txt$'
+  - id: trailing-whitespace
+    args: ['--markdown-linebreak-ext=md']
+- repo: local
+  hooks:
+  - id: reuse
+    name: reuse
+    description:
+      "Lint the project directory for compliance with the REUSE Specification"
+    language: system
+    entry: poetry run reuse lint
+    pass_filenames: false
+  - id: pyupgrade
+    name: pyupgrade
+    description: Automatically upgrade syntax for newer versions.
+    language: system
+    entry: poetry run pyupgrade
+    types: [python]
+    # for backward compatibility
+    files: ''
+    minimum_pre_commit_version: 0.15.0
+  - id: pycln
+    name: pycln
+    description:
+      "A formatter for finding and removing unused import statements."
+    language: system
+    entry: poetry run pycln
+    types: [python]
+    exclude: \.venv
+  - id: isort
+    name: isort
+    stages: [commit]
+    language: system
+    entry: poetry run isort
+    types: [python]
+  - id: black
+    name: black
+    stages: [commit]
+    language: system
+    entry: poetry run black
+    types: [python]
+  - id: flake8
+    name: flake8
+    stages: [commit]
+    language: system
+    entry: poetry run flake8
+    types: [python]
+    exclude: setup.py
+    args: ['--allowed-domain-names=data']
+  - id: python-safety-dependencies-check
+    name: safety
+    description: "Run safety on project packages."
+    entry: bash -c 'poetry export -f requirements.txt | poetry run safety check --stdin'
+    pass_filenames: false
+    language: system
+    files: 'requirements|poetry\.lock|pyproject'
+  - id: mypy
+    name: mypy
+    stages: [commit]
+    language: system
+    entry: poetry run mypy
+    types: [python]
+    require_serial: true
+  - id: pytest
+    name: pytest
+    stages: [commit]
+    language: system
+    entry: poetry run pytest
+    types: [python]
+    pass_filenames: false
+  - id: pytest-cov
+    name: pytest
+    stages: [push]
+    language: system
+    entry: poetry run pytest --cov --cov-fail-under=100
+    types: [python]
+    pass_filenames: false
