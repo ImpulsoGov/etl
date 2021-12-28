@@ -1,4 +1,4 @@
-name: Docker Image CI
+name: Cria imagem Docker - Impulso Previne
 
 on:
   push:
