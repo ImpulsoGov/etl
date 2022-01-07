@@ -36,9 +36,10 @@ jobs:
         IMPULSOETL_BD_USUARIO: ${{secrets.IMPULSOETL_BD_USUARIO}}
         IMPULSOETL_BD_SENHA: ${{secrets.IMPULSOETL_BD_SENHA}}
       run: >
-        docker run impulsogov/impulsoetl:latest
-        --env IMPULSOETL_BD_HOST="$IMPULSOETL_BD_HOST"
-        --env IMPULSOETL_BD_PORTA="$IMPULSOETL_BD_PORTA"
-        --env IMPULSOETL_BD_NOME="$IMPULSOETL_BD_NOME"
-        --env IMPULSOETL_BD_USUARIO="$IMPULSOETL_BD_USUARIO"
-        --env IMPULSOETL_BD_SENHA="$IMPULSOETL_BD_SENHA"
+        docker run
+        -e IMPULSOETL_BD_HOST
+        -e IMPULSOETL_BD_PORTA
+        -e IMPULSOETL_BD_NOME
+        -e IMPULSOETL_BD_USUARIO
+        -e IMPULSOETL_BD_SENHA
+        impulsogov/impulsoetl:latest
