@@ -49,7 +49,7 @@ def relatorio_transformado() -> pd.DataFrame:
         "tipo_producao",
         "categoria_profissional",
         "quantidade_registrada",
-        "municipio_id",
+        "unidade_geografica_id",
         "periodo_id",
     ]
     dados = [
@@ -185,13 +185,13 @@ def relatorio_transformado() -> pd.DataFrame:
     return pd.DataFrame(data=dados, columns=colunas)
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def modelo_categoria_profissional_por_tipo_equipe() -> object:
     class ModeloTabela(TabelaProducao, Base):
+        __table_args__ = {"keep_existing": True}
         __tablename__ = (
-            "dados_publicos"
-            + ".sisab_producao_municipios"
-            + "_por_categoria_profissional_por_tipo_equipe"
+            "dados_publicos."
+            + "sisab_producao_municipios_por_categoria_profissional_por_tipo_e"
         )
 
         categoria_profissional = Column("categoria_profissional", Text)
@@ -566,7 +566,8 @@ class TesteRelatorioProducao(object):
             for competencia in df["competencias"]
         )
         assert all(
-            municipio_id == "280030" for municipio_id in df["municipios"]
+            unidade_geografica_id == "280030"
+            for unidade_geografica_id in df["municipios"]
         )
         assert all(
             tipo_producao == "Atendimento Individual"
@@ -604,14 +605,14 @@ class TesteRelatorioProducao(object):
         """Testa substituir colunas pelos IDs do BD da Impulso."""
         relatorio_dados["municipio_id_sus"] = "280030"
         relatorio_dados["competencias"] = pd.Timestamp(2021, 9, 1)
-        assert "municipio_id" not in relatorio_dados.columns
+        assert "unidade_geografica_id" not in relatorio_dados.columns
         assert "periodo_id" not in relatorio_dados.columns
         relatorio_atendimentos_individuais.sessao = sessao
         df = relatorio_atendimentos_individuais._aplicar_ids_impulso(
             relatorio_dados,
         )
         colunas = df.columns
-        assert "municipio_id" in colunas
+        assert "unidade_geografica_id" in colunas
         assert "periodo_id" in colunas
         assert "municipio_id_sus" not in colunas
         assert "competencias" not in colunas
@@ -635,7 +636,7 @@ class TesteRelatorioProducao(object):
         assert "tipo_producao" in colunas
         assert "categoria_profissional" in colunas
         assert "tipo_equipe" in colunas
-        assert "municipio_id" in colunas
+        assert "unidade_geografica_id" in colunas
         assert "periodo_id" in colunas
         assert "quantidade_registrada" in colunas
 
@@ -682,7 +683,7 @@ def teste_gerar_modelo_impulso(variavel_a, variavel_b, relatorio_transformado):
     assert issubclass(modelo, TabelaProducao)
     assert issubclass(modelo, Base)
     assert modelo.__tablename__.startswith("sisab_producao_municipios")
-    assert hasattr(modelo, "municipio_id")
+    assert hasattr(modelo, "unidade_geografica_id")
     assert hasattr(modelo, "periodo_id")
     assert hasattr(modelo, tratar_nomes_campos(variavel_a))
     assert hasattr(modelo, tratar_nomes_campos(variavel_b))
@@ -697,8 +698,7 @@ def teste_carregar_relatorio_producao(
     """Testa carregar relatório de produção na base de dados da ImpulsoGov."""
     nome_esperado = (
         "dados_publicos"
-        + ".sisab_producao_municipios"
-        + "_por_categoria_profissional_por_tipo_equipe"
+        + ".sisab_producao_municipios_por_categoria_profissional_por_tipo_e"
     )
     linhas_esperadas = 16
 
@@ -724,7 +724,7 @@ def teste_carregar_relatorio_producao(
     [
         (
             "dados_publicos.sisab_producao_municipios_por_categoria"
-            + "_profissional_por_tipo_equipe",
+            + "_profissional_por_tipo_e",
             ("Tipo de Equipe", "Categoria Profissional"),
         ),
     ],

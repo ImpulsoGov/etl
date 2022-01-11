@@ -25,8 +25,8 @@ class TabelaProducao(object):
     _definicoes = {
         "id": "Identificador do agregado de produção no banco de dados",
         "periodo_id": "Identificador do período de realização da produção.",
-        "municipio_id": "Identificador do município responsável pela "
-        + "produção.",
+        "unidade_geografica_id": "Identificador da unidade geográfica "
+        + "responsável pela produção.",
         "tipo_producao": "Tipo de contato assistencial registrado. Pode ser "
         + "um entre 'Atendimento Individual', 'Atendimento Odontológico', "
         + "'Procedimento' ou 'Visita Domiciliar'.",
@@ -73,9 +73,9 @@ class TabelaProducao(object):
         )
 
     @declared_attr
-    def municipio_id(cls):
+    def unidade_geografica_id(cls):
         return sa.Column(
-            "municipio_id",
+            "unidade_geografica_id",
             UUID(as_uuid=False),
             # BUG: sqlalchemy.exc.NoReferencedTableError: Foreign key
             # Associado à falta do relacionamento com a tabela de período; ver
@@ -83,8 +83,8 @@ class TabelaProducao(object):
             # sa.ForeignKey("listas_de_codigos.municipios.id"),
             nullable=False,
             index=True,
-            comment=cls._definicoes["municipio_id"],
-            doc=cls._definicoes["municipio_id"],
+            comment=cls._definicoes["unidade_geografica_id"],
+            doc=cls._definicoes["unidade_geografica_id"],
         )
 
     @declared_attr

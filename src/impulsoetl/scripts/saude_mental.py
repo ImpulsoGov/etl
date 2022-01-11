@@ -86,6 +86,51 @@ def resolutividade_aps_por_condicao(
 
 
 @logger.catch
+def tipo_equipe_por_tipo_producao(
+    sessao: Session,
+    teste: bool = False,
+) -> None:
+    """Número de contatos assistenciais na APS por tipo de produção e equipe.
+
+    Argumentos:
+        sessao: objeto [`sqlalchemy.orm.session.Session`][] que permite
+            acessar a base de dados da ImpulsoGov.
+        teste: Indica se as modificações devem ser de fato escritas no banco de
+            dados (`False`, padrão). Caso seja `True`, as modificações são
+            adicionadas à uma transação, e podem ser revertidas com uma chamada
+            posterior ao método [`Session.rollback()`][] da sessão gerada com o
+            SQLAlchemy.
+
+    [`sqlalchemy.orm.session.Session`]: https://docs.sqlalchemy.org/en/14/orm/session_api.html#sqlalchemy.orm.Session
+    """
+    logger.info(
+        "Capturando dados de atendimentos individuais) por condição de saúde avaliada.",
+    )
+    variaveis = ("Tipo de Equipe", "Tipo de Produção")
+    operacao_id = "0f397c27-db38-4fd9-b097-3a9e25138b4c"
+    agendamentos_producao_por_equipe = (
+        sessao.query(agendamentos)
+        .filter(agendamentos.c.operacao_id == operacao_id)
+        .all()
+    )
+    for agendamento in agendamentos_producao_por_equipe:
+        obter_relatorio_producao(
+            sessao=sessao,
+            tabela_destino=agendamento.tabela_destino,
+            variaveis=variaveis,
+            unidades_geograficas_ids=[agendamento.unidade_geografica_id],
+            unidade_geografica_tipo=agendamento.unidade_geografica_tipo,
+            ano=agendamento.periodo_data_inicio.year,
+            mes=agendamento.periodo_data_inicio.month,
+            tipo_producao=None,
+            atualizar_captura=False,
+            teste=teste,
+        )
+        if teste:
+            break
+
+
+@logger.catch
 def raas_disseminacao(
     sessao: Session,
     teste: bool = False,
@@ -199,6 +244,7 @@ def principal(sessao: Session, teste: bool = False) -> None:
     resolutividade_aps_por_condicao(sessao=sessao, teste=teste)
     raas_disseminacao(sessao=sessao, teste=teste)
     bpa_i_disseminacao(sessao=sessao, teste=teste)
+    tipo_equipe_por_tipo_producao(sessao=sessao, teste=teste)
     # outros scripts de saúde mental aqui...
 
 
