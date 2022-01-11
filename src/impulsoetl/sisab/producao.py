@@ -84,7 +84,7 @@ TIPOS_RELATORIO_PRODUCAO: Final[frozendict] = frozendict(
 COLUNAS_MINIMAS: Final[frozenset] = frozenset(
     (
         "periodo_id",
-        "municipio_id",
+        "unidade_geografica_id",
         "tipo_producao",
         "quantidade_registrada",
     ),
@@ -758,11 +758,19 @@ class FormularioConsulta(FormularioAbstrato):  # noqa: WPS230
             },
         )
 
-        if (
-            self._metadados.filtros_ativos.get("tipo_producao")
-            and "Atendimento Individual"
-            in self._metadados.filtros_ativos["tipo_producao"]
-        ):
+        # caso não haja um filtro de Tipo de Produção, considerar todos tipos
+        if not self._metadados.filtros_ativos.get("tipo_producao"):
+            # TODO: ler valores disponíveis da página
+            self._metadados.filtros_ativos["tipo_producao"] = [
+                "Atendimento Individual",
+                "Atendimento Odontológico",
+                "Procedimento",
+                "Visita Domiciliar",
+            ]
+
+        if self._metadados.filtros_ativos["tipo_producao"] == [
+            "Atendimento Individual",
+        ]:
             self._metadados.filtros_ativos.update(
                 {
                     "aleitamento_materno": (
@@ -1088,7 +1096,7 @@ class RelatorioProducao(RelatorioAbstrato):
                     sessao=self.sessao,
                     id_sus=id_,
                 ),
-                dest_column_name="municipio_id",
+                dest_column_name="unidade_geografica_id",
             )
             .drop(columns=["municipio_id_sus"])
             .transform_column(
@@ -1154,7 +1162,7 @@ def gerar_modelo_impulso(
     no banco de dados da ImpulsoGov. A correspondência entre a
     classe resultante e a respectiva tabela no banco de dados é realizada
     utilizando o estilo de [mapeamento declarativo do SQLAlchemy][]. As
-    colunas `periodo_id`, `municipio_id`, `tipo_producao` e
+    colunas `periodo_id`, `unidade_geografica_id`, `tipo_producao` e
     `quantidade_registrada` estão sempre presentes, enquanto as demais
     colunas encontradas no relatório processado são dinamicamente
     acrescentadas ao modelo.
@@ -1200,7 +1208,7 @@ def gerar_modelo_impulso(
 
     if se_ja_existente.lower() == "manter":
         opcoes_tabela["__table_args__"]["keep_existing"] = True
-    elif se_ja_existente.lower() == "extender":
+    elif se_ja_existente.lower() == "estender":
         opcoes_tabela["__table_args__"]["extend_existing"] = True
     else:
         raise ValueError(
@@ -1273,7 +1281,9 @@ def obter_relatorio_producao(
     mes: int | None,
     unidades_geograficas_ids: list[str],
     unidade_geografica_tipo: str = "Municípios",
+    tipo_producao: str = "Atendimento Individual",
     teste: bool = False,
+    atualizar_captura: bool = True,
 ) -> None:  # TODO: transformar em gerador (??)
     """Extrai, transforma e carrega dados de produção para o BD da Impulso.
 
@@ -1315,6 +1325,16 @@ def obter_relatorio_producao(
         unidade_geografica_tipo: Tipo de unidade geográfica utilizada na
             agregação dos dados do relatório. Atualmente, o único valor
             suportado é `'Municípios'`.
+        tipo_producao: rótulo do tipo de produção a ser computada no relatório.
+            Deve ser um valor entre 'Atendimento Individual',
+            'Atendimento Odontológico', 'Procedimento' ou 'Visita Domiciliar'
+            (apenas 'Atendimento Individual' está plenamente implementado).
+            Por padrão, o valor é 'Atendimento Individual'.
+        atualizar_captura: Indica se a tabela
+            "configuracoes.capturas_agendadas" deve ser atualizada para
+            refletir a realização de uma nova captura (*legado*; para novos
+            fluxos de captura, utilize `False`). Para compatibilidade com as
+            versões antigas, o padrão é `True`.
         teste: Indica se as modificações devem ser de fato escritas no banco de
             dados (`False`, padrão). Caso seja `True`, as modificações são
             adicionadas à uma transação, e podem ser revertidas com uma chamada
@@ -1342,6 +1362,7 @@ def obter_relatorio_producao(
             "Selecionar Todos",
         ]
         for variavel in variaveis
+        if variavel != "Tipo de Produção"
     }
     modelo_tabela = gerar_modelo_impulso(
         tabela_nome=tabela_destino,
@@ -1364,7 +1385,7 @@ def obter_relatorio_producao(
                 competencias=[competencia],
                 linha_relatorio=variaveis[0],
                 coluna_relatorio=variaveis[1],
-                tipo_producao="Atendimento Individual",  # TODO: aceitar outros
+                tipo_producao=tipo_producao,
                 unidade_geografica=unidade_geografica_tipo,
                 estado=uf_id_ibge_para_sigla(
                     sessao=sessao,
@@ -1406,11 +1427,12 @@ def obter_relatorio_producao(
                 raise RuntimeError
             logger.info("OK.")
             if resultado and codigo_saida == 0 and not teste:
-                logger.info("Atualizando próxima captura...")
                 sessao.commit()
-                atualizar_proxima_captura(
-                    sessao=sessao,
-                    tabela_destino=tabela_destino,
-                    unidade_geografica_id=unidade_geografica_id,
-                )
-                logger.info("OK.")
+                if atualizar_captura:
+                    logger.info("Atualizando próxima captura...")
+                    atualizar_proxima_captura(
+                        sessao=sessao,
+                        tabela_destino=tabela_destino,
+                        unidade_geografica_id=unidade_geografica_id,
+                    )
+                    logger.info("OK.")

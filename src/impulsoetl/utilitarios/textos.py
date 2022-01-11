@@ -18,7 +18,8 @@ def normalizar_texto(texto: str, separador: str = "_", caixa="baixa") -> str:
     """Normaliza o texto para caixa baixa e removendo caracteres especiais."""
     texto_limpo = re.sub("[^a-zA-Z0-9]", separador, unidecode(texto).strip())
     # garantir que não haja dois separadores seguidos
-    texto_limpo = re.sub(separador + "{2,}", separador, texto_limpo)
+    if len(separador) > 0:
+        texto_limpo = re.sub(separador + "{2,}", separador, texto_limpo)
     if caixa == "alta":
         return texto_limpo.upper()
     elif caixa == "baixa":
