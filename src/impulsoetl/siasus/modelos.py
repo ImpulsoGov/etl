@@ -11,3 +11,5 @@ from impulsoetl.bd import tabelas
 raas_ps = tabelas["dados_publicos.siasus_raas_psicossocial_disseminacao"]
 
 bpa_i = tabelas["dados_publicos.siasus_bpa_i_disseminacao"]
+
+procedimentos = tabelas["dados_publicos.siasus_procedimentos_ambulatoriais"]

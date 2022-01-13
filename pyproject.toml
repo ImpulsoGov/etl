@@ -184,7 +184,10 @@ combine_as_imports = true
 
 files=["src/impulsoetl/**/*.py", "tests/**/*.py"]
 ignore_missing_imports=true
-plugins = ["sqlalchemy.ext.mypy.plugin"]
+plugins = [
+    "sqlalchemy.ext.mypy.plugin",
+    "numpy.typing.mypy_plugin"
+]
 
 [[tool.mypy.overrides]]
 module = "tests.*"

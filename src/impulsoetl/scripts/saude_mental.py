@@ -17,6 +17,7 @@ from impulsoetl.comum.capturas import unidades_pendentes_por_periodo
 from impulsoetl.comum.datas import periodos
 from impulsoetl.loggers import logger
 from impulsoetl.siasus.bpa_i import obter_bpa_i
+from impulsoetl.siasus.procedimentos import obter_pa
 from impulsoetl.siasus.raas_ps import obter_raas_ps
 from impulsoetl.sisab.producao import (
     gerar_nome_tabela,
@@ -182,13 +183,56 @@ def bpa_i_disseminacao(
         "Capturando BPAs individualizados do SIASUS.",
     )
     operacao_id = "50d46e1c-7fb3-4fbb-b495-825ff1f397d9"
-    agendamentos_raas = (
+    agendamentos_bpa_i = (
         sessao.query(agendamentos)
         .filter(agendamentos.c.operacao_id == operacao_id)
         .all()
     )
-    for agendamento in agendamentos_raas:
+    for agendamento in agendamentos_bpa_i:
         obter_bpa_i(
+            sessao=sessao,
+            uf_sigla=agendamento.uf_sigla,
+            ano=agendamento.periodo_data_inicio.year,
+            mes=agendamento.periodo_data_inicio.month,
+            teste=teste,
+        )
+        if teste:
+            break
+
+        logger.info("Registrando captura bem-sucedida...")
+        # NOTE: necessário registrar a operação de captura em nível de UF,
+        # mesmo que o gatilho na tabela de destino no banco de dados já
+        # registre a captura em nível dos municípios automaticamente quando há
+        # a inserção de uma nova linha
+        requisicao_inserir_historico = capturas_historico.insert(
+            {
+                "operacao_id": operacao_id,
+                "periodo_id": agendamento.periodo_id,
+                "unidade_geografica_id": agendamento.unidade_geografica_id,
+            }
+        )
+        conector = sessao.connection()
+        conector.execute(requisicao_inserir_historico)
+        sessao.commit()
+        logger.info("OK.")
+
+
+@logger.catch
+def procedimentos_disseminacao(
+    sessao: Session,
+    teste: bool = False,
+) -> None:
+    logger.info(
+        "Capturando procedimentos ambulatoriais do SIASUS.",
+    )
+    operacao_id = "f2a62b56-932a-431d-aee5-e3c0af33914f"
+    agendamentos_pa = (
+        sessao.query(agendamentos)
+        .filter(agendamentos.c.operacao_id == operacao_id)
+        .all()
+    )
+    for agendamento in agendamentos_pa:
+        obter_pa(
             sessao=sessao,
             uf_sigla=agendamento.uf_sigla,
             ano=agendamento.periodo_data_inicio.year,

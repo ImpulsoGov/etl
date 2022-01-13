@@ -8,6 +8,7 @@
 
 from impulsoetl.scripts.saude_mental import (
     bpa_i_disseminacao,
+    procedimentos_disseminacao,
     raas_disseminacao,
     resolutividade_aps_por_condicao,
 )
@@ -26,3 +27,8 @@ def teste_raas_disseminacao(sessao):
 def teste_bpa_i_disseminacao(sessao):
     """Testa obter Boletins de Produção Ambulatorial individualizados."""
     bpa_i_disseminacao(sessao=sessao, teste=True)
+
+
+def teste_procedimentos_disseminacao(sessao):
+    """Testa obter procedimentos ambulatoriais."""
+    procedimentos_disseminacao(sessao=sessao, teste=True)
