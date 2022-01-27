@@ -7,6 +7,7 @@
 
 
 from impulsoetl.scripts.saude_mental import (
+    abandonos,
     bpa_i_disseminacao,
     procedimentos_disseminacao,
     raas_disseminacao,
@@ -32,3 +33,8 @@ def teste_bpa_i_disseminacao(sessao):
 def teste_procedimentos_disseminacao(sessao):
     """Testa obter procedimentos ambulatoriais."""
     procedimentos_disseminacao(sessao=sessao, teste=True)
+
+
+def teste_abandonos(sessao):
+    """Testa obter procedimentos ambulatoriais."""
+    abandonos(sessao=sessao, teste=True)

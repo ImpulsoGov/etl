@@ -93,7 +93,6 @@ repos:
     entry: poetry run flake8
     types: [python]
     exclude: setup.py
-    args: ['--allowed-domain-names=data']
   - id: python-safety-dependencies-check
     name: safety
     description: "Run safety on project packages."

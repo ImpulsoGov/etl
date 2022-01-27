@@ -15,6 +15,7 @@ from sqlalchemy.orm import Session
 from impulsoetl.bd import Sessao, tabelas
 from impulsoetl.comum.capturas import unidades_pendentes_por_periodo
 from impulsoetl.comum.datas import periodos
+from impulsoetl.indicadores_saude_mental.abandonos import obter_abandonos
 from impulsoetl.loggers import logger
 from impulsoetl.siasus.bpa_i import obter_bpa_i
 from impulsoetl.siasus.procedimentos import obter_pa
@@ -261,13 +262,43 @@ def procedimentos_disseminacao(
 
 
 @logger.catch
-def usuarios_raas_resumo(sessao: Session, teste: bool = False) -> None:
-    pass
-
-
-@logger.catch
 def abandonos(sessao: Session, teste: bool = False) -> None:
-    pass
+
+    logger.info(
+        "Caracterizando abandonos de usuários recentes em CAPS.",
+    )
+    operacao_id = "ebe97494-981f-4f4d-bf7b-f0a57def1e70"
+    agendamentos_abandonos = (
+        sessao.query(agendamentos)
+        .filter(agendamentos.c.operacao_id == operacao_id)
+        .all()
+    )
+    for agendamento in agendamentos_abandonos:
+        obter_abandonos(
+            sessao=sessao,
+            unidade_geografica_id_sus=agendamento.unidade_geografica_id_sus,
+            periodo_data_inicio=agendamento.periodo_data_inicio,
+            teste=teste,
+            **agendamento.parametros or {},
+        )
+
+        logger.info("Registrando captura bem-sucedida...")
+        # NOTE: necessário registrar a operação de captura já que o gatilho
+        # de escrita no histórico se encontra desabilitado nesse indicador
+        requisicao_inserir_historico = capturas_historico.insert(
+            {
+                "operacao_id": operacao_id,
+                "periodo_id": agendamento.periodo_id,
+                "unidade_geografica_id": agendamento.unidade_geografica_id,
+            }
+        )
+        conector = sessao.connection()
+        conector.execute(requisicao_inserir_historico)
+        logger.info("OK.")
+        if teste:
+            sessao.rollback()
+            break
+        sessao.commit()
 
 
 def principal(sessao: Session, teste: bool = False) -> None:
@@ -289,6 +320,7 @@ def principal(sessao: Session, teste: bool = False) -> None:
     raas_disseminacao(sessao=sessao, teste=teste)
     bpa_i_disseminacao(sessao=sessao, teste=teste)
     tipo_equipe_por_tipo_producao(sessao=sessao, teste=teste)
+    abandonos(sessao=sessao, teste=teste)
     # outros scripts de saúde mental aqui...
 
 

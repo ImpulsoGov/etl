@@ -17,19 +17,8 @@ from sqlalchemy.orm import Session
 from impulsoetl.bd import tabelas
 from impulsoetl.loggers import logger
 
-tabela_raas = tabelas["saude_mental.painel_raas"]
-tabela_usuarios_raas_resumo = tabelas["saude_mental.usuarios_raas_resumo"]
-tabela_abandonos = tabelas["saude_mental._usuarios_abandonaram"]
 
-
-def primeiro_com_info(serie: pd.Series):
-    for elemento in serie:
-        if pd.notna(elemento) and elemento != "Sem informação":
-            return elemento
-    return serie.iloc[0]
-
-
-def consultar_raas(
+def consultar_painel_raas(
     sessao: Session,
     unidade_geografica_id_sus: str,
     periodo_data_inicio: datetime = datetime(
@@ -40,31 +29,43 @@ def consultar_raas(
         tzinfo=timezone(-timedelta(hours=3)),
     ),
 ) -> pd.DataFrame:
+    """Consulta visão das RAAS pré-processadas na banco de dados da Impulso."""
+
     logger.info(
-        "Obtendo arquivos de disseminação da RAAS do banco da Impulso...",
+        "Obtendo RAAS pré-processadas para o painel de saúde mental para o "
+        "município de ID {} a partir da competência de {:%m%Y}...",
+        unidade_geografica_id_sus,
+        periodo_data_inicio,
     )
-    requisicao_dados_raas = (
-        sessao.query(tabela_raas)
-        .filter(tabela_raas.c.municipio_id == unidade_geografica_id_sus)
+
+    tabela_painel_raas = tabelas["saude_mental.painel_raas"]
+    requisicao_painel_raas = (
+        sessao.query(tabela_painel_raas)
+        .filter(tabela_painel_raas.c.municipio_id == unidade_geografica_id_sus)
         .filter(
-            tabela_raas.c.realizacao_periodo_data_inicio >= periodo_data_inicio
+            tabela_painel_raas.c.competencia_realizacao >= periodo_data_inicio
         )
         .statement
     )
-    raas = pd.read_sql(requisicao_dados_raas, sessao.bind)
+    painel_raas = pd.read_sql(requisicao_painel_raas, sessao.bind)
+
     logger.info("OK.")
-    return raas
+    return painel_raas
 
 
 def consultar_usuarios_raas_resumo(
     sessao: Session,
     unidade_geografica_id_sus: str,
 ) -> pd.DataFrame:
+    """Obtém os dados cadastrais dos usuários conforme informados nas RAAS."""
+
     logger.info(
-        "Obtendo resumos das RAAS para os usuários do município de ID {} "
-        "na competência de {:%m%Y}...",
+        "Obtendo resumos de dados cadastrais em RAAS para os usuários do "
+        "município de ID {}...",
         unidade_geografica_id_sus,
     )
+
+    tabela_usuarios_raas_resumo = tabelas["saude_mental.usuarios_raas_resumo"]
     requisicao_dados_usuario_raas_resumo = (
         sessao.query(tabela_usuarios_raas_resumo)
         .filter(
@@ -77,6 +78,7 @@ def consultar_usuarios_raas_resumo(
         requisicao_dados_usuario_raas_resumo,
         sessao.bind,
     )
+
     logger.info("OK.")
     return usuarios_raas_resumo
 
@@ -89,6 +91,8 @@ def consultar_abandonos(
     logger.info(
         "Obtendo dados de abandonos em CAPS do banco da Impulso...",
     )
+
+    tabela_abandonos = tabelas["saude_mental._usuarios_abandonaram"]
     requisicao_dados_abandonos = (
         sessao.query(tabela_abandonos)
         .filter(tabela_abandonos.c.municipio_id == unidade_geografica_id_sus)
@@ -96,5 +100,6 @@ def consultar_abandonos(
         .statement
     )
     abandonos = pd.read_sql(requisicao_dados_abandonos, sessao.bind)
+
     logger.info("OK.")
     return abandonos
