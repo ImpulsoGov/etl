@@ -81,7 +81,8 @@ Unidecode = { version = "1.3.2", optional = true }
 # adicionada manualmente. Ver
 # https://gist.github.com/cspanring/5680334#gistcomment-1675829
 # e https://github.com/python-poetry/poetry/issues/845
-# GDAL = { version = "3.1.4", optional = true }
+# GDAL = "3.3.2"
+roman = {version = "^3.3", extras = ["impulsoetl"]}
 
 [tool.poetry.dev-dependencies]
 
@@ -154,6 +155,7 @@ impulsoetl = [
     "psycopg2-binary",
     "pysus",
     "python-dotenv",
+    "roman",
     "selenium-driver-updater",
     "SQLAlchemy",
     "SQLAlchemy-Continuum",
