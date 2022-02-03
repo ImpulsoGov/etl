@@ -70,7 +70,7 @@ pysus = { version = "0.5.10", optional = true }
 psycopg2-binary = { version = "2.9.2", optional = true }
 python-dotenv = { version = "0.19.2", optional = true }
 selenium-driver-updater = { version = "5.1.3", optional = true }
-SQLAlchemy = {extras = ["mypy"], "version" = "1.4.27", optional = true }
+SQLAlchemy = {extras = ["mypy"], version = "1.4.27", optional = true }
 SQLAlchemy-Continuum = { version = "1.3.11", optional = true }
 toolz = { version = "0.11.2", optional = true }
 types-frozendict = { version = "0.1.6", optional = true }
