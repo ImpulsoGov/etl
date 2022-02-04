@@ -19,6 +19,7 @@ from impulsoetl.loggers import logger
 from impulsoetl.siasus.bpa_i import obter_bpa_i
 from impulsoetl.siasus.procedimentos import obter_pa
 from impulsoetl.siasus.raas_ps import obter_raas_ps
+from impulsoetl.sihsus.aih_rd import obter_aih_rd
 from impulsoetl.sisab.producao import (
     gerar_nome_tabela,
     obter_relatorio_producao,
@@ -261,6 +262,49 @@ def procedimentos_disseminacao(
 
 
 @logger.catch
+def aih_reduzida_disseminacao(
+    sessao: Session,
+    teste: bool = False,
+) -> None:
+    logger.info(
+        "Capturando autorizações de internação hospitalar do SIHSUS.",
+    )
+    operacao_id = "0411c818-d189-4f2a-9aa2-7e2cac1b2b79"
+    agendamentos_aih_rd = (
+        sessao.query(agendamentos)
+        .filter(agendamentos.c.operacao_id == operacao_id)
+        .all()
+    )
+    for agendamento in agendamentos_aih_rd:
+        obter_aih_rd(
+            sessao=sessao,
+            uf_sigla=agendamento.uf_sigla,
+            ano=agendamento.periodo_data_inicio.year,
+            mes=agendamento.periodo_data_inicio.month,
+            teste=teste,
+        )
+        if teste:
+            break
+
+        logger.info("Registrando captura bem-sucedida...")
+        # NOTE: necessário registrar a operação de captura em nível de UF,
+        # mesmo que o gatilho na tabela de destino no banco de dados já
+        # registre a captura em nível dos municípios automaticamente quando há
+        # a inserção de uma nova linha
+        requisicao_inserir_historico = capturas_historico.insert(
+            {
+                "operacao_id": operacao_id,
+                "periodo_id": agendamento.periodo_id,
+                "unidade_geografica_id": agendamento.unidade_geografica_id,
+            }
+        )
+        conector = sessao.connection()
+        conector.execute(requisicao_inserir_historico)
+        sessao.commit()
+        logger.info("OK.")
+
+
+@logger.catch
 def usuarios_raas_resumo(sessao: Session, teste: bool = False) -> None:
     pass
 
@@ -285,10 +329,11 @@ def principal(sessao: Session, teste: bool = False) -> None:
     [`sqlalchemy.orm.session.Session`]: https://docs.sqlalchemy.org/en/14/orm/session_api.html#sqlalchemy.orm.Session
     """
 
-    resolutividade_aps_por_condicao(sessao=sessao, teste=teste)
-    raas_disseminacao(sessao=sessao, teste=teste)
-    bpa_i_disseminacao(sessao=sessao, teste=teste)
-    tipo_equipe_por_tipo_producao(sessao=sessao, teste=teste)
+    # resolutividade_aps_por_condicao(sessao=sessao, teste=teste)
+    # raas_disseminacao(sessao=sessao, teste=teste)
+    # bpa_i_disseminacao(sessao=sessao, teste=teste)
+    # tipo_equipe_por_tipo_producao(sessao=sessao, teste=teste)
+    aih_reduzida_disseminacao(sessao=sessao, teste=teste)
     # outros scripts de saúde mental aqui...
 
 
