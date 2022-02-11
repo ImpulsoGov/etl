@@ -3,18 +3,14 @@
 # SPDX-License-Identifier: MIT
 
 
-name: Roda Imagem Docker - Impulso Previne
-
-# This workflow uses actions that are not certified by GitHub.
-# They are provided by a third-party and are governed by
-# separate terms of service, privacy policy, and support
-# documentation.
+name: Roda Imagem Docker - ImpulsoETL
 
 on:
   schedule:
-    - cron: '0 5 * * *'
-  push:
-    branches: [ main ]
+    - cron: '0 6 * * *'
+  workflow_run:
+    workflows: ["Cria imagem Docker - ImpulsoETL"]
+    types: [completed]
 
 jobs:
   build:
@@ -27,10 +23,6 @@ jobs:
         DOCKER_SENHA: ${{secrets.DOCKER_SENHA}}
         SLACK_WEBHOOK_URL: ${{secrets.SLACK_WEBHOOK_URL}}
       run: docker login -u $DOCKER_USER -p $DOCKER_SENHA
-    - name: Docker Pull 
-      run: docker pull impulsogov/impulsoprevine:latest
-    - name: Docker Run
-      run: docker run impulsogov/impulsoprevine:latest
     - name: Receber imagem Docker do ImpulsoETL
       run: docker pull impulsogov/impulsoetl:latest
     - name: Executar ImpulsoETL

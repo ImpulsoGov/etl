@@ -3,13 +3,19 @@
 # SPDX-License-Identifier: MIT
 
 
-name: Cria imagem Docker - Impulso Previne
+name: Cria imagem Docker - ImpulsoETL
 
 on:
   push:
     branches: [ main ]
+    paths-ignore:
+      - 'src/impulsoprevine/**',
+      - 'Dockerfile'
   pull_request:
     branches: [ main ]
+    paths-ignore:
+      - 'src/impulsoprevine/**',
+      - 'Dockerfile'
 
 jobs:
   build:
@@ -22,10 +28,6 @@ jobs:
         DOCKER_SENHA: ${{secrets.DOCKER_SENHA}}
         SLACK_WEBHOOK_URL: ${{secrets.SLACK_WEBHOOK_URL}}
       run: docker login -u $DOCKER_USER -p $DOCKER_SENHA
-    - name: Build the Docker image
-      run: docker build -t impulsogov/impulsoprevine:latest .
-    - name: Push the Docker image
-      run: docker push impulsogov/impulsoprevine
     - name: Construir imagem do ImpulsoETL
       run: >
         docker build -t impulsogov/impulsoetl:latest
