@@ -37,5 +37,19 @@
   "conventionalCommits.scopes": [
     "impulsoetl",
     "impulsoprevine"
+  ],
+  "cSpell.language": "en,pt,pt_BR","cSpell.languageSettings": [
+    // This one works with python
+    {
+        "languageId": "python",
+        "ignoreRegExpList": [
+            "`[A-Za-z._]+?`",
+            " *[A-Za-z._]+?: "
+        ],
+        "includeRegExpList": [
+            "/#.*/",
+            "/('''|\"\"\")[^\\1]+?\\1/g"
+        ]
+    },
   ]
 }
