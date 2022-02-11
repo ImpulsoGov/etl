@@ -2,7 +2,6 @@
 # SPDX-FileCopyrightText: 2021, 2022 ImpulsoGov <contato@impulsogov.org>
 #
 # SPDX-License-Identifier: MIT
-# SPDX-License-Identifier: MIT
 
 
 # Created by https://www.gitignore.io/api/python
@@ -136,3 +135,4 @@ poetry.lock
 /bin
 /tmp
 *.whl
+*.exe
