@@ -304,16 +304,6 @@ def aih_reduzida_disseminacao(
         logger.info("OK.")
 
 
-@logger.catch
-def usuarios_raas_resumo(sessao: Session, teste: bool = False) -> None:
-    pass
-
-
-@logger.catch
-def abandonos(sessao: Session, teste: bool = False) -> None:
-    pass
-
-
 def principal(sessao: Session, teste: bool = False) -> None:
     """Executa todos os scripts de captura de dados de saúde mental.
 
