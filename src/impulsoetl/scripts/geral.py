@@ -11,6 +11,7 @@
 from sqlalchemy.orm import Session
 
 from impulsoetl.bd import Sessao, tabelas
+from impulsoetl.brasilapi.cep import obter_cep
 from impulsoetl.cnes.vinculos import obter_vinculos
 from impulsoetl.loggers import logger
 
@@ -62,6 +63,20 @@ def vinculos_disseminacao(
         logger.info("OK.")
 
 
+@logger.catch
+def ceps(sessao: Session, teste: bool = False) -> None:
+    logger.info(
+        "Capturando informações de Códigos de Endereçamento Postal.",
+    )
+    logger.info("Checando CEPs pendentes...")
+
+    tabela_ceps_pendentes = tabelas["configuracoes.ceps_pendentes"]
+    ceps_pendentes = sessao.query(
+        tabela_ceps_pendentes.c.id_cep,
+    ).all()
+    obter_cep(sessao=sessao, ceps_pendentes=ceps_pendentes, teste=teste)
+
+
 def principal(sessao: Session, teste: bool = False) -> None:
     """Executa todos os scripts de captura de dados de uso geral.
 
@@ -77,7 +92,8 @@ def principal(sessao: Session, teste: bool = False) -> None:
     [`sqlalchemy.orm.session.Session`]: https://docs.sqlalchemy.org/en/14/orm/session_api.html#sqlalchemy.orm.Session
     """
 
-    vinculos_disseminacao(sessao=sessao, teste=teste)
+    # vinculos_disseminacao(sessao=sessao, teste=teste)
+    ceps(sessao=sessao, teste=teste)
     # outros scripts de uso geral aqui...
 
 
