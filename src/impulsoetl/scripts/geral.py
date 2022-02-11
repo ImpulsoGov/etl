@@ -92,7 +92,7 @@ def principal(sessao: Session, teste: bool = False) -> None:
     [`sqlalchemy.orm.session.Session`]: https://docs.sqlalchemy.org/en/14/orm/session_api.html#sqlalchemy.orm.Session
     """
 
-    # vinculos_disseminacao(sessao=sessao, teste=teste)
+    vinculos_disseminacao(sessao=sessao, teste=teste)
     ceps(sessao=sessao, teste=teste)
     # outros scripts de uso geral aqui...
 
