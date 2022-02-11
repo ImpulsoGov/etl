@@ -1,3 +1,8 @@
+# SPDX-FileCopyrightText: 2021, 2022 ImpulsoGov <contato@impulsogov.org>
+#
+# SPDX-License-Identifier: MIT
+
+
 import indicadores_resultados as ir
 import isf_resultados as isf
 import indicadores_score as score

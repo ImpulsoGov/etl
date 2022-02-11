@@ -1,3 +1,8 @@
+# SPDX-FileCopyrightText: 2021, 2022 ImpulsoGov <contato@impulsogov.org>
+#
+# SPDX-License-Identifier: MIT
+
+
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, relationship
 from pandas.io import sql

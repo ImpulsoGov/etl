@@ -1,0 +1,26 @@
+Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
+Upstream-Name: etl
+Upstream-Contact: ImpulsoGov <contato@impulsogov.org>
+Source: https://github.com/ImpulsoGov/etl
+
+Files: poetry.lock .env.sample requirements.txt */requirements.txt .vscode/*.json
+Copyright: 2021, 2022 ImpulsoGov <contato@impulsogov.org>
+License: MIT
+
+Files: tests/sisab/RelatorioSaudeProducao*.csv
+Copyright: 2021, 2022 Coordenação Geral de Informação da Atenção Primária - CGIAP/DESF <sisab@saude.gov.br>
+License: LicenseRef-LEI-12527-2011-11-18
+
+Files: tests/siasus/SIA_*.parquet tests/sihsus/SIH_*.parquet tests/cnes/CNES_*.parquet
+Copyright: 2008-2022 Coordenação de Disseminação de Dados em Saúde - CODDS <dissemina.sus@saude.gov.br>
+License: LicenseRef-LEI-12527-2011-11-18
+
+Files: tests/siasus/*_transformad?.parquet tests/sihsus/*_transformad?.parquet tests/cnes/*_transformad?.parquet
+Copyright: 2008-2022 Coordenação de Disseminação de Dados em Saúde - CODDS <dissemina.sus@saude.gov.br>
+Copyright: 2021, 2022 ImpulsoGov <contato@impulsogov.org>
+License: ODC-By-1.0
+
+Files: tests/*/*_transformad?.parquet
+Files: */chromedriver.exe
+Copyright: 2015 The Chromium Authors
+License: BSD-3-Clause
