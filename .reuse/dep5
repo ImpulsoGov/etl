@@ -19,8 +19,3 @@ Files: tests/siasus/*_transformad?.parquet tests/sihsus/*_transformad?.parquet t
 Copyright: 2008-2022 Coordenação de Disseminação de Dados em Saúde - CODDS <dissemina.sus@saude.gov.br>
 Copyright: 2021, 2022 ImpulsoGov <contato@impulsogov.org>
 License: ODC-By-1.0
-
-Files: tests/*/*_transformad?.parquet
-Files: */chromedriver.exe
-Copyright: 2015 The Chromium Authors
-License: BSD-3-Clause
