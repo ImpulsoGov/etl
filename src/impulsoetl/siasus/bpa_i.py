@@ -277,7 +277,7 @@ def carregar_bpa_i(
     # executar todas as inserções em uma única operação acarretaria um consumo
     # proibitivo de memória
     contador = 0
-    while contador <= num_registros:
+    while contador < num_registros:
         logger.info(
             "Enviando registros para a tabela de destino "
             "({contador} de {num_registros})...",
@@ -350,9 +350,19 @@ def obter_bpa_i(
 
     # TODO: paralelizar transformação e carregamento de fatias do DataFrame
     # original
+    if teste:
+        passo = 10
+        if len(bpa_i) > 1000:
+            bpa_i = bpa_i[:1000]
+            logger.warning(
+                "DataFrame de BPA-i's truncado para 1000 registros para fins "
+                + "de teste.",
+            )
+    else:
+        passo = 1000
+
     bpa_i_transformada = transformar_bpa_i(sessao=sessao, bpa_i=bpa_i)
 
-    passo = 10 if teste else 1000
     carregar_bpa_i(
         sessao=sessao,
         bpa_i_transformada=bpa_i_transformada,
