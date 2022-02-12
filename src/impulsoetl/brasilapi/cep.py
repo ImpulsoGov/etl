@@ -70,22 +70,6 @@ def transformar_cep(cep_dados: dict[str, Any]) -> pd.Dataframe:
         cep_dados["cep"],
     )
 
-    # TODO: não precisa passar para DataFrame; fazer tudo em dicionário
-    # cep_df = pd.json_normalize(cep_dados, sep="_")
-
-    # # garantir que haja colunas (nulas) com latlong mesmo se não for localizado
-    # if "location_coordinates_latitude" not in cep_df.columns:
-    #     cep_df["location_coordinates_latitude"] = None
-    #     cep_df["location_coordinates_longitude"] = None
-
-    # # transformar
-    # cep_transformado = (
-    #     cep_df
-    #     .rename_columns(DE_PARA_CEP)
-    #     .astype(TIPOS_CEP)
-    #     .select_columns(TIPOS_CEP.keys())
-    # )
-
     cep_transformado = cep_dados
     cep_transformado["latitude"] = (
         cep_transformado.get("location", {})

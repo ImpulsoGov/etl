@@ -7,7 +7,6 @@
 
 import re
 
-import pandas as pd
 import pytest
 
 from impulsoetl.bd import tabelas
@@ -43,20 +42,16 @@ def cep_dados():
 
 @pytest.fixture
 def cep_transformado():
-    return pd.DataFrame(
-        [
-            {
-                "id_cep": "89010025",
-                "uf_sigla": "SC",
-                "municipio_nome": "Blumenau",
-                "bairro_nome": "Centro",
-                "logradouro_nome_completo": "Rua Doutor Luiz de Freitas Melro",
-                "fonte_nome": "viacep",
-                "longitude": -49.0629788,
-                "latitude": -26.9244749,
-            }
-        ]
-    )
+    return {
+        "id_cep": "89010025",
+        "uf_sigla": "SC",
+        "municipio_nome": "Blumenau",
+        "bairro_nome": "Centro",
+        "logradouro_nome_completo": "Rua Doutor Luiz de Freitas Melro",
+        "fonte_nome": "viacep",
+        "longitude": -49.0629788,
+        "latitude": -26.9244749,
+    }
 
 
 def teste_de_para():
@@ -85,36 +80,23 @@ def teste_extrair_cep(cep):
     cep_dados = extrair_cep(id_cep=cep)
     assert isinstance(cep_dados, dict)
     for campo in DE_PARA_CEP:
-        if "_" in campo:
-            campos_aninhados = campo.split("_")
-            assert (
-                campos_aninhados[0] in cep_dados
-            ), "Campo faltante na resposta do servidor: {}".format(
-                campos_aninhados[0]
-            )
-            assert (
-                campos_aninhados[1] in cep_dados[campos_aninhados[0]]
-            ), "Campo faltante na resposta do servidor: {}".format(
-                campos_aninhados[0]
-            )
-        else:
+        if campo not in ("latitude", "longitude"):
             assert (
                 campo in cep_dados
             ), "Campo faltante na resposta do servidor: {}".format(campo)
+    assert "location" in cep_dados
+    assert "coordinates" in cep_dados["location"]
 
 
 def teste_transformar_cep(cep_dados):
     cep_transformado = transformar_cep(cep_dados=cep_dados)
 
-    assert isinstance(cep_transformado, pd.DataFrame)
-    assert len(cep_transformado) == 1
-    for campo in cep_transformado.columns:
+    assert isinstance(cep_transformado, dict)
+    for campo in cep_transformado:
         assert campo in TIPOS_CEP, "Campo inesperado: {}".format(campo)
     for campo in TIPOS_CEP:
-        assert campo in cep_transformado.columns, "Campo faltante: {}".format(
-            campo
-        )
-        assert isinstance(cep_transformado[campo][0], TIPOS_CEP[campo])
+        assert campo in cep_transformado, "Campo faltante: {}".format(campo)
+        assert isinstance(cep_transformado[campo], TIPOS_CEP[campo])
 
 
 def teste_carregar_cep(sessao, cep_transformado, caplog):
