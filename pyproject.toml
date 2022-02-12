@@ -101,6 +101,7 @@ pyupgrade = "2.29.1"
 reuse = "0.13.0"
 safety = "1.10.3"
 wemake-python-styleguide="0.0.1"
+pytest-testmon = "^1.2.3"
 
 [tool.poetry.extras]
 
