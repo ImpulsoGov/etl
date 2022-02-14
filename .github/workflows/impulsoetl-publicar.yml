@@ -9,12 +9,12 @@ on:
   push:
     branches: [ main ]
     paths-ignore:
-      - 'src/impulsoprevine/**',
+      - 'src/impulsoprevine/**'
       - 'Dockerfile'
   pull_request:
     branches: [ main ]
     paths-ignore:
-      - 'src/impulsoprevine/**',
+      - 'src/impulsoprevine/**'
       - 'Dockerfile'
 
 jobs:
