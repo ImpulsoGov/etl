@@ -9,14 +9,14 @@ on:
   push:
     branches: [ main ]
     paths-ignore:
-      - 'src/impulsoetl/**',
-      - 'tests/**',
+      - 'src/impulsoetl/**'
+      - 'tests/**'
       - 'impulsoetl.Dockerfile'
   pull_request:
     branches: [ main ]
     paths-ignore:
-      - 'src/impulsoetl/**',
-      - 'tests/**',
+      - 'src/impulsoetl/**'
+      - 'tests/**'
       - 'impulsoetl.Dockerfile'
 
 jobs:
