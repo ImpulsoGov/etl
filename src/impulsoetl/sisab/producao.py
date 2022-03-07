@@ -39,7 +39,6 @@ from sqlalchemy.orm import Session
 from toolz.functoolz import compose_left
 
 from impulsoetl.bd import Base
-from impulsoetl.comum.capturas import atualizar_proxima_captura
 from impulsoetl.comum.datas import periodo_por_data
 from impulsoetl.comum.geografias import (
     id_impulso_para_id_sus,
@@ -1428,11 +1427,3 @@ def obter_relatorio_producao(
             logger.info("OK.")
             if resultado and codigo_saida == 0 and not teste:
                 sessao.commit()
-                if atualizar_captura:
-                    logger.info("Atualizando próxima captura...")
-                    atualizar_proxima_captura(
-                        sessao=sessao,
-                        tabela_destino=tabela_destino,
-                        unidade_geografica_id=unidade_geografica_id,
-                    )
-                    logger.info("OK.")

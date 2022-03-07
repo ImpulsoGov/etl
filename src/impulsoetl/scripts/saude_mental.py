@@ -8,22 +8,16 @@
 """Scripts para o produto de Saúde Mental."""
 
 
-from datetime import date, timedelta
-
 from sqlalchemy.orm import Session
 
 from impulsoetl.bd import Sessao, tabelas
-from impulsoetl.comum.capturas import unidades_pendentes_por_periodo
-from impulsoetl.comum.datas import periodos
 from impulsoetl.loggers import logger
 from impulsoetl.siasus.bpa_i import obter_bpa_i
 from impulsoetl.siasus.procedimentos import obter_pa
 from impulsoetl.siasus.raas_ps import obter_raas_ps
 from impulsoetl.sihsus.aih_rd import obter_aih_rd
-from impulsoetl.sisab.producao import (
-    gerar_nome_tabela,
-    obter_relatorio_producao,
-)
+from impulsoetl.sisab.producao import obter_relatorio_producao
+
 
 agendamentos = tabelas["configuracoes.capturas_agendamentos"]
 capturas_historico = tabelas["configuracoes.capturas_historico"]
@@ -53,38 +47,27 @@ def resolutividade_aps_por_condicao(
         + "individuais) por condição de saúde avaliada.",
     )
 
-    variaveis = ("Conduta", "Problema/Condição Avaliada")
-    tabela_destino = gerar_nome_tabela(
-        variaveis=variaveis,
-        unidade_geografica="Municípios",
-    )
-    # TODO: o trecho a seguir poderia/deveria ser abstraído em uma função para
-    # reutilização sempre que for necessário executar uma função de ETL para
-    # todas as capturas pendentes
-    pendentes_por_periodo = unidades_pendentes_por_periodo(
-        sessao=sessao,
-        tabela_destino=tabela_destino,
+    operacao_id = ("bdbeb1c4-bdc6-432f-a3b4-b6ca306e32c9")
+    agendamentos_resolutividade_por_condicao = (
+        sessao.query(agendamentos)
+        .filter(agendamentos.c.operacao_id == operacao_id)
+        .all()
     )
 
-    for periodo_id, unidades_geograficas_ids in pendentes_por_periodo.items():
-        data_inicio = (
-            sessao.query(periodos.c.data_inicio)
-            .filter(periodos.c.id == periodo_id)
-            .one()[0]
-        )
+    for agendamento in agendamentos_resolutividade_por_condicao:
         obter_relatorio_producao(
-            tabela_destino=tabela_destino,
-            variaveis=variaveis,
-            unidades_geograficas_ids=unidades_geograficas_ids,
+            tabela_destino=agendamento.tabela_destino,
+            variaveis=("Conduta", "Problema/Condição Avaliada"),
+            unidades_geograficas_ids=[agendamento.unidade_geografica_id],
             unidade_geografica_tipo="Municípios",
-            data_inicio=data_inicio,
-            data_fim=max(data_inicio, date.today() - timedelta(days=45)),
+            ano=agendamento.periodo_data_inicio.year,
+            mes=agendamento.periodo_data_inicio.month,
+            atualizar_captura=False,
             sessao=sessao,
             teste=teste,
         )
         if teste:  # evitar rodar muitas iterações
             break
-        break
 
 
 @logger.catch
