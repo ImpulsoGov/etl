@@ -8,9 +8,9 @@ name: Roda Imagem Docker - ImpulsoETL
 on:
   schedule:
     - cron: '0 6 * * *'
-  workflow_run:
-    workflows: ["Cria imagem Docker - ImpulsoETL"]
-    types: [completed]
+  # workflow_run:
+  #   workflows: ["Cria imagem Docker - ImpulsoETL"]
+  #   types: [completed]
 
 jobs:
   build:
