@@ -2,8 +2,7 @@ import uuid
 from datetime import datetime
 import numpy as np
 import pandas as pd
-from io import StringIO
-from teste_carregamento_cadastro import insereBanco
+#from carregamento import insereBanco
 
 
 # Parâmetros #########################
