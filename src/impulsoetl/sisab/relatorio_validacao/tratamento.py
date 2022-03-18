@@ -3,13 +3,18 @@ import pandas as pd
 from sqlalchemy import false
 
 
-#%%
+#%% leitura do arquivo pulando o cabeçalho
 df = pd.read_csv ('rel_Validacao032022.csv',sep=';',encoding = 'ISO-8859-1', skiprows=range(0,4))
 
 
 #%%
 df.head(10)
 
+#%%
+df.isnull().sum()
+
+#%%
+df.info()
 
 
 #%%Exclusão coluna NaN
@@ -27,8 +32,6 @@ df.drop(range(48265,48269))
 
 #%% aplicando a exclusão
 df.drop(range(48265,48269),inplace=True)
-#%%
-print(df)
 
 
 #%%
@@ -41,53 +44,25 @@ df.drop(['Região', 'Uf','Municipio'], axis=1, inplace=True)
 
 
 #%%
-df.head()
-
-
-#%%
-df.columns
-
-
-#%%
 df.columns = ['municipio_id_sus', 'cnes_id', 'id_ine', 'validacao_nome', 'validacao_quantidade']
-df.head(2)
-
-#%%
-df.isnull().sum()
-#%%
-df.info()
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-# %% Rascunho
-
-df1 = pd.DataFrame(columns=['unidade_geografica_id_sus', 'municipio_id_sus', 'periodo_codigo', 'estabelecimento_id_cnes', 'equipe_id_ine', 'validacao_descricao', 'validacao_quantidade', 'no_prazo'])
 
 
 #%%
+df.insert(0,"id", value= '')
 
-dados = pd.read_csv(path, sep=';', dtype={'Total': str})
-df_partial[['municipio_id_sus', 'estabelecimento_id_cnes', 'equipe_id_ine', 'validacao_descricao', 'validacao_quantidade']] = dados[[',IBGE', 'CNES', 'INE', 'Validação', 'Total']]
-df_partial['municipio_id_sus'] = df_partial['municipio_id_sus'].str.split(pat=",", expand=True)[1]
-df_partial['unidade_geografica_id_sus'] = df_partial['municipio_id_sus']
-df_partial.periodo_codigo = periodo[1]
-df_partial.no_prazo = prazo[1]
-df = df.append(df_partial)
+#%%
+df.insert(2,"periodo_id", value='')
+
+
+
+#%%
+df = df.assign(criacao_data = pd.Timestamp.now(),
+            atualizacao_data = pd.Timestamp.now(), 
+            no_prazo = '',
+            periodo_codigo = '')
+
+#%%
+df.head()
 
 
 
