@@ -4,6 +4,7 @@ import numpy as np
 import pandas as pd
 from carregamento import carregar_cadastros
 from sqlalchemy.orm import Session
+from impulsoetl.comum.datas import periodo_por_data
 
 visao_equipe=[
     ('equipes-validas','|HM|NC|AQ|')
@@ -76,6 +77,9 @@ def tratamentoDados(dados_sisab_cadastros,tipo_equipe,ponderacao,sessao:Session)
         tabela_consolidada['id'] = tabela_consolidada.apply(lambda row:uuid.uuid4(), axis=1)
         tabela_consolidada['criacao_data'] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         tabela_consolidada['atualizacao_data'] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        tabela_consolidada.transform_column("periodo_id",function=lambda dt: periodo_por_data(sessao=sessao, data=dt).id,
+            dest_column_name="periodo_id",
+        )
         formatarTipo(tabela_consolidada,sessao=sessao)
         
     except Exception as e:
