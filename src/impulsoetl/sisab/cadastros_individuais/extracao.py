@@ -1,11 +1,20 @@
 
-from email import header
+from ast import match_case
 import requests
 import urllib
+
+from sqlalchemy import column
 from parametros_requisicao import head
 import pandas as pd
 from io import StringIO
-#from tratamento import tratamentoDados
+from tratamento import tratamentoDados
+from sqlalchemy.orm import Session
+#import sys
+#sys.path.append("/Users/walt/PycharmProjects/Impulso/ETL/etl/src/impulsoetl")
+#from bd import Sessao
+
+from impulsoetl.bd import Sessao
+
 
 
 #('todas-equipes',''),
@@ -30,49 +39,47 @@ def extracaoDados(visao_equipe,pond,competencia):
     response = requests.request("POST", url, headers=headers, data=payload)
     return response.text
 
-def criacaoDataFrame(rp,rel,ind,eq,quad, pond):
+def criacaoDataFrame(rp,tipo_equipe, ponderacao,sessao: Session):
     try:
-      df = pd.read_csv(StringIO(rp), sep='\t', header=None)
-
-      if pond == False:
-        if eq == 'todas-equipes':
-          df.columns = df.loc[7]
-          df = df.iloc[8:-4]
+      df = pd.read_csv(StringIO(rp), delimiter='\t', header=None)
+      if ponderacao == False:
+        if tipo_equipe == 'todas-equipes':
+          dados = df.iloc[8:-4]
+          df = pd.DataFrame(data=dados)
+          df=df[0].str.split(';', expand=True)
+          df.columns=['Uf','IBGE','Municipio','CNES','Nome UBS','INE','Sigla','JAN/2022','Parametro']
         else:
-          df.columns = df.loc[8]
-          df = df.iloc[9:-4]
-        path = ind+"-"+eq+"-"+quad+".csv"       
-        df.to_csv(path, index=False, encoding='utf-8')
-      
-
-      else: # então True
-        if eq == 'todas-equipes':
-          df.columns = df.loc[8]
-          df = df.iloc[9:-4]
+          dados = df.iloc[9:-4]
+          df = pd.DataFrame(data=dados)
+          df=df[0].str.split(';', expand=True)
+          df.columns=['Uf','IBGE','Municipio','CNES','Nome UBS','INE','Sigla','JAN/2022','Parametro','Coluna']
+        tratamentoDados(df,tipo_equipe,ponderacao,sessao=sessao)
+        
+      else:
+        if tipo_equipe == 'todas-equipes':
+          dados = df.iloc[9:-4]
+          df = pd.DataFrame(data=dados)
+          df=df[0].str.split(';', expand=True)
+          df.columns=['Uf','IBGE','Municipio','CNES','Nome UBS','INE','Sigla','JAN/2022','Coluna']
         else:
-          df.columns = df.loc[9]
-          df = df.iloc[10:-4]
-        path = ind+"-"+eq+"-"+quad+".csv"       
-        df.to_csv(path, index=False, encoding='utf-8')
-
-      #tratamentoDados()
-
-      
+          dados = df.iloc[10:-4]
+          df = pd.DataFrame(data=dados)
+          df=df[0].str.split(';', expand=True)
+          df.columns=['Uf','IBGE','Municipio','CNES','Nome UBS','INE','Sigla','JAN/2022','Coluna']
+        tratamentoDados(df,tipo_equipe,ponderacao,sessao=sessao)
+        
     except Exception as e:
       print(e)
 
-def main(periodo_list):
+def main(periodo_list,sessao: Session):
     try:
         for i in range(len(visao_equipe)):
             for k in range(len(ponderacao)):
-                name = 'ponderacao-' + str(ponderacao[k])
-                joined_string = ",".join(periodo_list)
-                criacaoDataFrame(extracaoDados(visao_equipe[i][1],ponderacao[k], periodo_list),'cadastro', name, visao_equipe[i][0], joined_string, ponderacao[k])
-                
-                
+                criacaoDataFrame(extracaoDados(visao_equipe[i][1],ponderacao[k], periodo_list), visao_equipe[i][0], ponderacao[k],sessao=sessao)           
     except Exception as e:
       print(e)
 
-# periodos_list = ['201804', '201808', '201812', '201904', '201908', '201912', '202004', '202008', '202012','202101', '202102', '202103', '202104', '202105', '202106','202107', '202108', '202109', '202110', '202111']
-periodos_list = ['202201']
-main(periodos_list)
+if __name__ == "__main__":
+    with Sessao() as sessao:
+      periodos_list = ['202201']
+      main(periodos_list,sessao=sessao)

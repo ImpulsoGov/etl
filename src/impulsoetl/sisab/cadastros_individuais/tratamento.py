@@ -2,10 +2,9 @@ import uuid
 from datetime import datetime
 import numpy as np
 import pandas as pd
-#from carregamento import insereBanco
+from carregamento import carregar_cadastros
+from sqlalchemy.orm import Session
 
-
-# Parâmetros #########################
 visao_equipe=[
     ('equipes-validas','|HM|NC|AQ|')
 ]
@@ -34,62 +33,50 @@ periodos_dict = {'ABR/2018.Q1':'2018.Q1',
             'DEZ/2021.Q3':'2021.M12',
             'JAN/2022':'2022.M1'}
 
-################################################################
 
-def formatarTipo(df):
+
+def formatarTipo(tabela_consolidada,sessao: Session):
     try:
-        df['id'] = df['id'].astype('string')
-        df['municipio_id_sus'] = df['municipio_id_sus'].astype('string')
-        df['periodo_id'] = df['periodo_id'].astype('string')
-        df['periodo_codigo'] = df['periodo_codigo'].astype('string')
-        df['estabelecimento_id_cnes'] = df['estabelecimento_id_cnes'].astype('string')
-        df['estabelecimento_nome'] = df['estabelecimento_nome'].astype('string')
-        df['equipe_id_ine'] = df['equipe_id_ine'].astype('string')
-        df['quantidades'] = df['quantidades'].astype(int)
-        df['criterio_pontuacao_possui'] = df['criterio_pontuacao_possui'].astype(int)
-        df['criacao_data'] = df['criacao_data'].astype('string')
-        df['atualizacao_data'] = df['atualizacao_data'].astype('string')
-        print(df.info())
-        #insereBanco(df)
+        tabela_consolidada['id'] = tabela_consolidada['id'].astype('string')
+        tabela_consolidada['municipio_id_sus'] = tabela_consolidada['municipio_id_sus'].astype('string')
+        tabela_consolidada['periodo_id'] = tabela_consolidada['periodo_id'].astype('string')
+        tabela_consolidada['periodo_codigo'] = tabela_consolidada['periodo_codigo'].astype('string')
+        tabela_consolidada['cnes_id'] = tabela_consolidada['cnes_id'].astype('string')
+        tabela_consolidada['cnes_nome'] = tabela_consolidada['cnes_nome'].astype('string')
+        tabela_consolidada['ine_id'] = tabela_consolidada['ine_id'].astype('string')
+        tabela_consolidada['quantidade'] = tabela_consolidada['quantidade'].astype(int)
+        tabela_consolidada['criterio_pontuacao'] = tabela_consolidada['criterio_pontuacao'].astype(bool)
+        tabela_consolidada['criacao_data'] = tabela_consolidada['criacao_data'].astype('string')
+        tabela_consolidada['atualizacao_data'] = tabela_consolidada['atualizacao_data'].astype('string')
+        carregar_cadastros(cadastros_transformada=tabela_consolidada,sessao=sessao)
     except Exception as e:
       print(e) 
 
-###############################################################
-def tratamentoDados():
+def tratamentoDados(dados_sisab_cadastros,tipo_equipe,ponderacao,sessao:Session):
     try:
-        sisab_cadastros_municipios = pd.DataFrame(columns=['id','municipio_id_sus','periodo_id','periodo_codigo','estabelecimento_id_cnes','estabelecimento_nome','equipe_id_ine','quantidades','criterio_pontuacao_possui','criacao_data','atualizacao_data'])
-        for i in range(len(visao_equipe)):
-            for k in range(len(ponderacao)):
-                quad = "202201"
-                path = 'ponderacao-'+str(ponderacao[k])+"-"+visao_equipe[i][0]+"-"+quad+".csv"
-                dados_sisab_cadastros_csv = pd.read_csv(path, sep=';')
+        tabela_consolidada = pd.DataFrame(columns=['id','municipio_id_sus','periodo_id','periodo_codigo','cnes_id','cnes_nome','ine_id','quantidades','criterio_pontuacao','criacao_data','atualizacao_data'])
+        for item in ['JAN/2022']:
+            
+            if tipo_equipe == 'equipes-validas':
+                tabela_equipes_validas = pd.DataFrame(columns=[
+                                                    'municipio_id_sus',
+                                                    'periodo_codigo',
+                                                    'cnes_id',
+                                                    'cnes_nome',
+                                                    'ine_id',
+                                                    'quantidade',
+                                                    'criterio_pontuacao',
+                                                    'periodo_id'])
+                tabela_equipes_validas[['municipio_id_sus', 'cnes_id', 'cnes_nome', 'ine_id', 'quantidade']] = dados_sisab_cadastros[['IBGE', 'CNES', 'Nome UBS', 'INE', item]]  
+                tabela_equipes_validas['criterio_pontuacao'] = ponderacao
+                tabela_equipes_validas['periodo_codigo'] = periodos_dict[item]
+                tabela_consolidada=tabela_equipes_validas
 
-                for item in ['JAN/2022']:
-                    if visao_equipe[i][0] == 'equipes-validas':
-                        sisab_cadastros_municipios_parcial = pd.DataFrame(columns=[
-                                                            'municipio_id_sus',
-                                                            'periodo_codigo',
-                                                            'estabelecimento_id_cnes',
-                                                            'estabelecimento_nome',
-                                                            'equipe_id_ine',
-                                                            'quantidades',
-                                                            'criterio_pontuacao_possui'])
-                        sisab_cadastros_municipios_parcial[['municipio_id_sus', 'estabelecimento_id_cnes', 'estabelecimento_nome', 'equipe_id_ine', 'quantidades']] = dados_sisab_cadastros_csv[['IBGE', 'CNES', 'Nome UBS', 'INE', item]]  
-                        sisab_cadastros_municipios_parcial['criterio_pontuacao_possui'] = ponderacao[k]
-                        sisab_cadastros_municipios_parcial['periodo_codigo'] = periodos_dict[item]
-                        sisab_cadastros_municipios = pd.concat([sisab_cadastros_municipios,sisab_cadastros_municipios_parcial])
-                        
-
-        sisab_cadastros_municipios.reset_index(drop=True, inplace=True)
-        sisab_cadastros_municipios['id'] = sisab_cadastros_municipios.apply(lambda row:uuid.uuid4(), axis=1)
-        #sisab_cadastros_municipios['periodo_id'] = sisab_cadastros_municipios.apply(lambda row:uuid.uuid4(), axis=1)
-        sisab_cadastros_municipios['criacao_data'] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        sisab_cadastros_municipios['atualizacao_data'] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        #sisab_cadastros_municipios.to_csv("sisab_cadastros_municipios_equipe_validas_202112.csv")
-        print(sisab_cadastros_municipios.info())
-
-        formatarTipo(sisab_cadastros_municipios)
+        tabela_consolidada.reset_index(drop=True, inplace=True)
+        tabela_consolidada['id'] = tabela_consolidada.apply(lambda row:uuid.uuid4(), axis=1)
+        tabela_consolidada['criacao_data'] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        tabela_consolidada['atualizacao_data'] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        formatarTipo(tabela_consolidada,sessao=sessao)
+        
     except Exception as e:
       print(e)
-
-tratamentoDados()
