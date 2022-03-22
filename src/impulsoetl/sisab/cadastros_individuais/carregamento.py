@@ -1,8 +1,6 @@
 
 from __future__ import annotations
-
 import json
-import pandas as pd
 from sqlalchemy.orm import Session
 from modelos import cadastros as tabela_destino
 #import sys
@@ -44,7 +42,7 @@ def carregar_cadastros(
     logger.info(
         "Carregamento concluído para a tabela `{tabela_nome}`: "
         + "adicionadas {linhas_adicionadas} novas linhas.",
-        tabela_nome="dados_publicos.siasus_raas_psicossocial_disseminacao",
+        tabela_nome="dados_publicos._sisab_cadastros_municipios_equipe_validas",
         linhas_adicionadas=len(cadastros_transformada),
     )
 

@@ -1,18 +1,15 @@
 
-from ast import match_case
 import requests
 import urllib
-
-from sqlalchemy import column
 from parametros_requisicao import head
 import pandas as pd
 from io import StringIO
 from tratamento import tratamentoDados
 from sqlalchemy.orm import Session
+from carregamento import carregar_cadastros
 #import sys
 #sys.path.append("/Users/walt/PycharmProjects/Impulso/ETL/etl/src/impulsoetl")
 #from bd import Sessao
-
 from impulsoetl.bd import Sessao
 
 
@@ -52,9 +49,7 @@ def criacaoDataFrame(rp,tipo_equipe, ponderacao,sessao: Session):
           dados = df.iloc[9:-4]
           df = pd.DataFrame(data=dados)
           df=df[0].str.split(';', expand=True)
-          df.columns=['Uf','IBGE','Municipio','CNES','Nome UBS','INE','Sigla','JAN/2022','Parametro','Coluna']
-        tratamentoDados(df,tipo_equipe,ponderacao,sessao=sessao)
-        
+          df.columns=['Uf','IBGE','Municipio','CNES','Nome UBS','INE','Sigla','JAN/2022','Parametro','Coluna']  
       else:
         if tipo_equipe == 'todas-equipes':
           dados = df.iloc[9:-4]
@@ -66,8 +61,8 @@ def criacaoDataFrame(rp,tipo_equipe, ponderacao,sessao: Session):
           df = pd.DataFrame(data=dados)
           df=df[0].str.split(';', expand=True)
           df.columns=['Uf','IBGE','Municipio','CNES','Nome UBS','INE','Sigla','JAN/2022','Coluna']
-        tratamentoDados(df,tipo_equipe,ponderacao,sessao=sessao)
-        
+      return df
+
     except Exception as e:
       print(e)
 
@@ -75,7 +70,10 @@ def main(periodo_list,sessao: Session):
     try:
         for i in range(len(visao_equipe)):
             for k in range(len(ponderacao)):
-                criacaoDataFrame(extracaoDados(visao_equipe[i][1],ponderacao[k], periodo_list), visao_equipe[i][0], ponderacao[k],sessao=sessao)           
+                df = criacaoDataFrame(extracaoDados(visao_equipe[i][1],ponderacao[k], periodo_list), visao_equipe[i][0], ponderacao[k],sessao=sessao) 
+                df_tratado = tratamentoDados(df,visao_equipe[i][0], ponderacao[k],sessao=sessao)
+                df_carregado = carregar_cadastros(cadastros_transformada=df_tratado,sessao=sessao)
+                return df_carregado            
     except Exception as e:
       print(e)
 

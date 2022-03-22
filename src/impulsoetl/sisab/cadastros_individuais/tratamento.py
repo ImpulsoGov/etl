@@ -2,9 +2,11 @@ import uuid
 from datetime import datetime
 import numpy as np
 import pandas as pd
-from carregamento import carregar_cadastros
 from sqlalchemy.orm import Session
 from impulsoetl.comum.datas import periodo_por_data
+#import sys
+#sys.path.append("/Users/walt/PycharmProjects/Impulso/ETL/etl/src/impulsoetl")
+#from comum.datas import periodo_por_data
 
 visao_equipe=[
     ('equipes-validas','|HM|NC|AQ|')
@@ -35,7 +37,6 @@ periodos_dict = {'ABR/2018.Q1':'2018.Q1',
             'JAN/2022':'2022.M1'}
 
 
-
 def formatarTipo(tabela_consolidada,sessao: Session):
     try:
         tabela_consolidada['id'] = tabela_consolidada['id'].astype('string')
@@ -49,7 +50,7 @@ def formatarTipo(tabela_consolidada,sessao: Session):
         tabela_consolidada['criterio_pontuacao'] = tabela_consolidada['criterio_pontuacao'].astype(bool)
         tabela_consolidada['criacao_data'] = tabela_consolidada['criacao_data'].astype('string')
         tabela_consolidada['atualizacao_data'] = tabela_consolidada['atualizacao_data'].astype('string')
-        carregar_cadastros(cadastros_transformada=tabela_consolidada,sessao=sessao)
+        return tabela_consolidada
     except Exception as e:
       print(e) 
 
