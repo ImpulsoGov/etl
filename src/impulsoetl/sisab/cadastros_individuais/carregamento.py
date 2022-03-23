@@ -2,11 +2,12 @@
 from __future__ import annotations
 import json
 from sqlalchemy.orm import Session
-from modelos import cadastros as tabela_destino
 #import sys
 #sys.path.append("/Users/walt/PycharmProjects/Impulso/ETL/etl/src/impulsoetl")
 #from loggers import logger
 from impulsoetl.loggers import logger
+from .modelos import cadastros as tabela_destino
+
 
 def carregar_cadastros(
     sessao: Session, cadastros_transformada
