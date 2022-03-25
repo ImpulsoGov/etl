@@ -3,9 +3,9 @@ import requests
 from sup import head
 from io import StringIO
 import pandas as pd
-import dotenv
 import os
 import json
+import dotenv
 
 dotenv.load_dotenv(dotenv.find_dotenv())
 oge = os.getenv
@@ -17,9 +17,12 @@ from sqlalchemy.orm import Session
 from sqlalchemy.orm import sessionmaker
 
 #----------- importações para carga
-#from impulsoetl.loggers import logger
-#from impulsoetl.bd import tabelas
+from impulsoetl.loggers import logger
+from impulsoetl.bd import tabelas
 
+#importacao para transformacao
+
+from impulsoetl.comum.geografias import id_sus_para_id_impulso
 
 
 #%%
@@ -30,7 +33,7 @@ conn = engine.raw_connection()
 cur = conn.cursor()
 
 Session = sessionmaker(bind=engine)
-session = Session()
+sessao = Session()
 
 
 #teste de conexão - (tentar mais uma vez após 30 segundos caso dê erro)
@@ -105,7 +108,7 @@ try:
     #df = pd.read_csv (StringIO(response.text),sep=';',encoding = 'ISO-8859-1', skiprows=range(0,4), skipfooter=4) ORIGINAL DIRETO DA EXTRAÇÃO 
 
     # leitura do arquivo pulando o cabeçalho e últimas linhas
-    df = pd.read_csv ('/home/silas/Documentos/Impulso/etlValidacaolocal/rel_Validacao032022.csv',sep=';',encoding = 'ISO-8859-1', skiprows=range(0,4), skipfooter=4)
+    df = pd.read_csv ('/home/silas/Documentos/Impulso/etlValidacaolocal/rel_Validacao032022.csv',sep=';',encoding = 'ISO-8859-1',engine='python', skiprows=range(0,4), skipfooter=4)
 
     print('Dados carregados!!!')
 
@@ -152,10 +155,15 @@ try:
 
     df = df.assign (periodo_id = query)
 
+    idsus = (df.iloc[0]['municipio_id_sus']) #idsus para preencher coluna id_unidade_geo 
+
+    id_unidade_geo = id_sus_para_id_impulso(sessao,idsus)
+
     print('Dados Tratados!\nDataframe final Pronto!')
 
 except Exception as e:
     print(e+' Erro de tratamento!')
+
 #%%
 print(df.head())
 
