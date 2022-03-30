@@ -136,3 +136,7 @@ poetry.lock
 /tmp
 *.whl
 *.exe
+extracao.py-jvsc-d969bfe0-eac4-4220-a3c3-cc180344dcdc.ipynb
+.gitignore
+.gitignore
+.vscode/settings.json
