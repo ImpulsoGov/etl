@@ -1,3 +1,5 @@
+# flake8: noqa
+# type: ignore
 import requests
 from suporte_extracao import head
 from io import StringIO
@@ -7,32 +9,22 @@ import json
 import dotenv
 from datetime import datetime
 import uuid
-
-dotenv.load_dotenv(dotenv.find_dotenv())
-oge = os.getenv
-
 # ----------- importações para consulta banco
 from sqlalchemy import create_engine
 import psycopg2
 from sqlalchemy.orm import Session
 from sqlalchemy.orm import sessionmaker
-
 #----------- importações para carga
 from impulsoetl.loggers import logger
 from impulsoetl.bd import tabelas
-
 # importacao para transformacao
-
 from impulsoetl.comum.geografias import id_sus_para_id_impulso
 from frozenlist import FrozenList
 
-
-
-
-
+dotenv.load_dotenv(dotenv.find_dotenv())
+oge = os.getenv
 
 # conexão com banco de dados                 #postgres://usuario:senha@host:porta(5432)/database
-
 engine = create_engine(
     f"postgresql+psycopg2://{oge('IMPULSOETL_BD_USUARIO')}:{oge('IMPULSOETL_BD_SENHA')}@{oge('IMPULSOETL_BD_HOST')}:{oge('IMPULSOETL_BD_PORTA')}/{oge('IMPULSOETL_BD_NOME')}"
 )
@@ -41,7 +33,6 @@ cur = conn.cursor()
 
 Session = sessionmaker(bind=engine)
 sessao = Session()
-
 
 # teste de conexão -
 try:
@@ -59,12 +50,23 @@ except Exception as e:
     logger.info("Erro na requisição: ")
 
 def competencia_to_periodo_codigo(periodo_competencia):
+    """Essa função converte o período de competência de determinado relatorio no código do periodo padrão da impulso
+    EX: 202203 para 2022.M3
+    Args:
+        periodo_competencia (str): período de competência de determinado relatório
+
+    Returns:
+        _type_: _description_
+    """
 
     ano = periodo_competencia[0:4]
-    mes = ".M" + periodo_competencia[5:6]
-    periodo_codigo = ano + mes
+    mes = ".M" + periodo_competencia[4:6]
+    if mes[2] == '0':
+        mes = ".M" + periodo_competencia[5:6]
+        periodo_codigo = ano + mes
+    else:
+        periodo_codigo = ano + mes
     return periodo_codigo
-
 
 # Agendamento
 
@@ -88,7 +90,7 @@ envio_prazo_lista=[envio_prazo_on,''] #preencher envio_prazo_on ou deixar vazio 
 for periodo in periodos_lista:
     periodo_competencia = periodo
     for tipo in envio_prazo_lista:
-        envio_prazo= tipo
+        envio_prazo = tipo
         # -------------------------------------------Extração-----------------------------------
 
 
@@ -201,8 +203,7 @@ for periodo in periodos_lista:
             logger.info(" Erro de tratamento!")
             logger.info(e)
 
-
-        print(df.head())
+        print(df.head(2))
 # # ------------------------------------------------------------------------------------------
 # def carregar_relatorio_validacao(
 #     sessao: Session, relatorio_validacao_df: pd.DataFrame
@@ -222,40 +223,44 @@ for periodo in periodos_lista:
 
 # #     """
 
-# relatorio_validacao_df = df
+        relatorio_validacao_df = df
 
-# registros = json.loads(
-#     relatorio_validacao_df.to_json(
-#         orient="records",
-#         date_format="iso",
-#     )
-# )
-
-
-# tabela_relatorio_validacao = tabelas[
-#     "dados_publicos._sisab_validacao_municipios_por_producao"
-# ]  # tabela teste
-
-# requisicao_insercao = tabela_relatorio_validacao.insert().values(registros)
-
-# try:
-#     conector = sessao.connection()
-#     conector.execute(requisicao_insercao)
-
-    
-#     logger.info(
-#         "Carregamento concluído para a tabela `{tabela_nome}`: "
-#         + "adicionadas {linhas_adicionadas} novas linhas.",
-#         tabela_nome="dados_publicos._sisab_validacao_municipios_por_producao", 
-#         linhas_adicionadas=len(relatorio_validacao_df))
-    
-
-# except Exception as e:
-#     logger.info(e)
+        registros = json.loads(
+            relatorio_validacao_df.to_json(
+                orient="records",
+                date_format="iso",
+            )
+        )
 
 
+        tabela_relatorio_validacao = tabelas[
+            "dados_publicos._sisab_validacao_municipios_por_producao"
+        ]  # tabela teste
 
+        requisicao_insercao = tabela_relatorio_validacao.insert().values(registros)
 
+        try:
+            conector = sessao.connection()
+            conector.execute(requisicao_insercao)
+            sessao.commit()
+
+            
+            logger.info(
+                "Carregamento concluído para a tabela `{tabela_nome}`: "
+                + "adicionadas {linhas_adicionadas} novas linhas.",
+                tabela_nome="dados_publicos._sisab_validacao_municipios_por_producao", 
+                linhas_adicionadas=len(relatorio_validacao_df))
+            
+            
+
+        except Exception as e:
+            sessao.rollback()
+            logger.info(e)
+        
+        
+        
+sessao.close()
+logger.info("Job Completo")
 
 
 

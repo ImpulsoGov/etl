@@ -1,14 +1,12 @@
+# flake8: noqa
+from sqlalchemy.orm import Session
+from datetime import datetime
+from impulsoetl.bd import Sessao, tabelas
+from impulsoetl.loggers import logger
+import json
 
-#%%
-from sqlalchemy import create_engine
-import psycopg2
-import pandas as pd
-from sqlalchemy.orm import sessionmaker
 
-#------------------------------------------------------------------------------------------
-def carregar_relatorio_validacao(
-    sessao: Session, relatorio_validacao_df: pd.DataFrame
-) -> int:
+def carregar_relatorio_validacao(sessao: Session, relatorio_validacao_df) -> int:
     """Carrega os dados de um arquivo validação do portal SISAB no BD da Impulso.
 
     Argumentos:
@@ -22,8 +20,7 @@ def carregar_relatorio_validacao(
         Código de saída do processo de carregamento. Se o carregamento
         for bem sucedido, o código de saída será `0`.
 
-    """
-
+#     """
     registros = json.loads(
         relatorio_validacao_df.to_json(
             orient="records",
@@ -32,19 +29,29 @@ def carregar_relatorio_validacao(
     )
 
 
-    tabela_relatorio_validacao = tabelas["dados_publicos._sisab_validacao_municipios_por_producao"] # tabela teste
+    tabela_relatorio_validacao = tabelas[
+        "dados_publicos._sisab_validacao_municipios_por_producao"
+    ]  # tabela teste
 
     requisicao_insercao = tabela_relatorio_validacao.insert().values(registros)
 
-    conector = sessao.connection()
-    conector.execute(requisicao_insercao)
+    try:
+        conector = sessao.connection()
+        conector.execute(requisicao_insercao)
+        sessao.commit()
 
-    logger.info(
-            "Carregamento concluído para a tabela `{tabela_relatorio_validacao}`: "
+        
+        logger.info(
+            "Carregamento concluído para a tabela `{tabela_nome}`: "
             + "adicionadas {linhas_adicionadas} novas linhas.",
-            tabela_nome="dados_publicos.sisab_validacao_municipios_por_producao",
-            linhas_adicionadas=len(relatorio_validacao_df),
-        )
+            tabela_nome="dados_publicos._sisab_validacao_municipios_por_producao", 
+            linhas_adicionadas=len(relatorio_validacao_df))
+        
+        
 
-    return 0
+    except Exception as e:
+        sessao.rollback()
+        logger.info(e)
+    
+        
 

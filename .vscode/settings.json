@@ -38,6 +38,8 @@
     "impulsoetl",
     "impulsoprevine"
   ],
+  "cSpell.diagnosticLevel": "Hint",
+
   "cSpell.language": "en,pt,pt_BR","cSpell.languageSettings": [
     // This one works with python
     {
@@ -52,5 +54,11 @@
         ]
     },
   ],
-  "jupyter.jupyterServerType": "local"
+  "jupyter.jupyterServerType": "local",
+  "files.associations": {
+    "python.pythonPath": "/home/silas/Documentos/Impulso/repo/etl/.venv/bin/python3"
+  },
+  "editor.codeActionsOnSave": {
+  
+  }
 }
