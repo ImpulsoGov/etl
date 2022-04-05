@@ -292,4 +292,4 @@ pip-selfcheck.json
 
 # End of https://www.toptal.com/developers/gitignore/api/python,jupyternotebooks,visualstudiocode,pycharm,venv
 
-#*.ipynb
+*.ipynb
