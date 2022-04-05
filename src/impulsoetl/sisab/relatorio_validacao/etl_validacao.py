@@ -56,7 +56,7 @@ def competencia_to_periodo_codigo(periodo_competencia):
         periodo_competencia (str): período de competência de determinado relatório
 
     Returns:
-        _type_: _description_
+        periodo código
     """
 
     ano = periodo_competencia[0:4]
@@ -130,7 +130,7 @@ for periodo in periodos_lista:
 
         try:
             logger.info("Dados em tratamento!")
-            
+
             df['INE'] = df['INE'].fillna('0')
     
             df['INE'] = df['INE'].astype('int')
