@@ -130,6 +130,11 @@ for periodo in periodos_lista:
 
         try:
             logger.info("Dados em tratamento!")
+            
+            df['INE'] = df['INE'].fillna('0')
+    
+            df['INE'] = df['INE'].astype('int')
+    
             df.drop(["Região", "Uf", "Municipio", "Unnamed: 8"], axis=1, inplace=True)
 
             df.columns = [
