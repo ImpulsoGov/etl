@@ -7,10 +7,7 @@
 
 """Declara representações das tabelas relativas ao SIASUS."""
 
-#from impulsoetl.bd import tabelas
-import sys
-sys.path.append("/Users/walt/PycharmProjects/Impulso/ETL/etl/src/impulsoetl")
-from bd import tabelas
+from impulsoetl.bd import tabelas
 
 cadastros_equipe_validas = tabelas["dados_publicos._sisab_cadastros_municipios_equipe_validas"]
 cadastros_equipe_homologadas = tabelas["dados_publicos._sisab_cadastros_municipios_equipe_homologadas"]

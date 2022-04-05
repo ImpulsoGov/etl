@@ -2,30 +2,27 @@ import uuid
 from datetime import datetime
 import pandas as pd
 from sqlalchemy.orm import Session
-#from impulsoetl.comum.datas import periodo_por_codigo
-#from impulsoetl.comum.geografias import id_sus_para_id_impulso
-import sys
-sys.path.append("/Users/walt/PycharmProjects/Impulso/ETL/etl/src/impulsoetl")
-from comum.datas import periodo_por_codigo, periodo_por_data
-from comum.geografias import id_sus_para_id_impulso
+from impulsoetl.comum.datas import periodo_por_codigo
+from impulsoetl.comum.geografias import id_sus_para_id_impulso
+from impulsoetl.tipos import DatetimeLike
 
 
 
-def tratamento_dados(sessao: Session,dados_sisab_cadastros: pd.DataFrame,ponderacao:bool,periodo:str) -> pd.DataFrame:
-    periodo_cod = periodo_por_data(sessao=sessao, data=periodo)
+def tratamento_dados(sessao: Session,dados_sisab_cadastros:pd.DataFrame,com_ponderacao:bool,periodo:DatetimeLike)->pd.DataFrame:
 
     tabela_consolidada = pd.DataFrame(columns=['id','municipio_id_sus','periodo_id','periodo_codigo','cnes_id','cnes_nome',
                                     'ine_id','quantidade','criterio_pontuacao','criacao_data','atualizacao_data'])
-    for item in periodo:
-        tabela_consolidada[['municipio_id_sus', 'cnes_id', 'cnes_nome', 'ine_id', 'quantidade']] = dados_sisab_cadastros.loc[:, ['IBGE', 'CNES', 'Nome UBS', 'INE', 'quantidade']]  
-        tabela_consolidada['criterio_pontuacao'] = ponderacao
-    tabela_consolidada['periodo_codigo'] = periodo_cod[item]
+    
+    periodo_cod = periodo_por_data(sessao=sessao, data=periodo)
+    tabela_consolidada[['municipio_id_sus', 'cnes_id', 'cnes_nome', 'ine_id', 'quantidade']] = dados_sisab_cadastros.loc[:, ['IBGE', 'CNES', 'Nome UBS', 'INE', 'quantidade']]  
+    tabela_consolidada['criterio_pontuacao'] = com_ponderacao
+    tabela_consolidada['periodo_codigo'] = periodo_cod[3]
     tabela_consolidada.reset_index(drop=True, inplace=True)
     tabela_consolidada['id'] = tabela_consolidada.apply(lambda row:uuid.uuid4(), axis=1)
     tabela_consolidada['criacao_data'] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     tabela_consolidada['atualizacao_data'] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-    periodo = periodo_por_codigo(sessao=sessao, codigo=periodo_cod)
+    periodo = periodo_por_codigo(sessao=sessao, codigo=periodo_cod[3])
     tabela_consolidada["periodo_id"] = periodo.id
     tabela_consolidada["unidade_geografica_id"] = (
         tabela_consolidada["municipio_id_sus"]
