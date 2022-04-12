@@ -2,4 +2,3 @@
 #
 # SPDX-License-Identifier: MIT
 
-from impulsoetl.sisab.cadastros_individuais.principal import obter_cadastros_individuais

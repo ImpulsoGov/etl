@@ -4,13 +4,14 @@ import urllib
 from parametros_requisicao import head
 import pandas as pd
 from io import StringIO
-#import sys
-#sys.path.append("/Users/Walter Matheus/Impulso/etl/src/impulsoetl")
-#from tipos import DatetimeLike
-from impulsoetl.tipos import DatetimeLike
+#from impulsoetl.tipos import DatetimeLike
+import sys
+sys.path.append("/Users/Walter Matheus/Impulso/etl/src/impulsoetl")
+from tipos import DatetimeLike
+ 
 
 
-def extrair_cadastros_individuais(visao_equipe:str,com_ponderacao:bool,competencia:DatetimeLike):
+def extrair_cadastros_individuais(visao_equipe:str,com_ponderacao:bool,competencia:DatetimeLike)->str:
     competencia = competencia.replace('-','')
     competencia= competencia[0:6]
     url = "https://sisab.saude.gov.br/paginas/acessoRestrito/relatorio/federal/indicadores/indicadorCadastro.xhtml"
