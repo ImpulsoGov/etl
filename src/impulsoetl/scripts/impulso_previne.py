@@ -9,15 +9,19 @@
 
 
 from sqlalchemy.orm import Session
-from datetime import datetime
+
 from impulsoetl.bd import Sessao, tabelas
 from impulsoetl.loggers import logger
-from impulsoetl.sisab.cadastros_individuais.principal import obter_cadastros_individuais
+from impulsoetl.sisab.cadastros_individuais.principal import (
+    obter_cadastros_individuais,
+)
+
 # from impulsoetl.sisab.validacao import obter_validacao_municipios_por_producao
 
 
 agendamentos = tabelas["configuracoes.capturas_agendamentos"]
 capturas_historico = tabelas["configuracoes.capturas_historico"]
+
 
 @logger.catch
 def cadastros_municipios_equipe_validas(
@@ -29,21 +33,21 @@ def cadastros_municipios_equipe_validas(
         "Capturando Cadastros de equipes válidas por município.",
     )
     # este já é o ID definitivo da operação!
-    operacao_id = ("da6bf13a-2acd-44c1-a3e2-21ab071fc8a3")
-    visao_equipe=[('equipes-validas','|HM|NC|AQ|')] 
+    operacao_id = "da6bf13a-2acd-44c1-a3e2-21ab071fc8a3"
+    visao_equipe = "equipes-validas"
     agendamentos_cadastros = (
         sessao.query(agendamentos)
         .filter(agendamentos.c.operacao_id == operacao_id)
         .all()
     )
-    
+
     for agendamento in agendamentos_cadastros:
         periodo = agendamento.periodo_data_inicio
         obter_cadastros_individuais(
             sessao=sessao,
             visao_equipe=visao_equipe,
             periodo=periodo,
-            teste=teste
+            teste=teste,
         )
         if teste:
             break
@@ -64,6 +68,7 @@ def cadastros_municipios_equipe_validas(
         conector.execute(requisicao_inserir_historico)
         sessao.commit()
         logger.info("OK.")
+
 
 @logger.catch
 def cadastros_municipios_equipe_homologada(
@@ -74,22 +79,22 @@ def cadastros_municipios_equipe_homologada(
     logger.info(
         "Capturando Cadastros de equipes válidas por município.",
     )
- 
-    operacao_id = ("c668a75e-9eeb-4176-874b-98d7553222f2")
-    visao_equipe=[('equipes-homologadas','|HM|')] 
+
+    operacao_id = "c668a75e-9eeb-4176-874b-98d7553222f2"
+    visao_equipe = "equipes-homologadas"
     agendamentos_cadastros = (
         sessao.query(agendamentos)
         .filter(agendamentos.c.operacao_id == operacao_id)
         .all()
     )
-    
+
     for agendamento in agendamentos_cadastros:
         periodo = agendamento.periodo_data_inicio
         obter_cadastros_individuais(
             sessao=sessao,
             visao_equipe=visao_equipe,
             periodo=periodo,
-            teste=teste
+            teste=teste,
         )
         if teste:
             break
@@ -110,7 +115,6 @@ def cadastros_municipios_equipe_homologada(
         conector.execute(requisicao_inserir_historico)
         sessao.commit()
         logger.info("OK.")
-
 
 
 @logger.catch
@@ -122,22 +126,22 @@ def cadastros_municipios_equipe_todas(
     logger.info(
         "Capturando Cadastros de equipes válidas por município.",
     )
- 
-    operacao_id = ("180ae562-2e34-4ae7-bff4-31ded6f0b418")
-    visao_equipe=[('todas-equipes','')] 
+
+    operacao_id = "180ae562-2e34-4ae7-bff4-31ded6f0b418"
+    visao_equipe = "todas-equipes"
     agendamentos_cadastros = (
         sessao.query(agendamentos)
         .filter(agendamentos.c.operacao_id == operacao_id)
         .all()
     )
-    
+
     for agendamento in agendamentos_cadastros:
         periodo = agendamento.periodo_data_inicio
         obter_cadastros_individuais(
             sessao=sessao,
             visao_equipe=visao_equipe,
             periodo=periodo,
-            teste=teste
+            teste=teste,
         )
         if teste:
             break
@@ -159,6 +163,7 @@ def cadastros_municipios_equipe_todas(
         sessao.commit()
         logger.info("OK.")
 
+
 @logger.catch
 def validacao_municipios_por_producao(
     sessao: Session,
@@ -166,7 +171,7 @@ def validacao_municipios_por_producao(
 ) -> None:
 
     # este já é o ID definitivo da operação!
-    operacao_id = ("c84c1917-4f57-4592-a974-50a81b3ed6d5")
+    operacao_id = "c84c1917-4f57-4592-a974-50a81b3ed6d5"
 
     # Ler agendamentos e rodar ETL para cada agendamento pendente
     # ...

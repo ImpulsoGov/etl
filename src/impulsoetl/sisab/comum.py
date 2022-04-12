@@ -185,7 +185,8 @@ class FiltroMultiplo(object):  # noqa: WPS214  # permitir muitos métodos
 
         for opcao in self._opcoes_disponiveis:
             opcao_valor = opcao.find_element(
-                By.CSS_SELECTOR, "input",
+                By.CSS_SELECTOR,
+                "input",
             ).get_attribute("value")
             if opcao_valor in valores_a_clicar:
                 input_ = opcao.find_element(By.CSS_SELECTOR, "input")

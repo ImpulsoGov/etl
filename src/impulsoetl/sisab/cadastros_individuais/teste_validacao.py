@@ -16,33 +16,43 @@ Amostra 07: Verifica se há diferença na contagem de equipes
 
 """
 
-def amostra_01 (df:pd.DataFrame,df_tratado:pd.DataFrame) -> int:
-    return df['IBGE'].nunique()
 
-def amostra_02 (df:pd.DataFrame,df_tratado:pd.DataFrame) -> int:
-    return df['IBGE'].nunique() - df_tratado['municipio_id_sus'].nunique()
-
-def amostra_03 (df:pd.DataFrame,df_tratado:pd.DataFrame) -> int:
-    return df.query("IBGE == '310670'")["quantidade"].astype(int).sum() - df_tratado.query("municipio_id_sus == '310670'")["quantidade"].sum() 
-
-def amostra_04 (df:pd.DataFrame,df_tratado:pd.DataFrame) -> int:
-	return df_tratado['unidade_geografica_id'].nunique()
-
-def amostra_05 (df:pd.DataFrame,df_tratado:pd.DataFrame) -> int:
-    return df['quantidade'].astype(int).sum() - df_tratado['quantidade'].sum()
-
-def amostra_06 (df:pd.DataFrame,df_tratado:pd.DataFrame) -> int:
-	return df_tratado['cnes_id'].nunique() - df_tratado['cnes_id'].nunique()
-
-def amostra_07 (df:pd.DataFrame,df_tratado:pd.DataFrame) -> int:
-	return df_tratado['ine_id'].nunique() - df_tratado['ine_id'].nunique()
+def amostra_01(df: pd.DataFrame, df_tratado: pd.DataFrame) -> int:
+    return df["IBGE"].nunique()
 
 
-def teste_validação(df,df_tratado):
-	assert amostra_01(df,df_tratado) > 5000
-	assert amostra_02(df,df_tratado) == 0
-	assert amostra_03(df,df_tratado) == 0
-	assert amostra_04(df,df_tratado) >= 26
-	assert amostra_05(df,df_tratado) == 0
-	assert amostra_06(df,df_tratado) == 0
-	assert amostra_07(df,df_tratado) == 0
+def amostra_02(df: pd.DataFrame, df_tratado: pd.DataFrame) -> int:
+    return df["IBGE"].nunique() - df_tratado["municipio_id_sus"].nunique()
+
+
+def amostra_03(df: pd.DataFrame, df_tratado: pd.DataFrame) -> int:
+    return (
+        df.query("IBGE == '310670'")["quantidade"].astype(int).sum()
+        - df_tratado.query("municipio_id_sus == '310670'")["quantidade"].sum()
+    )
+
+
+def amostra_04(df: pd.DataFrame, df_tratado: pd.DataFrame) -> int:
+    return df_tratado["unidade_geografica_id"].nunique()
+
+
+def amostra_05(df: pd.DataFrame, df_tratado: pd.DataFrame) -> int:
+    return df["quantidade"].astype(int).sum() - df_tratado["quantidade"].sum()
+
+
+def amostra_06(df: pd.DataFrame, df_tratado: pd.DataFrame) -> int:
+    return df_tratado["cnes_id"].nunique() - df_tratado["cnes_id"].nunique()
+
+
+def amostra_07(df: pd.DataFrame, df_tratado: pd.DataFrame) -> int:
+    return df_tratado["ine_id"].nunique() - df_tratado["ine_id"].nunique()
+
+
+def teste_validação(df, df_tratado):
+    assert amostra_01(df, df_tratado) > 5000
+    assert amostra_02(df, df_tratado) == 0
+    assert amostra_03(df, df_tratado) == 0
+    assert amostra_04(df, df_tratado) >= 26
+    assert amostra_05(df, df_tratado) == 0
+    assert amostra_06(df, df_tratado) == 0
+    assert amostra_07(df, df_tratado) == 0
