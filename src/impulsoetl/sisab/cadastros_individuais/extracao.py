@@ -11,8 +11,10 @@ from typing import Final
 
 import pandas as pd
 import requests
-from parametros_requisicao import head
 
+from impulsoetl.sisab.cadastros_individuais.parametros_requisicao import (
+    head,
+)
 from impulsoetl.tipos import DatetimeLike
 
 
