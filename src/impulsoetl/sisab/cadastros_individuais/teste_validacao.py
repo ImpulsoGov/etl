@@ -48,7 +48,7 @@ def amostra_07(df: pd.DataFrame, df_tratado: pd.DataFrame) -> int:
     return df_tratado["ine_id"].nunique() - df_tratado["ine_id"].nunique()
 
 
-def teste_validação(df, df_tratado):
+def teste_validacao(df, df_tratado):
     assert amostra_01(df, df_tratado) > 5000
     assert amostra_02(df, df_tratado) == 0
     assert amostra_03(df, df_tratado) == 0

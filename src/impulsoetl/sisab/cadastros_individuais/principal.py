@@ -6,8 +6,6 @@
 from __future__ import annotations
 
 from sqlalchemy.orm import Session
-from teste_validacao import teste_validação
-from tratamento import tratamento_dados
 
 from impulsoetl.tipos import DatetimeLike
 from impulsoetl.sisab.cadastros_individuais.carregamento import (
@@ -16,6 +14,10 @@ from impulsoetl.sisab.cadastros_individuais.carregamento import (
 from impulsoetl.sisab.cadastros_individuais.extracao import (
     extrair_cadastros_individuais,
 )
+from impulsoetl.sisab.cadastros_individuais.teste_validacao import (
+    teste_validacao,
+)
+from impulsoetl.sisab.cadastros_individuais.tratamento import tratamento_dados
 
 
 def obter_cadastros_individuais(
@@ -25,7 +27,6 @@ def obter_cadastros_individuais(
     com_ponderacao: list[bool] = [True, False],
     teste: bool = True,
 ) -> None:
-
     """Extrai, transforma e carrega dados de cadastros de equipes pelo SISAB.
 
     Argumentos:
@@ -58,7 +59,7 @@ def obter_cadastros_individuais(
             com_ponderacao=status_ponderacao,
             periodo=periodo,
         )
-        teste_validação(df, df_tratado)
+        teste_validacao(df, df_tratado)
         carregar_cadastros(
             sessao=sessao,
             cadastros_transformada=df_tratado,
