@@ -1,3 +1,8 @@
+# SPDX-FileCopyrightText: 2022 ImpulsoGov <contato@impulsogov.org>
+#
+# SPDX-License-Identifier: MIT
+
+
 # Funções utilizadas para a extração de todos os relatórios.
 # **get_cookie:**
 # >  *Parametros* : URL do site alvo
