@@ -18,7 +18,6 @@ from impulsoetl.siasus.raas_ps import obter_raas_ps
 from impulsoetl.sihsus.aih_rd import obter_aih_rd
 from impulsoetl.sisab.producao import obter_relatorio_producao
 
-
 agendamentos = tabelas["configuracoes.capturas_agendamentos"]
 capturas_historico = tabelas["configuracoes.capturas_historico"]
 
@@ -47,7 +46,7 @@ def resolutividade_aps_por_condicao(
         + "individuais) por condição de saúde avaliada.",
     )
 
-    operacao_id = ("bdbeb1c4-bdc6-432f-a3b4-b6ca306e32c9")
+    operacao_id = "bdbeb1c4-bdc6-432f-a3b4-b6ca306e32c9"
     agendamentos_resolutividade_por_condicao = (
         sessao.query(agendamentos)
         .filter(agendamentos.c.operacao_id == operacao_id)
