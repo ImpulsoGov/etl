@@ -56,7 +56,7 @@
   ],
   "jupyter.jupyterServerType": "local",
   "files.associations": {
-    "python.pythonPath": "/home/silas/Documentos/Impulso/repo/etl/.venv/bin/python3"
+    "python.pythonPath": "${workspaceDir}/etl/.venv/bin/python3"
   },
   "editor.codeActionsOnSave": {
   

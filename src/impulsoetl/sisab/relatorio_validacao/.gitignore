@@ -290,6 +290,4 @@ pip-selfcheck.json
 # Support for Project snippet scope
 !.vscode/*.code-snippets
 
-# End of https://www.toptal.com/developers/gitignore/api/python,jupyternotebooks,visualstudiocode,pycharm,venv
-
 *.ipynb

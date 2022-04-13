@@ -14,6 +14,7 @@ from sqlalchemy import create_engine
 import psycopg2
 from sqlalchemy.orm import Session
 from sqlalchemy.orm import sessionmaker
+from sqlalchemy import delete
 #----------- importações para carga
 from impulsoetl.loggers import logger
 from impulsoetl.bd import tabelas
@@ -34,22 +35,52 @@ cur = conn.cursor()
 Session = sessionmaker(bind=engine)
 sessao = Session()
 
-# teste de conexão -
-try:
-    conn
-    logger.info("Conexão com o banco Impulso OK!")
-except Exception as e:
-    logger.info("connect fail : ")
-    
-# Checando disponibilidade da API
-try:
-    url = "https://sisab.saude.gov.br/paginas/acessoRestrito/relatorio/federal/envio/RelValidacao.xhtml"
-    retorno = requests.get(url)  # checagem da URl
-    logger.info("Api Online ")
-except Exception as e:
-    logger.info("Erro na requisição: ")
 
-def competencia_to_periodo_codigo(periodo_competencia):
+# Checando disponibilidade da API
+url = "https://sisab.saude.gov.br/paginas/acessoRestrito/relatorio/federal/envio/RelValidacao.xhtml"
+retorno = requests.get(url)  # checagem da URl
+logger.info(retorno)
+#-------------------Funções
+def obter_lista_periodo(operacao_id):
+    """Obtém lista de períodos da tabela agendamento
+
+    Args:
+        operacao_id (_type_): ID da operação do ETL
+
+    Returns:
+        periodos_lista: períodos que precisam ser atualizados em formato de lista
+    """    
+
+
+    agendamentos = tabelas["configuracoes.capturas_agendamentos"]
+    periodos = pd.read_sql_query(
+            f"""select distinct periodo_data_inicio from {agendamentos} where operacao_id = '{operacao_id}';""",
+            engine    )
+
+    periodos['periodo_data_inicio'] = pd.to_datetime(periodos['periodo_data_inicio'])
+
+    periodos["periodo_data_inicio"] = periodos["periodo_data_inicio"].apply(lambda x: (x).strftime('%Y%m'))
+
+    periodos_lista = periodos['periodo_data_inicio'].tolist()
+    return periodos_lista
+
+
+def obter_lista_periodos_inseridos():
+    """Obtém lista de períodos da períodos que já constam na tabela
+
+        Returns:
+        periodos_lista: períodos que já constam na tabela destino
+    """    
+
+
+    tabela_alvo="dados_publicos._sisab_validacao_municipios_por_producao"
+    periodos = pd.read_sql_query(
+            f"""select distinct periodo_codigo from {tabela_alvo};""",
+            engine    )
+    periodos = periodos['periodo_codigo'].tolist()
+    return periodos
+
+def competencia_para_periodo_codigo(periodo_competencia):
     """Essa função converte o período de competência de determinado relatorio no código do periodo padrão da impulso
     EX: 202203 para 2022.M3
     Args:
@@ -58,6 +89,7 @@ def competencia_to_periodo_codigo(periodo_competencia):
     Returns:
         periodo código
     """
+
 
     ano = periodo_competencia[0:4]
     mes = ".M" + periodo_competencia[4:6]
@@ -68,21 +100,27 @@ def competencia_to_periodo_codigo(periodo_competencia):
         periodo_codigo = ano + mes
     return periodo_codigo
 
-# Agendamento
+def obter_data_criacao(tabela, periodo_codigo):
+    """Obtém a data de criação do registro que já consta na tabela baseado no período
 
-agendamentos = tabelas["configuracoes.capturas_agendamentos"]
+        Returns:
+        data_criacao: data em formato datetime  
+    """
+
+
+    data_criacao = pd.read_sql_query(
+                f"select distinct criacao_data from {tabela} where periodo_codigo  = '{periodo_codigo}';",
+                engine)
+    if data_criacao.empty == True:
+        data_criacao = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    
+    else:
+        data_criacao = data_criacao.iloc[0]["criacao_data"]
+    return data_criacao
+
+
 operacao_id = ('c84c1917-4f57-4592-a974-50a81b3ed6d5')
-
-#modularizar
-periodos = pd.read_sql_query(
-        f"""select distinct periodo_data_inicio from {agendamentos} where operacao_id = '{operacao_id}';""",
-        engine    )
-
-periodos['periodo_data_inicio'] = pd.to_datetime(periodos['periodo_data_inicio'])
-
-periodos["periodo_data_inicio"] = periodos["periodo_data_inicio"].apply(lambda x: (x).strftime('%Y%m'))
-
-periodos_lista = periodos['periodo_data_inicio'].tolist()
+periodos_lista = obter_lista_periodo(operacao_id)
 
 envio_prazo_on = '&envioPrazo=on' #Check box envio requisições no prazo marcado
 
@@ -99,7 +137,7 @@ for periodo in periodos_lista:
         periodo_tipo='producao' #produção ou envio
 
     
-        periodo_codigo = competencia_to_periodo_codigo(periodo_competencia)
+        periodo_codigo = competencia_para_periodo_codigo(periodo_competencia)
 
 
         # ---------------Busca dados na API SISAB relatório validacao
@@ -108,7 +146,7 @@ for periodo in periodos_lista:
             vs = hd[1] #viewstate
             payload='j_idt44=j_idt44&unidGeo=brasil&periodo='+periodo_tipo+'&j_idt70='+periodo_competencia+'&colunas=regiao&colunas=uf&colunas=ibge&colunas=municipio&colunas=cnes&colunas=ine'+envio_prazo+'&javax.faces.ViewState='+vs+'&j_idt102=j_idt102'
             headers = hd[0]
-            response = requests.request("POST", url, headers=headers, data=payload)
+            resposta = requests.request("POST", url, headers=headers, data=payload)
             logger.info("Dados obtidos")
             
         except Exception as e:
@@ -119,7 +157,7 @@ for periodo in periodos_lista:
 
         try:
 
-            df = pd.read_csv (StringIO(response.text),sep=';',encoding = 'ISO-8859-1', skiprows=range(0,4), skipfooter=4,  engine='python') #ORIGINAL DIRETO DA EXTRAÇÃO 
+            df = pd.read_csv (StringIO(resposta.text),sep=';',encoding = 'ISO-8859-1', skiprows=range(0,4), skipfooter=4,  engine='python') #ORIGINAL DIRETO DA EXTRAÇÃO 
             #df = pd.read_csv ('/home/silas/Documentos/Impulso/etlValidacaolocal/rel_Validacao032022.csv',sep=';',engine='python', skiprows=range(0,6), skipfooter=4, encoding = 'UTF-8')
             #df.head()
             logger.info("Dados carregados!!!")
@@ -133,9 +171,9 @@ for periodo in periodos_lista:
             logger.info("Dados em tratamento!")
 
             df['INE'] = df['INE'].fillna('0')
-    
+
             df['INE'] = df['INE'].astype('int')
-    
+
             df.drop(["Região", "Uf", "Municipio", "Unnamed: 8"], axis=1, inplace=True)
 
             df.columns = [
@@ -152,8 +190,9 @@ for periodo in periodos_lista:
             df.insert(2, "periodo_id", value="")
 
             # -------------novas colunas para padrão tabela requerida
+
             df = df.assign(
-                criacao_data=pd.Timestamp.now(),
+                criacao_data=data_criacao,
                 atualizacao_data=pd.Timestamp.now(),
                 no_prazo=1 if (envio_prazo == envio_prazo_on) else 0,
                 periodo_codigo=periodo_codigo,
@@ -177,7 +216,7 @@ for periodo in periodos_lista:
             df = df.assign(unidade_geografica_id=id_unidade_geo)
 
             df['id'] = df.apply(lambda row:uuid.uuid4(), axis=1)
-            
+
             df["id"] = df["id"].astype("string")
 
             df["municipio_id_sus"] = df["municipio_id_sus"].astype("string")
@@ -197,12 +236,11 @@ for periodo in periodos_lista:
             df["unidade_geografica_id"] = df["unidade_geografica_id"].astype("string")
 
             df["no_prazo"] = df["no_prazo"].astype("bool")
-            
-            df['criacao_data'] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-            
+
             df['atualizacao_data'] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
             logger.info("Dados Tratados!")
+
             logger.info("Dataframe final Pronto!")
             
         except Exception as e:
@@ -243,10 +281,18 @@ for periodo in periodos_lista:
             "dados_publicos._sisab_validacao_municipios_por_producao"
         ]  # tabela teste
 
+        if periodo_codigo in periodos_inseridos:
+            
+            limpar = delete(tabela_relatorio_validacao).where(tabela_relatorio_validacao.c.periodo_codigo == periodo_codigo)
+            print(stmt)
+
+
+
         requisicao_insercao = tabela_relatorio_validacao.insert().values(registros)
 
         try:
             conector = sessao.connection()
+            conector.execute(limpar)
             conector.execute(requisicao_insercao)
             sessao.commit()
 
@@ -263,25 +309,6 @@ for periodo in periodos_lista:
             sessao.rollback()
             logger.info(e)
         
-        
-        
-sessao.close()
-logger.info("Job Completo")
 
 
 
-#
-
-# Análise dos dados
-# df.head(10)
-#
-# df.tail(10)
-#
-# print(df)
-#
-# df.isnull().sum()
-
-# códigos para checagem de tipo e conteúdo do request
-# print(type(response))
-# src = response.content
-# src

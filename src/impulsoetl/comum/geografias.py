@@ -4,6 +4,7 @@
 
 
 """Define categorias geográficas utilizadas em vários processos de ETL.
+
 Atributos:
     BR_UFS: Siglas das Unidades Federativas brasileiras.
 """
@@ -58,13 +59,16 @@ municipios = tabelas["listas_de_codigos.municipios"]
 @lru_cache(27)
 def uf_id_ibge_para_sigla(sessao: Session, id_ibge: str | int) -> str:
     """Retorna a sigla de uma unidade federativa a partir do código IBGE.
+
     Argumentos:
         sessao: objeto [`sqlalchemy.orm.session.Session`][] que permite
             acessar a base de dados da ImpulsoGov.
         id_ibge: Código de dois dígitos utilizado para identificar a unidade
             federativas no IBGE.
+
     Retorna:
         Sigla da unidade federativa.
+
     [`sqlalchemy.orm.session.Session`]: https://docs.sqlalchemy.org/en/14/orm/session_api.html#sqlalchemy.orm.Session"""
     return (
         sessao.query(ufs.c.sigla)
@@ -76,13 +80,16 @@ def uf_id_ibge_para_sigla(sessao: Session, id_ibge: str | int) -> str:
 @lru_cache(5570)
 def id_sus_para_id_impulso(sessao: Session, id_sus: str | int) -> str:
     """Converte identificador SUS do município para o usado no BD da Impulso.
+
     Argumentos:
         sessao: objeto [`sqlalchemy.orm.session.Session`][] que permite
             acessar a base de dados da ImpulsoGov.
         id_sus: Código de sete dígitos utilizado para identificar o município
             nos sistemas do SUS.
+
     Retorna:
         Identificador único do município no banco de dados da ImpulsoGov.
+
     [`sqlalchemy.orm.session.Session`]: https://docs.sqlalchemy.org/en/14/orm/session_api.html#sqlalchemy.orm.Session
     """
     return (
@@ -95,14 +102,17 @@ def id_sus_para_id_impulso(sessao: Session, id_sus: str | int) -> str:
 @lru_cache(5570)
 def id_impulso_para_id_sus(sessao: Session, id_impulso: str) -> str:
     """Obtém o ID SUS a partir do identificador usado no BD da Impulso.
+
     Argumentos:
         sessao: objeto [`sqlalchemy.orm.session.Session`][] que permite
             acessar a base de dados da ImpulsoGov.
         id_impulso: Identificador único do município no banco de dados da
             ImpulsoGov.
+
     Retorna:
         Código de sete dígitos utilizado para identificar o município nos
         sistemas do SUS.
+
     [`sqlalchemy.orm.session.Session`]: https://docs.sqlalchemy.org/en/14/orm/session_api.html#sqlalchemy.orm.Session
     """
     return (

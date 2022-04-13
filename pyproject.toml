@@ -88,9 +88,8 @@ Unidecode = { version = "1.3.2", optional = true }
 # GDAL = "3.3.2"
 roman = {version = "^3.3", extras = ["impulsoetl"]}
 GDAL = "3.4.0"
-ipykernel = "^6.9.2"
-jupyter = "^1.0.0"
-wasmer = "^1.1.0"
+
+
 
 [tool.poetry.dev-dependencies]
 
@@ -110,7 +109,7 @@ reuse = "0.13.0"
 safety = "1.10.3"
 wemake-python-styleguide="0.0.1"
 pytest-testmon = "^1.2.3"
-jupyter = "^1.0.0"
+
 
 [tool.poetry.extras]
 
@@ -173,6 +172,11 @@ impulsoetl = [
     "types-frozendict",
     "types-requests",
     "Unidecode"
+]
+
+analise = [
+    "ipykernel",
+    "jupyter"
 ]
 
 [tool.bandit]
