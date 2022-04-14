@@ -172,7 +172,7 @@ def parametros_municipios_equipes_validas(
         "Capturando parâmetros de cadastros por município.",
     )
  
-    operacao_id = ("")
+    operacao_id = ("c07a7a29-cacf-4102-9a28-b674ae0ec609")
     visao_equipe=[('equipes-validas','|HM|NC|AQ|')] 
 
     agendamentos_cadastros = (
@@ -221,7 +221,7 @@ def parametros_municipios_equipes_homologada(
         "Capturando parâmetros de cadastros por município.",
     )
  
-    operacao_id = ("")
+    operacao_id = ("8f593199-fcef-4023-b79a-0ed7f9050cd2")
     visao_equipe=[('equipes-homologadas','|HM|')] 
 
     agendamentos_cadastros = (
@@ -269,7 +269,7 @@ def parametros_cne_ine_equipes_homologada(
         "Capturando parâmetros de cadastros por estabelecimento e equipe.",
     )
  
-    operacao_id = ("")
+    operacao_id = ("dcb03493-8ad2-4f48-bd3b-4022fc33c2c2")
     visao_equipe=[('equipes-homologadas','|HM|')] 
 
     agendamentos_cadastros = (
@@ -317,7 +317,7 @@ def parametros_cnes_ine_equipes_validas(
         "Capturando parâmetros de cadastros por estabelecimento e equipe.",
     )
  
-    operacao_id = ("")
+    operacao_id = ("3a61f9ca-c32f-4844-b6ac-a115bd8e4b5a")
     visao_equipe=[('equipes-validas','|HM|NC|AQ|')] 
 
     agendamentos_cadastros = (
