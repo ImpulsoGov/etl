@@ -1,13 +1,10 @@
 
 import requests
 import urllib
-from parametros_requisicao import head
+from sisab.parametros_requisicao import head
 import pandas as pd
 from io import StringIO
-#from impulsoetl.tipos import DatetimeLike
-import sys
-sys.path.append("/Users/Walter Matheus/Impulso/etl/src/impulsoetl")
-from tipos import DatetimeLike
+from impulsoetl.tipos import DatetimeLike
  
 
 

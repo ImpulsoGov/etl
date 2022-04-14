@@ -1,10 +1,9 @@
 from extracao import _extrair_cadastros_individuais,extrair_cadastros_individuais
 from tratamento import tratamento_dados
-from teste_validacao import teste_validação
+from teste_validacao import teste_validacao
 from sqlalchemy.orm import Session
 from carregamento import carregar_cadastros
 from impulsoetl.tipos import DatetimeLike
-from impulsoetl.bd import Sessao
 
 com_ponderacao = [True,False]
 
@@ -26,7 +25,7 @@ def obter_cadastros_individuais(sessao: Session,visao_equipe:list,periodo:Dateti
   for k in range(len(com_ponderacao)):
     df = _extrair_cadastros_individuais(extrair_cadastros_individuais(visao_equipe[0][1],com_ponderacao[k], periodo), visao_equipe[0][0], com_ponderacao[k]) 
     df_tratado = tratamento_dados(sessao=sessao,dados_sisab_cadastros=df, com_ponderacao=com_ponderacao[k],periodo=periodo)
-    teste_validação(df,df_tratado)
+    teste_validacao(df,df_tratado)
     carregar_cadastros(sessao=sessao,cadastros_transformada=df_tratado,visao_equipe=visao_equipe[0][0])
     if not teste:
         sessao.commit()
