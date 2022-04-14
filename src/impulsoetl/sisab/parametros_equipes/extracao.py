@@ -21,7 +21,6 @@ def extrair_parametros_equipes(visao_equipe:str,competencia:DatetimeLike)->str:
     return response.text
 
 def _extrair_parametros_equipes(rp:str)->pd.DataFrame:
- 
     df = pd.read_csv(StringIO(rp), delimiter='\t', header=None, engine= 'python')
     dados = df.iloc[9:-4]
     df = pd.DataFrame(data=dados)

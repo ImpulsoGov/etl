@@ -6,8 +6,6 @@ import pandas as pd
 from io import StringIO
 from impulsoetl.tipos import DatetimeLike
  
-
-
 def extrair_cadastros_individuais(visao_equipe:str,com_ponderacao:bool,competencia:DatetimeLike)->str:
     competencia = competencia.replace('-','')
     competencia= competencia[0:6]

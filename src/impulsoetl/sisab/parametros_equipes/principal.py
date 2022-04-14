@@ -9,7 +9,6 @@ from impulsoetl.bd import Sessao
 
 def obter_parametros_equipes(sessao: Session,visao_equipe:list,periodo:DatetimeLike,teste: bool = True)->None:
   """Extrai, transforma e carrega dados de cadastros de equipes de todos os municípios a partir do Sisab.
-
   Argumentos:
       sessao: objeto [`sqlalchemy.orm.session.Session`][] que permite
           acessar a base de dados da ImpulsoGov.
@@ -20,7 +19,7 @@ def obter_parametros_equipes(sessao: Session,visao_equipe:list,periodo:DatetimeL
           adicionadas à uma transação, e podem ser revertidas com uma chamada
           posterior ao método [`Session.rollback()`][] da sessão gerada com o
           SQLAlchemy. """
-          
+
   df = _extrair_parametros_equipes(extrair_parametros_equipes(visao_equipe[0][1], periodo)) 
   df_tratado = tratamento_dados(sessao=sessao,dados_sisab_cadastros=df,periodo=periodo)
   teste_validacao(df,df_tratado)

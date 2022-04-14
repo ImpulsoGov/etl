@@ -25,6 +25,7 @@ def get_cookie(url):
     vs=urllib.parse.quote(soup.findAll('input')[1].attrs['value'])
     return ck,vs 
 
+
 def head(url):
     cookies=get_cookie(url)
     vs=cookies[1]

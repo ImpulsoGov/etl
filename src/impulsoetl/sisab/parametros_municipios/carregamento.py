@@ -5,7 +5,6 @@ from sqlalchemy.orm import Session
 import pandas as pd
 from impulsoetl.loggers import logger
 from impulsoetl.bd import logger
-
 from modelos import parametros_municipios_equipe_validas, parametros_municipios_equipe_homologadas
 
 def carregar_parametros_municipios(sessao: Session,parametros_municipios_transformada:pd.DataFrame,visao_equipe:str) -> int:

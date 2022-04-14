@@ -8,7 +8,6 @@ Amostra 04: Verifica se a quantidade de unidades federativas é superior a 5000
 Amostra 05: Verifica se há diferença no somatório de parâmetros 
 Amostra 06: Verifica se há diferença na contagem de estabelecimentos 
 Amostra 07: Verifica se há diferença na contagem de equipes 
-
 """
 
 def amostra_01 (df:pd.DataFrame,df_tratado:pd.DataFrame) -> int:

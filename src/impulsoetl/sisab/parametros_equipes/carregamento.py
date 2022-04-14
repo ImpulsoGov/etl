@@ -33,5 +33,4 @@ def carregar_parametros_equipes(sessao: Session,parametros_equipes_transformada:
         tabela_nome=f"dados_publicos._sisab_cadastros_municipios_{sulfixo_tabela}",
         linhas_adicionadas=len(parametros_equipes_transformada),
     )
-    
     return 0

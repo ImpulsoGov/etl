@@ -6,7 +6,6 @@ Amostra 02: Verifica se há diferença na contagem de municípios
 Amostra 03: Verifica se há diferença parametro considerando apenas o município de Betim-MG
 Amostra 04: Verifica se a quantidade de unidades federativas é igual a 26
 Amostra 05: Verifica se há diferença no somatório de parâmetros 
-
 """
 
 def amostra_01 (df:pd.DataFrame,df_tratado:pd.DataFrame) -> int:

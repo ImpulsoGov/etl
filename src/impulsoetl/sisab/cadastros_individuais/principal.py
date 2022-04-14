@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session
 from carregamento import carregar_cadastros
 from impulsoetl.tipos import DatetimeLike
 
+
 com_ponderacao = [True,False]
 
 def obter_cadastros_individuais(sessao: Session,visao_equipe:list,periodo:DatetimeLike,teste: bool = True)->None:
