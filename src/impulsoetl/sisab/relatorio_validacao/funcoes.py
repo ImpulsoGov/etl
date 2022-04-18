@@ -1,7 +1,7 @@
 # flake8: noqa
 # type: ignore
 import requests
-from suporte_extracao import head
+from impulsoetl.sisab.relatorio_validacao.suporte_extracao import head
 from io import StringIO
 import pandas as pd
 import os
@@ -22,8 +22,6 @@ from impulsoetl.bd import tabelas
 from impulsoetl.comum.geografias import id_sus_para_id_impulso
 from frozenlist import FrozenList
 from impulsoetl.bd import Sessao
-
-
 
 def obter_lista_periodo(operacao_id,sessao=Sessao()):
     """Obtém lista de períodos da tabela agendamento
@@ -47,7 +45,7 @@ def obter_lista_periodo(operacao_id,sessao=Sessao()):
 
     periodos_lista = periodos['periodo_data_inicio'].tolist()
 
-    query = query.iloc[0]["id"]
+    logger.info("Leitura dos Agendamentos ok!")
     return periodos_lista
 
 def obter_lista_periodos_inseridos(sessao=Sessao()):
@@ -64,6 +62,7 @@ def obter_lista_periodos_inseridos(sessao=Sessao()):
             f"""select distinct periodo_codigo from {tabela_alvo};""",
             engine    )
     periodos = periodos['periodo_codigo'].tolist()
+    logger.info("Leitura dos períodos inseridos no banco Impulso OK!")
     return periodos
 
 def competencia_para_periodo_codigo(periodo_competencia):
@@ -130,6 +129,7 @@ def requisicao_validacao_sisab_producao(periodo_competencia,envio_prazo):
     payload='j_idt44=j_idt44&unidGeo=brasil&periodo='+periodo_tipo+'&j_idt70='+periodo_competencia+'&colunas=regiao&colunas=uf&colunas=ibge&colunas=municipio&colunas=cnes&colunas=ine'+envio_prazo+'&javax.faces.ViewState='+vs+'&j_idt102=j_idt102'
     headers = hd[0]
     resposta = requests.request("POST", url, headers=headers, data=payload)
+    logger.info("Dados Obtidos no SISAB")
     return resposta
 
 def tratamento_validacao_producao(resposta,data_criacao,envio_prazo,periodo_codigo,sessao=Sessao()):
@@ -142,9 +142,12 @@ def tratamento_validacao_producao(resposta,data_criacao,envio_prazo,periodo_codi
     Returns:
     df: dataframe com os dados enriquecidos e tratados em formato pandas dataframe  
     """
-
     
+    
+    logger.info("Dados em tratamento")
     engine = sessao.get_bind()
+    envio_prazo_on = '&envioPrazo=on'
+
     df = pd.read_csv (StringIO(resposta.text),sep=';',encoding = 'ISO-8859-1', skiprows=range(0,4), skipfooter=4,  engine='python') #ORIGINAL DIRETO DA EXTRAÇÃO 
 
     df['INE'] = df['INE'].fillna('0')
@@ -165,7 +168,7 @@ def tratamento_validacao_producao(resposta,data_criacao,envio_prazo,periodo_codi
     df.insert(0, "id", value="")
 
     df.insert(2, "periodo_id", value="")
-
+    
     # -------------novas colunas para padrão tabela requerida
 
     df = df.assign(
@@ -175,24 +178,20 @@ def tratamento_validacao_producao(resposta,data_criacao,envio_prazo,periodo_codi
         periodo_codigo=periodo_codigo,
     )
 
-    query = pd.read_sql_query(
+    periodo_id = pd.read_sql_query(
         f"select id  from listas_de_codigos.periodos where codigo  = '{periodo_codigo}';",
         engine,
     )
+    
+    periodo_id = periodo_id.iloc[0]["id"]
 
-    query = query.iloc[0]["id"]
-
-    df = df.assign(periodo_id=query)
-
-    idsus = df.iloc[0][
-        "municipio_id_sus"
-    ]  # idsus para preencher coluna id_unidade_geo
-
-    id_unidade_geo = id_sus_para_id_impulso(sessao, idsus)
-
-    df = df.assign(unidade_geografica_id=id_unidade_geo)
+    df = df.assign(periodo_id=periodo_id)
 
     df['id'] = df.apply(lambda row:uuid.uuid4(), axis=1)
+    
+    df.insert(11, "unidade_geografica_id", value="")
+    
+    df['unidade_geografica_id'] = df['municipio_id_sus'].apply(lambda row: id_sus_para_id_impulso(sessao, id_sus=row))
 
     df[["id","municipio_id_sus", "periodo_id","cnes_id",\
         "ine_id","validacao_nome","periodo_codigo","unidade_geografica_id"]] = df[["id","municipio_id_sus", "periodo_id","cnes_id","ine_id",\
@@ -206,9 +205,11 @@ def tratamento_validacao_producao(resposta,data_criacao,envio_prazo,periodo_codi
     df['atualizacao_data'] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     
     df_validacao_tratado = df 
+    logger.info("Dados tratados")
+    print(df_validacao_tratado.head())
     return df_validacao_tratado
 
-def carregar_validacao_producao(df_validacao_tratado,sessao=Sessao()):
+def carregar_validacao_producao(df_validacao_tratado,periodo_competencia,sessao=Sessao()):
     """Carrega os dados de um arquivo validação do portal SISAB no BD da Impulso.
 
     Argumentos:
@@ -241,6 +242,10 @@ def carregar_validacao_producao(df_validacao_tratado,sessao=Sessao()):
 
     conector = sessao.connection()
 
+    periodo_codigo = competencia_para_periodo_codigo(periodo_competencia)
+
+    periodos_inseridos = obter_lista_periodos_inseridos()
+
     if periodo_codigo in periodos_inseridos:
         
         limpar = delete(tabela_relatorio_validacao).where(tabela_relatorio_validacao.c.periodo_codigo == periodo_codigo)
@@ -254,7 +259,7 @@ def carregar_validacao_producao(df_validacao_tratado,sessao=Sessao()):
     print(requisicao_insercao)
 
     conector.execute(requisicao_insercao)
-    sessao.commit()
+    
     
     logger.info(
     "Carregamento concluído para a tabela `{tabela_nome}`: "
@@ -265,32 +270,31 @@ def carregar_validacao_producao(df_validacao_tratado,sessao=Sessao()):
     return 0
 
 
+def obter_validacao_municipios_producao(periodo_competencia,envio_prazo):
+    """Executa a Extração, Transformação e Carga para memória utilizando as funções próprias para isso.
 
-# ----------------------------------------------
-operacao_id = ('c84c1917-4f57-4592-a974-50a81b3ed6d5')
+    Argumentos:
+        periodo_competencia: Período de competência do dado, obtido no script impulso_previne
+        envio_prazo: No prazo sim ou não, obtido no script impulso_previne
 
-envio_prazo_on = '&envioPrazo=on' #Check box envio requisições no prazo marcado
+    Retorna:
+        Código de saída do processo de carregamento. Se o carregamento
+        for bem sucedido, o código de saída será `0`.
+  """
 
-envio_prazo_lista=[envio_prazo_on,'']
+    tabela_alvo = 'dados_publicos._sisab_validacao_municipios_por_producao'
 
-periodos_lista = obter_lista_periodo(operacao_id)
+    periodo_codigo = competencia_para_periodo_codigo(periodo_competencia)
 
-periodos_inseridos = obter_lista_periodos_inseridos()
+    data_criacao = obter_data_criacao(tabela_alvo,periodo_codigo)
+
+    resposta = requisicao_validacao_sisab_producao(periodo_competencia,envio_prazo)
+
+    df_tratado = tratamento_validacao_producao(resposta,data_criacao,envio_prazo,periodo_codigo)
+
+    carregar_validacao_producao(df_tratado)
+    logger.info("Dados prontos para o commit")
+    
 
 
-for periodo in periodos_lista:
-    periodo_competencia = periodo
-    for tipo in envio_prazo_lista:
-        envio_prazo = tipo
-
-        periodo_tipo='producao'
-
-        periodo_codigo = competencia_para_periodo_codigo(periodo_competencia)
-
-        data_criacao = obter_data_criacao('dados_publicos._sisab_validacao_municipios_por_producao',periodo_codigo)
-
-        resposta = requisicao_validacao_sisab_producao(periodo_competencia,envio_prazo)
-
-        df_tratado = tratamento_validacao_producao(resposta,data_criacao,envio_prazo,periodo_codigo)
-
-        carregar_validacao_producao(df_tratado)
+            

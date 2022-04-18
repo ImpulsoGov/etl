@@ -3,17 +3,21 @@
 # SPDX-FileCopyrightText: 2021, 2022 ImpulsoGov <contato@impulsogov.org>
 #
 # SPDX-License-Identifier: MIT
+# flake8: noqa
+# type: ignore
 
 
 """Scripts para o produto Impulso Previne."""
 
 
+from requests import head
 from sqlalchemy.orm import Session
 
 from impulsoetl.bd import Sessao, tabelas
 from impulsoetl.loggers import logger
-# from impulsoetl.sisab.cadastros import obter_cadastros_municipios_equipe_validas
-# from impulsoetl.sisab.validacao import obter_validacao_municipios_por_producao
+#from impulsoetl.sisab.cadastros import obter_cadastros_municipios_equipe_validas
+from impulsoetl.sisab.relatorio_validacao.funcoes import obter_validacao_municipios_producao
+from impulsoetl.sisab.relatorio_validacao.funcoes import obter_lista_periodo
 
 
 agendamentos = tabelas["configuracoes.capturas_agendamentos"]
@@ -43,7 +47,21 @@ def validacao_municipios_por_producao(
 
     # Ler agendamentos e rodar ETL para cada agendamento pendente
     # ...
+    periodos_lista = obter_lista_periodo(operacao_id,sessao=Sessao())
+    envio_prazo_on = '&envioPrazo=on' #Check box envio requisições no prazo marcado
+    envio_prazo_lista=[envio_prazo_on,'']
 
+    for periodo in periodos_lista:
+        periodo_competencia = periodo
+        for tipo in envio_prazo_lista:
+            envio_prazo = tipo
+            obter_validacao_municipios_producao(periodo_competencia,envio_prazo)
+
+    #if teste:  # evitar rodar muitas iterações
+    #    break
+
+    #sessao.commit()
+    return 0
 
 def principal(sessao: Session, teste: bool = False) -> None:
     """Executa todos os scripts de captura de dados do Impulso Previne.
