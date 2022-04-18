@@ -1,10 +1,10 @@
 
 import requests
 import urllib
-from sisab.parametros_requisicao import head
 import pandas as pd
 from io import StringIO
 from impulsoetl.tipos import DatetimeLike
+from impulsoetl.sisab.parametros_requisicao import head
 
 def extrair_parametros_municipios(visao_equipe:str,competencia:DatetimeLike)->str:
     competencia = competencia.replace('-','')

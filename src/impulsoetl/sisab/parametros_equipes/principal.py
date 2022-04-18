@@ -1,13 +1,21 @@
-from extracao import _extrair_parametros_equipes,extrair_parametros_equipes
-from tratamento import tratamento_dados
-from teste_validacao import teste_validacao
 from sqlalchemy.orm import Session
-from carregamento import carregar_parametros_equipes
-from impulsoetl.tipos import DatetimeLike
+from impulsoetl.sisab.parametros_equipes.extracao import (
+_extrair_parametros_equipes,
+extrair_parametros_equipes
+)
+from impulsoetl.sisab.parametros_equipes.tratamento import tratamento_dados
+from impulsoetl.sisab.parametros_equipes.teste_validacao import teste_validacao
+from impulsoetl.sisab.parametros_equipes.carregamento import carregar_parametros_equipes
 from impulsoetl.bd import Sessao
+from impulsoetl.tipos import DatetimeLike
+#
+import sys
+sys.path.append("/Users/Walter Matheus/Impulso/etl/src/impulsoetl")
+from tipos import DatetimeLike
+from bd import Sessao
+#
 
-
-def obter_parametros_equipes(sessao: Session,visao_equipe:list,periodo:DatetimeLike,teste: bool = True)->None:
+def obter_parametros_equipes(sessao: Session,visao_equipe:list,periodo:DatetimeLike,teste: bool = False)->None:
   """Extrai, transforma e carrega dados de cadastros de equipes de todos os municípios a partir do Sisab.
   Argumentos:
       sessao: objeto [`sqlalchemy.orm.session.Session`][] que permite
@@ -28,8 +36,8 @@ def obter_parametros_equipes(sessao: Session,visao_equipe:list,periodo:DatetimeL
       sessao.commit()
 
 periodo = '2022-01-01'
-visao_equipe=[('equipes-homologadas','|HM|')] 
-teste=True
+visao_equipe=[('equipes-validas','|HM|NC|AQ|')] 
+teste=False
 
 if __name__ == "__main__":
     with Sessao() as sessao:

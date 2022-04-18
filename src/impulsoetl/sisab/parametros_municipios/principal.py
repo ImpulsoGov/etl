@@ -1,11 +1,15 @@
-from extracao import _extrair_parametros_municipios,extrair_parametros_municipios
-from tratamento import tratamento_dados
-from teste_validacao import teste_validacao
-from carregamento import carregar_parametros_municipios
+from impulsoetl.sisab.parametros_municipios.extracao import (
+_extrair_parametros_municipios,
+extrair_parametros_municipios
+)
 from sqlalchemy.orm import Session
+from impulsoetl.sisab.parametros_municipios.teste_validacao import teste_validacao
+from impulsoetl.sisab.parametros_municipios.tratamento import tratamento_dados
+from impulsoetl.sisab.parametros_municipios.carregamento import carregar_parametros_municipios
 from impulsoetl.bd import Sessao
+from impulsoetl.tipos import DatetimeLike
 
-def obter_parametros_municipios(sessao:Session,visao_equipe:list,periodo:str,teste:bool)->None:
+def obter_parametros_municipios(sessao:Session,visao_equipe:list,periodo:DatetimeLike,teste:bool)->None:
 
   """Extrai, transforma e carrega dados de cadastros de equipes de todos os municípios a partir do Sisab.
   Argumentos:

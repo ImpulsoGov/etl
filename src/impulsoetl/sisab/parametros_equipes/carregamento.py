@@ -5,8 +5,11 @@ from sqlalchemy.orm import Session
 import pandas as pd
 from impulsoetl.loggers import logger
 from impulsoetl.bd import logger
+from impulsoetl.sisab.parametros_equipes.modelos import (
+parametros_equipes_equipe_validas, 
+parametros_equipes_equipe_homologadas    
+)
 
-from modelos import parametros_equipes_equipe_validas, parametros_equipes_equipe_homologadas
 
 def carregar_parametros_equipes(sessao: Session,parametros_equipes_transformada:pd.DataFrame,visao_equipe:str) -> int:
 
