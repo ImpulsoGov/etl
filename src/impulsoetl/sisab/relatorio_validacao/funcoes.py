@@ -23,32 +23,7 @@ from impulsoetl.comum.geografias import id_sus_para_id_impulso
 from frozenlist import FrozenList
 from impulsoetl.bd import Sessao
 
-def obter_lista_periodo(operacao_id,sessao=Sessao()):
-    """Obtém lista de períodos da tabela agendamento
-
-    Args:
-        operacao_id (_type_): ID da operação do ETL
-
-    Returns:
-        periodos_lista: períodos que precisam ser atualizados em formato de lista
-    """    
-
-    engine = sessao.get_bind()
-    agendamentos = tabelas["configuracoes.capturas_agendamentos"]
-    periodos = pd.read_sql_query(
-            f"""select distinct periodo_data_inicio from {agendamentos} where operacao_id = '{operacao_id}';""",
-            engine   )
-
-    periodos['periodo_data_inicio'] = pd.to_datetime(periodos['periodo_data_inicio'])
-
-    periodos["periodo_data_inicio"] = periodos["periodo_data_inicio"].apply(lambda x: (x).strftime('%Y%m'))
-
-    periodos_lista = periodos['periodo_data_inicio'].tolist()
-
-    logger.info("Leitura dos Agendamentos ok!")
-    return periodos_lista
-
-def obter_lista_periodos_inseridos(sessao=Sessao()):
+def obter_lista_periodos_inseridos(sessao):
     """Obtém lista de períodos da períodos que já constam na tabela
 
         Returns:
@@ -85,7 +60,7 @@ def competencia_para_periodo_codigo(periodo_competencia):
         periodo_codigo = ano + mes
     return periodo_codigo
 
-def obter_data_criacao(tabela, periodo_codigo,sessao=Sessao()):
+def obter_data_criacao(sessao,tabela, periodo_codigo):
     """Obtém a data de criação do registro que já consta na tabela baseado no período
         
         Args:
@@ -132,7 +107,7 @@ def requisicao_validacao_sisab_producao(periodo_competencia,envio_prazo):
     logger.info("Dados Obtidos no SISAB")
     return resposta
 
-def tratamento_validacao_producao(resposta,data_criacao,envio_prazo,periodo_codigo,sessao=Sessao()):
+def tratamento_validacao_producao(sessao,resposta,data_criacao,envio_prazo,periodo_codigo):
     """Tratamento dos dados obtidos 
 
     Args:
@@ -209,7 +184,7 @@ def tratamento_validacao_producao(resposta,data_criacao,envio_prazo,periodo_codi
     print(df_validacao_tratado.head())
     return df_validacao_tratado
 
-def carregar_validacao_producao(df_validacao_tratado,periodo_competencia,sessao=Sessao()):
+def carregar_validacao_producao(sessao,df_validacao_tratado,periodo_competencia):
     """Carrega os dados de um arquivo validação do portal SISAB no BD da Impulso.
 
     Argumentos:
@@ -270,7 +245,7 @@ def carregar_validacao_producao(df_validacao_tratado,periodo_competencia,sessao=
     return 0
 
 
-def obter_validacao_municipios_producao(periodo_competencia,envio_prazo):
+def obter_validacao_municipios_producao(sessao,periodo_competencia,envio_prazo):
     """Executa a Extração, Transformação e Carga para memória utilizando as funções próprias para isso.
 
     Argumentos:
@@ -294,7 +269,7 @@ def obter_validacao_municipios_producao(periodo_competencia,envio_prazo):
 
     carregar_validacao_producao(df_tratado)
     logger.info("Dados prontos para o commit")
-    
+
 
 
             
