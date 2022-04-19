@@ -261,7 +261,7 @@ def obter_validacao_municipios_producao(sessao,periodo_competencia,envio_prazo):
 
     periodo_codigo = competencia_para_periodo_codigo(periodo_competencia)
 
-    data_criacao = obter_data_criacao(tabela_alvo,periodo_codigo)
+    data_criacao = obter_data_criacao(sessao,tabela_alvo,periodo_codigo)
 
     resposta = requisicao_validacao_sisab_producao(periodo_competencia,envio_prazo)
 

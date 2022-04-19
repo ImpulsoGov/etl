@@ -12,12 +12,12 @@
 
 from requests import head
 from sqlalchemy.orm import Session
-
+import pandas as pd
 from impulsoetl.bd import Sessao, tabelas
 from impulsoetl.loggers import logger
 #from impulsoetl.sisab.cadastros import obter_cadastros_municipios_equipe_validas
 from impulsoetl.sisab.relatorio_validacao.funcoes import obter_validacao_municipios_producao
-from impulsoetl.sisab.relatorio_validacao.funcoes import obter_lista_periodo
+
 
 
 agendamentos = tabelas["configuracoes.capturas_agendamentos"]
