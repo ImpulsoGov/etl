@@ -12,6 +12,7 @@ on:
       - 'src/impulsoprevine/**'
       - 'Dockerfile'
   pull_request:
+    types: [ closed ]
     branches: [ main ]
     paths-ignore:
       - 'src/impulsoprevine/**'
@@ -20,6 +21,7 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    if: github.event.pull_request.merged == true || github.event_name == 'push'
     steps:
     - uses: actions/checkout@v2
     - name: Docker login
