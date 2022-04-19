@@ -219,7 +219,7 @@ def carregar_validacao_producao(sessao,df_validacao_tratado,periodo_competencia)
 
     periodo_codigo = competencia_para_periodo_codigo(periodo_competencia)
 
-    periodos_inseridos = obter_lista_periodos_inseridos()
+    periodos_inseridos = obter_lista_periodos_inseridos(sessao)
 
     if periodo_codigo in periodos_inseridos:
         
