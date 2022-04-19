@@ -265,9 +265,9 @@ def obter_validacao_municipios_producao(sessao,periodo_competencia,envio_prazo):
 
     resposta = requisicao_validacao_sisab_producao(periodo_competencia,envio_prazo)
 
-    df_tratado = tratamento_validacao_producao(resposta,data_criacao,envio_prazo,periodo_codigo)
+    df_validacao_tratado = tratamento_validacao_producao(sessao,resposta,data_criacao,envio_prazo,periodo_codigo)
 
-    carregar_validacao_producao(df_tratado)
+    carregar_validacao_producao(sessao,df_validacao_tratado,periodo_competencia)
     logger.info("Dados prontos para o commit")
 
 
