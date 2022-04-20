@@ -445,7 +445,6 @@ def carregar_aih_rd(
             if len(mensagem_erro) > 500:
                 mensagem_erro = mensagem_erro[:500]
             logger.error(mensagem_erro)
-            breakpoint()
             sessao.rollback()
             return 1
 
