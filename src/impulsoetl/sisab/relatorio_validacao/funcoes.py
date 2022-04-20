@@ -89,12 +89,12 @@ def requisicao_validacao_sisab_producao(periodo_competencia,envio_prazo):
     """Obtém os dados da API
     
     Args:
-        tabela (str): tabela alvo da busca
-        periodo_codigo (str): Período de referência da data
+        periodo_competencia: Período de competência do dado a ser buscado no sisab
+        envio_prazo(bool): Tipo de relatório de validação a ser obtido (referência check box "no prazo" no sisab)  
     
     Returns:
-    data_criacao: data em formato datetime  
-"""
+    resposta: Resposta da requisição do sisab, com os dados obtidos ou não
+    """
 
     
     url = "https://sisab.saude.gov.br/paginas/acessoRestrito/relatorio/federal/envio/RelValidacao.xhtml"
@@ -123,11 +123,13 @@ def tratamento_validacao_producao(sessao,resposta,data_criacao,envio_prazo,perio
     engine = sessao.get_bind()
     envio_prazo_on = '&envioPrazo=on'
 
-    df = pd.read_csv (StringIO(resposta.text),sep=';',encoding = 'ISO-8859-1', skiprows=range(0,4), skipfooter=4,  engine='python') #ORIGINAL DIRETO DA EXTRAÇÃO 
+    df = pd.read_csv(StringIO(resposta.text),sep=';',encoding = 'ISO-8859-1', skiprows=range(0,4), skipfooter=4,  engine='python') #ORIGINAL DIRETO DA EXTRAÇÃO 
 
     df['INE'] = df['INE'].fillna('0')
 
     df['INE'] = df['INE'].astype('int')
+
+    assert df['Uf'].count() > 26, "Estado faltante"
 
     df.drop(["Região", "Uf", "Municipio", "Unnamed: 8"], axis=1, inplace=True)
 
@@ -184,7 +186,7 @@ def tratamento_validacao_producao(sessao,resposta,data_criacao,envio_prazo,perio
     print(df_validacao_tratado.head())
     return df_validacao_tratado
 
-def carregar_validacao_producao(sessao,df_validacao_tratado,periodo_competencia):
+def carregar_validacao_producao(sessao,df_validacao_tratado,periodo_competencia,tabela_destino):
     """Carrega os dados de um arquivo validação do portal SISAB no BD da Impulso.
 
     Argumentos:
@@ -197,7 +199,7 @@ def carregar_validacao_producao(sessao,df_validacao_tratado,periodo_competencia)
     Retorna:
         Código de saída do processo de carregamento. Se o carregamento
         for bem sucedido, o código de saída será `0`.
-  """
+     """
 
     
     engine = sessao.get_bind()
@@ -211,9 +213,7 @@ def carregar_validacao_producao(sessao,df_validacao_tratado,periodo_competencia)
     )
 
 
-    tabela_relatorio_validacao = tabelas[
-        "dados_publicos._sisab_validacao_municipios_por_producao"
-    ]  # tabela teste
+    tabela_relatorio_validacao = tabela_destino
 
     conector = sessao.connection()
 
@@ -244,8 +244,38 @@ def carregar_validacao_producao(sessao,df_validacao_tratado,periodo_competencia)
     
     return 0
 
+def testes_pre_carga (df_validacao_tratado):
+    """Realiza algumas validações no dataframe antes da carga ao banco.
 
-def obter_validacao_municipios_producao(sessao,periodo_competencia,envio_prazo):
+    Argumentos:
+            relatorio_validacao_df: [`DataFrame`][] contendo os dados a serem carregados
+            na tabela de destino, já no formato utilizado pelo banco de dados
+            da ImpulsoGov.
+
+    Retorna:
+        Código de saída do processo de carregamento. Se o carregamento
+        for bem sucedido, o código de saída será `0`.
+    """
+
+
+    assert df_validacao_tratado['municipio_id_sus'].nunique() > 5000, "Número de municípios obtidos menor que 5000"
+
+    assert df_validacao_tratado['unidade_geografica_id'].nunique() == df_validacao_tratado['municipio_id_sus'].nunique() , "Falta de unidade geográfica"
+
+    assert sum(df_validacao_tratado['cnes_id'].isna()) == 0, "Dado ausente em cnes_id"
+
+    assert sum(df_validacao_tratado['id'].isna()) == 0, "Id do registro ausente"
+
+    assert sum(df_validacao_tratado['validacao_nome'].isna()) == 0, "Nome da validacão ausente"
+
+    assert sum(df_validacao_tratado['validacao_quantidade']) > 0, "Quantidade de validação inválida"
+    
+    assert len(df_validacao_tratado.columns) == 12, "Falta de coluna no dataframe"
+
+    logger.info("Testes OK!")
+
+
+def obter_validacao_municipios_producao(sessao,periodo_competencia,envio_prazo,tabela_destino,periodo_codigo):
     """Executa a Extração, Transformação e Carga para memória utilizando as funções próprias para isso.
 
     Argumentos:
@@ -257,17 +287,16 @@ def obter_validacao_municipios_producao(sessao,periodo_competencia,envio_prazo):
         for bem sucedido, o código de saída será `0`.
   """
 
-    tabela_alvo = 'dados_publicos._sisab_validacao_municipios_por_producao'
 
-    periodo_codigo = competencia_para_periodo_codigo(periodo_competencia)
-
-    data_criacao = obter_data_criacao(sessao,tabela_alvo,periodo_codigo)
+    data_criacao = obter_data_criacao(sessao,tabela_destino,periodo_codigo)
 
     resposta = requisicao_validacao_sisab_producao(periodo_competencia,envio_prazo)
 
     df_validacao_tratado = tratamento_validacao_producao(sessao,resposta,data_criacao,envio_prazo,periodo_codigo)
 
-    carregar_validacao_producao(sessao,df_validacao_tratado,periodo_competencia)
+    testes_pre_carga (df_validacao_tratado)
+
+    carregar_validacao_producao(sessao,df_validacao_tratado,periodo_competencia,tabela_destino)
     logger.info("Dados prontos para o commit")
 
 

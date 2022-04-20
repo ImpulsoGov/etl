@@ -15,7 +15,6 @@ from sqlalchemy.orm import Session
 import pandas as pd
 from impulsoetl.bd import Sessao, tabelas
 from impulsoetl.loggers import logger
-#from impulsoetl.sisab.cadastros import obter_cadastros_municipios_equipe_validas
 from impulsoetl.sisab.relatorio_validacao.funcoes import obter_validacao_municipios_producao
 
 
@@ -47,34 +46,35 @@ def validacao_municipios_por_producao(
 
     # Ler agendamentos e rodar ETL para cada agendamento pendente
     # ...
-    engine = sessao.get_bind()
     agendamentos = tabelas["configuracoes.capturas_agendamentos"]
-    periodos = pd.read_sql_query(
-            f"""select distinct periodo_data_inicio from {agendamentos} where operacao_id = '{operacao_id}';""",
-            engine   )
-
-    periodos['periodo_data_inicio'] = pd.to_datetime(periodos['periodo_data_inicio'])
-
-    periodos["periodo_data_inicio"] = periodos["periodo_data_inicio"].apply(lambda x: (x).strftime('%Y%m'))
-
-    periodos_lista = periodos['periodo_data_inicio'].tolist()
-
+    agendamentos_relatorio_validacao = (
+        sessao.query(agendamentos)
+        .filter(agendamentos.c.operacao_id == operacao_id)
+        .all()
+    )
+    
     logger.info("Leitura dos Agendamentos ok!")
-    
+
     envio_prazo_on = '&envioPrazo=on' #Check box envio requisições no prazo marcado
-    
+
     envio_prazo_lista=[envio_prazo_on,'']
 
-    for periodo in periodos_lista:
-        periodo_competencia = periodo
+    for agendamento in agendamentos_relatorio_validacao:
+        periodo_competencia = agendamento.periodo_data_inicio.strftime("%Y%m")
         for tipo in envio_prazo_lista:
             envio_prazo = tipo
-            obter_validacao_municipios_producao(sessao=sessao,periodo_competencia=periodo_competencia,envio_prazo=envio_prazo)
+            obter_validacao_municipios_producao(
+                sessao=sessao,
+                periodo_competencia=periodo_competencia,
+                envio_prazo=envio_prazo,
+                tabela_destino=agendamento.tabela_destino,
+                periodo_codigo=agendamento.periodo_codigo,
+            )
 
-    #if teste:  # evitar rodar muitas iterações
-    #    break
+    if teste:  # evitar rodar muitas iterações
+        break
 
-    #sessao.commit()
+    sessao.commit()
     return 0
 
 def principal(sessao: Session, teste: bool = False) -> None:
