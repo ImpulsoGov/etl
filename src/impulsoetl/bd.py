@@ -27,6 +27,7 @@ from psycopg2.extensions import AsIs, register_adapter
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 
+from impulsoetl.utilitarios.bd import TabelasRefletidasDicionario
 from impulsoetl.loggers import logger
 
 logger.info("Configurando interface com o banco de dados...")
@@ -68,15 +69,7 @@ logger.info("OK")
 logger.info(
     "Espelhando a estrutura das tabelas pré-existentes no banco de dados...",
 )
-meta.reflect(schema="listas_de_codigos")
-meta.reflect(schema="dados_publicos")
-meta.reflect(schema="configuracoes", views=True)
-tabelas = meta.tables
-logger.debug(
-    "{num_tabelas} tabelas encontradas: {tabelas}",
-    num_tabelas=len(tabelas),
-    tabelas=",".join([tabela.name for tabela in meta.sorted_tables]),
-)
+tabelas = TabelasRefletidasDicionario(meta, views=True)
 logger.info("OK")
 
 logger.info("Criando base declarativa para a definição de novos modelos...")

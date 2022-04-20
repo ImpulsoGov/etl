@@ -3,28 +3,62 @@
 # SPDX-License-Identifier: MIT
 
 
-"""Configurações gerais de conexão com o banco de dados.
-
-Atributos:
-    SQLALCHEMY_DATABASE_URL: Cadeia de conexão com o banco de dados PostgreSQL.
-    engine: Objeto de conexão entre o SQLAlchemy e o banco de dados.
-    Base: Base para a definição de modelos objeto-relacionais (ORM) segundo no
-        [paradigma declarativo do SQLAlchemy][sqlalchemy-declarativo].
-
-[sqlalchemy-declarativo]: https://docs.sqlalchemy.org/en/13/orm/extensions/declarative/index.html
-"""
+"""Funções e classes úteis para interagir com o banco de dados da Impulso."""
 
 
-import os
+from sqlalchemy.exc import InvalidRequestError
+from sqlalchemy.schema import MetaData, Table
 
-import sqlalchemy as sa
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker
-
-SQLALCHEMY_DATABASE_URL = os.environ["IMPULSOETL_POSTGRES_CONEXAO"]
+from impulsoetl.loggers import logger
 
 
-engine = sa.create_engine(SQLALCHEMY_DATABASE_URL)
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+class TabelasRefletidasDicionario(dict):
+    """Representa um dicionário de tabelas refletidas de um banco de dados."""
 
-Base = declarative_base()
+    def __init__(self, metadata_obj: MetaData, **kwargs):
+        """Instancia um dicionário de tabelas refletidas de um banco de dados.
+
+        Funciona exatamente como o dicionário de tabelas refletidas de um banco
+        de dados acessível por meio da propriedade `tables` de um objeto
+        [`sqlalchemy.schema.MetaData`][], com a exceção de que as chaves
+        referentes a tabelas ou consultas ainda não refletidas são espelhadas
+        sob demanda quando requisitadas pelo método `__getitem__()`
+        (equivalente a obter a representação de uma tabela do dicionário
+        chamando `dicionario["nome_do_schema.nome_da_tabela"]`).
+
+        Argumentos:
+            metadata_obj: instância da classe [`sqlalchemy.schema.MetaData`][]
+                da biblioteca SQLAlchemy,
+            **kwargs: Parâmetros adicionais a serem passados para o método
+                [`reflect()`][] do objeto de metadados ao se tentar obter uma
+                tabela ainda não espelhada no banco de dados.
+
+        [`sqlalchemy.schema.MetaData`]: https://docs.sqlalchemy.org/en/14/core/metadata.html#sqlalchemy.schema.MetaData
+        [`reflect()`][]: https://docs.sqlalchemy.org/en/14/core/metadata.html#sqlalchemy.schema.MetaData.reflect
+        """
+        self.meta = metadata_obj
+        self.kwargs = kwargs
+
+    def __getitem__(self, chave: str) -> Table:
+        try:
+            return self.meta.tables[chave]
+        except (InvalidRequestError, KeyError):
+            schema = None
+            try:
+                schema, tabela_nome = chave.split(".", maxsplit=1)
+            except ValueError:
+                tabela_nome = chave
+            logger.info("Espelhando tabela `{}`...", chave)
+            self.meta.reflect(schema=schema, only=[tabela_nome], **self.kwargs)
+            logger.info("OK.")
+            return self.meta.tables[chave]
+
+    def __setitem__(self, chave: str, valor: Table) -> None:
+        self.meta.tables[chave] = valor
+
+    def __repr__(self) -> str:
+        return self.meta.tables.__repr__()
+
+    def update(self, *args, **kwargs) -> None:
+        for chave, valor in dict(*args, **kwargs).items():
+            self[chave] = valor
