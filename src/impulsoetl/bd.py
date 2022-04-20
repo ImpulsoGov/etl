@@ -71,13 +71,11 @@ logger.info(
 meta.reflect(schema="listas_de_codigos")
 meta.reflect(schema="dados_publicos")
 meta.reflect(schema="configuracoes", views=True)
-meta.reflect(schema="saude_mental", views=True)
-# meta.reflect(schema="logs")
 tabelas = meta.tables
 logger.debug(
     "{num_tabelas} tabelas encontradas: {tabelas}",
     num_tabelas=len(tabelas),
-    tabelas=tabelas,
+    tabelas=",".join([tabela.name for tabela in meta.sorted_tables]),
 )
 logger.info("OK")
 
