@@ -212,8 +212,8 @@ def carregar_validacao_producao(sessao,df_validacao_tratado,periodo_competencia,
         )
     )
 
-
-    tabela_relatorio_validacao = tabela_destino
+    
+    tabela_relatorio_validacao = tabelas[tabela_destino]
 
     conector = sessao.connection()
 
