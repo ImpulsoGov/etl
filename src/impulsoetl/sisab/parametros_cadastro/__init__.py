@@ -2,4 +2,4 @@
 #
 # SPDX-License-Identifier: MIT
 
-from impulsoetl.sisab.parametros_municipios.principal import obter_parametros_municipios
+from impulsoetl.sisab.parametros_cadastro.principal import obter_parametros

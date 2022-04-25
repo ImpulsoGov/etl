@@ -5,7 +5,6 @@ from sqlalchemy.orm import Session
 import pandas as pd
 from impulsoetl.loggers import logger
 from impulsoetl.bd import logger
-
 from modelos import cadastros_equipe_homologadas ,cadastros_todas_equipes, cadastros_equipe_validas
 
 def carregar_cadastros(sessao: Session,cadastros_transformada:pd.DataFrame,visao_equipe:str) -> int:

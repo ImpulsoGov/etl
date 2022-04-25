@@ -1,26 +1,27 @@
 from __future__ import annotations
 from sqlalchemy.orm import Session
 from impulsoetl.tipos import DatetimeLike
-from impulsoetl.sisab.cadastros_individuais.carregamento import (
-    carregar_cadastros,
+from impulsoetl.sisab.parametros_cadastro.carregamento import (
+    carregar_parametros ,
 )
-from impulsoetl.sisab.cadastros_individuais.extracao import (
-    extrair_cadastros_individuais,
+from impulsoetl.sisab.parametros_cadastro.extracao import (
+    extrair_parametros,
 )
-from impulsoetl.sisab.cadastros_individuais.teste_validacao import (
+from impulsoetl.sisab.parametros_cadastro.teste_validacao import (
     teste_validacao,
 )
-from impulsoetl.sisab.cadastros_individuais.tratamento import tratamento_dados
+from impulsoetl.sisab.parametros_cadastro.tratamento import tratamento_dados
+from impulsoetl.bd import Sessao
 
 
-def obter_cadastros_individuais(
+def obter_parametros(
     sessao: Session,
     visao_equipe: str,
     periodo: DatetimeLike,
-    com_ponderacao: list[bool] = [True, False],
-    teste: bool = True,
+    nivel_agregacao: str,
+    teste: bool = False
 ) -> None:
-    """Extrai, transforma e carrega dados de cadastros de equipes pelo SISAB.
+    """Extrai, transforma e carrega dados de parâmetros cadastros de equipes pelo SISAB.
     Argumentos:
         sessao: objeto [`sqlalchemy.orm.session.Session`][] que permite
             acessar a base de dados da ImpulsoGov.
@@ -39,23 +40,11 @@ def obter_cadastros_individuais(
             posterior ao método [`Session.rollback()`][] da sessão gerada com o
             SQLAlchemy."""
 
-    for status_ponderacao in com_ponderacao:
-        df = extrair_cadastros_individuais(
-            visao_equipe=visao_equipe,
-            com_ponderacao=status_ponderacao,
-            competencia=periodo,
-        )
-        df_tratado = tratamento_dados(
-            sessao=sessao,
-            dados_sisab_cadastros=df,
-            com_ponderacao=status_ponderacao,
-            periodo=periodo,
-        )
-        teste_validacao(df, df_tratado)
-        carregar_cadastros(
-            sessao=sessao,
-            cadastros_transformada=df_tratado,
-            visao_equipe=visao_equipe,
-        )
-        if not teste:
-            sessao.commit()
+    df = extrair_parametros(visao_equipe=visao_equipe,competencia=periodo,nivel_agregacao=nivel_agregacao)
+    df_tratado = tratamento_dados(sessao=sessao,dados_sisab_cadastros=df,periodo=periodo,nivel_agregacao=nivel_agregacao)
+    teste_validacao(df, df_tratado,nivel_agregacao=nivel_agregacao)
+    carregar_parametros(sessao=sessao,parametros_transformada=df_tratado,visao_equipe=visao_equipe,nivel_agregacao=nivel_agregacao)
+    if not teste:
+        sessao.commit()
+
+        

@@ -8,5 +8,7 @@
 
 from impulsoetl.bd import tabelas
 
+parametros_municipios_equipe_validas = tabelas["dados_publicos._sisab_cadastros_parametro_municipios_equipes_validas"]
+parametros_municipios_equipe_homologadas = tabelas["dados_publicos._sisab_cadastros_parametro_municipios_equipes_homologadas"]
 parametros_equipes_equipe_validas = tabelas["dados_publicos._sisab_cadastros_parametro_cnes_ine_equipes_validas"]
 parametros_equipes_equipe_homologadas = tabelas["dados_publicos._sisab_cadastros_parametro_cnes_ine_equipes_equipe_homologadas"]
