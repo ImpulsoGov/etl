@@ -71,8 +71,8 @@ def validacao_municipios_por_producao(
                 periodo_codigo=agendamento.periodo_codigo,
             )
 
-    if teste:  # evitar rodar muitas iterações
-        break
+        if teste:  # evitar rodar muitas iterações
+            break
 
     sessao.commit()
     return 0
