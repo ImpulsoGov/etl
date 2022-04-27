@@ -6,9 +6,9 @@
 """Obtém dados dos Boletins de Produção Ambulatorial individualizados (BPA-i).
 """
 
+
 from __future__ import annotations
 
-import json
 import uuid
 from typing import Final
 
@@ -22,7 +22,7 @@ from sqlalchemy.orm import Session
 from impulsoetl.comum.datas import periodo_por_data
 from impulsoetl.comum.geografias import id_sus_para_id_impulso
 from impulsoetl.loggers import logger
-from impulsoetl.siasus.modelos import bpa_i as tabela_destino
+from impulsoetl.utilitarios.bd import carregar_dataframe
 
 DE_PARA_BPA_I: Final[frozendict] = frozendict(
     {
@@ -228,95 +228,12 @@ def transformar_bpa_i(
     return bpa_i_transformada
 
 
-def carregar_bpa_i(
-    sessao: Session,
-    bpa_i_transformada: pd.DataFrame,
-    passo: int = 1000,
-) -> int:
-    """Carrega os dados de um arquivo de disseminação de BPAi no BD da Impulso.
-
-    Argumentos:
-        sessao: objeto [`sqlalchemy.orm.session.Session`][] que permite
-            acessar a base de dados da ImpulsoGov.
-        bpa_i_transformada: [`DataFrame`][] contendo os dados a serem
-            carregados na tabela de destino, já no formato utilizado pelo banco
-            de dados da ImpulsoGov (conforme retornado pela função
-            [`transformar_bpa_i()`][]).
-        passo: Indica quantos registros devem ser enviados para a base de dados
-            de cada vez.
-
-    Retorna:
-        Código de saída do processo de carregamento. Se o carregamento
-        for bem sucedido, o código de saída será `0`.
-
-    [`sqlalchemy.orm.session.Session`]: https://docs.sqlalchemy.org/en/14/orm/session_api.html#sqlalchemy.orm.Session
-    [`DataFrame`]: https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html
-    [`transformar_bpa_i()`]: impulsoetl.siasus.bpa_i.transformar_bpa_i
-    """
-
-    tabela_nome = tabela_destino.key
-    num_registros = len(bpa_i_transformada)
-    logger.info(
-        "Carregando {num_registros} registros de BPA-i para a tabela"
-        "`{tabela_nome}`...",
-        num_registros=num_registros,
-        tabela_nome=tabela_nome,
-    )
-
-    logger.info("Processando dados para JSON e de volta para um dicionário...")
-    registros = json.loads(
-        bpa_i_transformada.to_json(
-            orient="records",
-            date_format="iso",
-        )
-    )
-
-    conector = sessao.connection()
-
-    # Iterar por fatias do total de registro. Isso é necessário porque
-    # executar todas as inserções em uma única operação acarretaria um consumo
-    # proibitivo de memória
-    contador = 0
-    while contador < num_registros:
-        logger.info(
-            "Enviando registros para a tabela de destino "
-            "({contador} de {num_registros})...",
-            contador=contador,
-            num_registros=num_registros,
-        )
-        subconjunto_registros = registros[
-            contador : min(num_registros, contador + passo)
-        ]
-        requisicao_insercao = tabela_destino.insert().values(
-            subconjunto_registros,
-        )
-        try:
-            conector.execute(requisicao_insercao)
-        except Exception as err:
-            mensagem_erro = str(err)
-            if len(mensagem_erro) > 500:
-                mensagem_erro = mensagem_erro[:500]
-            logger.error(mensagem_erro)
-            sessao.rollback()
-            return 1
-
-        contador += passo
-
-    logger.info(
-        "Carregamento concluído para a tabela `{tabela_nome}`: "
-        + "adicionadas {linhas_adicionadas} novas linhas.",
-        tabela_nome=tabela_nome,
-        linhas_adicionadas=num_registros,
-    )
-
-    return 0
-
-
 def obter_bpa_i(
     sessao: Session,
     uf_sigla: str,
     ano: int,
     mes: int,
+    tabela_destino: str,
     teste: bool = False,
     **kwargs,
 ) -> None:
@@ -328,6 +245,8 @@ def obter_bpa_i(
         uf_sigla: Sigla da Unidade Federativa cujos BPA-i's se pretende obter.
         ano: Ano dos BPA-i's que se pretende obter.
         mes: Mês das BPA-i's que se pretende obter.
+        tabela_destino: nome da tabela de destino, qualificado com o nome do
+            schema (formato `nome_do_schema.nome_da_tabela`).
         teste: Indica se as modificações devem ser de fato escritas no banco de
             dados (`False`, padrão). Caso seja `True`, as modificações são
             adicionadas à uma transação, e podem ser revertidas com uma chamada
@@ -358,14 +277,19 @@ def obter_bpa_i(
                 + "de teste.",
             )
     else:
-        passo = 1000
+        passo = 10000
 
     bpa_i_transformada = transformar_bpa_i(sessao=sessao, bpa_i=bpa_i)
+    sessao.commit()
 
-    carregar_bpa_i(
+    carregamento_status = carregar_dataframe(
         sessao=sessao,
-        bpa_i_transformada=bpa_i_transformada,
+        df=bpa_i_transformada,
+        tabela_destino=tabela_destino,
         passo=passo,
+        teste=teste,
     )
-    if not teste:
+    if teste or carregamento_status != 0:
+        sessao.rollback()
+    else:
         sessao.commit()

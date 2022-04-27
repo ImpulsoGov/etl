@@ -7,7 +7,6 @@
 
 from __future__ import annotations
 
-import json
 import uuid
 from typing import Final
 
@@ -21,7 +20,7 @@ from sqlalchemy.orm import Session
 from impulsoetl.comum.datas import periodo_por_data
 from impulsoetl.comum.geografias import id_sus_para_id_impulso
 from impulsoetl.loggers import logger
-from impulsoetl.siasus.modelos import raas_ps as tabela_destino
+from impulsoetl.utilitarios.bd import carregar_dataframe
 
 DE_PARA_RAAS_PS: Final[frozendict] = frozendict(
     {
@@ -245,55 +244,12 @@ def transformar_raas_ps(
     )
 
 
-def carregar_raas_ps(
-    sessao: Session, raas_ps_transformada: pd.DataFrame
-) -> int:
-    """Carrega os dados de um arquivo de disseminação da RAAS no BD da Impulso.
-
-    Argumentos:
-        sessao: objeto [`sqlalchemy.orm.session.Session`][] que permite
-            acessar a base de dados da ImpulsoGov.
-        raas_ps: [`DataFrame`][] contendo os dados a serem carregados
-            na tabela de destino, já no formato utilizado pelo banco de dados
-            da ImpulsoGov (conforme retornado pela função
-            [`transformar_raas_ps()`][]).
-
-    Retorna:
-        Código de saída do processo de carregamento. Se o carregamento
-        for bem sucedido, o código de saída será `0`.
-
-    [`sqlalchemy.orm.session.Session`]: https://docs.sqlalchemy.org/en/14/orm/session_api.html#sqlalchemy.orm.Session
-    [`DataFrame`]: https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html
-    [`transformar_raas_ps()`]: impulsoetl.siasus.raas_ps.transformar_raas_ps
-    """
-
-    registros = json.loads(
-        raas_ps_transformada.to_json(
-            orient="records",
-            date_format="iso",
-        )
-    )
-
-    requisicao_insercao = tabela_destino.insert().values(registros)
-
-    conector = sessao.connection()
-    conector.execute(requisicao_insercao)
-
-    logger.info(
-        "Carregamento concluído para a tabela `{tabela_nome}`: "
-        + "adicionadas {linhas_adicionadas} novas linhas.",
-        tabela_nome="dados_publicos.siasus_raas_psicossocial_disseminacao",
-        linhas_adicionadas=len(raas_ps_transformada),
-    )
-
-    return 0
-
-
 def obter_raas_ps(
     sessao: Session,
     uf_sigla: str,
     ano: int,
     mes: int,
+    tabela_destino: str,
     teste: bool = False,
     **kwargs,
 ) -> None:
@@ -306,6 +262,8 @@ def obter_raas_ps(
             pretende obter.
         ano: Ano das RAAS Psicossociais que se pretende obter.
         mes: Mês das RAAS Psicossociais que se pretende obter.
+        tabela_destino: nome da tabela de destino, qualificado com o nome do
+            schema (formato `nome_do_schema.nome_da_tabela`).
         teste: Indica se as modificações devem ser de fato escritas no banco de
             dados (`False`, padrão). Caso seja `True`, as modificações são
             adicionadas à uma transação, e podem ser revertidas com uma chamada
@@ -323,8 +281,33 @@ def obter_raas_ps(
         mes=mes,
     )
     raas_ps = download(uf_sigla, year=ano, month=mes, group=["PS"])
-    raas_ps_transformada = transformar_raas_ps(sessao=sessao, raas_ps=raas_ps)
 
-    carregar_raas_ps(sessao=sessao, raas_ps_transformada=raas_ps_transformada)
-    if not teste:
+    raas_ps_transformada = transformar_raas_ps(
+        sessao=sessao,
+        raas_ps=raas_ps,
+    )
+    sessao.commit()
+
+    if teste:
+        passo = 10
+        pa_transformada = raas_ps_transformada.iloc[
+            : min(1000, len(raas_ps_transformada)),
+        ]
+        if len(pa_transformada) == 1000:
+            logger.warning(
+                "Arquivo de RAAS truncado para 1000 registros para teste.",
+            )
+    else:
+        passo = 10000
+
+    carregamento_status = carregar_dataframe(
+        sessao=sessao,
+        df=raas_ps_transformada,
+        tabela_destino=tabela_destino,
+        passo=passo,
+        teste=teste,
+    )
+    if teste or carregamento_status != 0:
+        sessao.rollback()
+    else:
         sessao.commit()

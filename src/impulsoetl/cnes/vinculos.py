@@ -8,7 +8,6 @@
 
 from __future__ import annotations
 
-import json
 import re
 import uuid
 from typing import Final
@@ -21,10 +20,10 @@ from frozendict import frozendict
 from pysus.online_data.CNES import download
 from sqlalchemy.orm import Session
 
-from impulsoetl.cnes.modelos import vinculos as tabela_destino
 from impulsoetl.comum.datas import periodo_por_data
 from impulsoetl.comum.geografias import id_sus_para_id_impulso
 from impulsoetl.loggers import logger
+from impulsoetl.utilitarios.bd import carregar_dataframe
 
 DE_PARA_VINCULOS: Final[frozendict] = frozendict(
     {
@@ -297,95 +296,12 @@ def transformar_vinculos(
     return vinculos_transformado
 
 
-def carregar_vinculos(
-    sessao: Session,
-    vinculos_transformado: pd.DataFrame,
-    passo: int = 1000,
-) -> int:
-    """Carrega um arquivo de disseminação de vínculos profissionais no BD.
-
-    Argumentos:
-        sessao: objeto [`sqlalchemy.orm.session.Session`][] que permite
-            acessar a base de dados da ImpulsoGov.
-        vinculos_transformado: [`DataFrame`][] contendo os dados a serem
-            carregados na tabela de destino, já no formato utilizado pelo banco
-            de dados da ImpulsoGov (conforme retornado pela função
-            [`transformar_vinculos()`][]).
-        passo: Indica quantos registros devem ser enviados para a base de dados
-            de cada vez.
-
-    Retorna:
-        Código de saída do processo de carregamento. Se o carregamento
-        for bem sucedido, o código de saída será `0`.
-
-    [`sqlalchemy.orm.session.Session`]: https://docs.sqlalchemy.org/en/14/orm/session_api.html#sqlalchemy.orm.Session
-    [`DataFrame`]: https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html
-    [`transformar_vinculos()`]: impulsoetl.cnes.vinculos.transformar_vinculos
-    """
-
-    tabela_nome = tabela_destino.key
-    num_registros = len(vinculos_transformado)
-    logger.info(
-        "Carregando {num_registros} registros de vinculos profissionais "
-        "para a tabela `{tabela_nome}`...",
-        num_registros=num_registros,
-        tabela_nome=tabela_nome,
-    )
-
-    logger.info("Processando dados para JSON e de volta para um dicionário...")
-    registros = json.loads(
-        vinculos_transformado.to_json(
-            orient="records",
-            date_format="iso",
-        )
-    )
-
-    conector = sessao.connection()
-
-    # Iterar por fatias do total de registro. Isso é necessário porque
-    # executar todas as inserções em uma única operação acarretaria um consumo
-    # proibitivo de memória
-    contador = 0
-    while contador < num_registros:
-        logger.info(
-            "Enviando registros para a tabela de destino "
-            "({contador} de {num_registros})...",
-            contador=contador,
-            num_registros=num_registros,
-        )
-        subconjunto_registros = registros[
-            contador : min(num_registros, contador + passo)
-        ]
-        requisicao_insercao = tabela_destino.insert().values(
-            subconjunto_registros,
-        )
-        try:
-            conector.execute(requisicao_insercao)
-        except Exception as err:
-            mensagem_erro = str(err)
-            if len(mensagem_erro) > 500:
-                mensagem_erro = mensagem_erro[:500]
-            logger.error(mensagem_erro)
-            sessao.rollback()
-            return 1
-
-        contador += passo
-
-    logger.info(
-        "Carregamento concluído para a tabela `{tabela_nome}`: "
-        + "adicionadas {linhas_adicionadas} novas linhas.",
-        tabela_nome=tabela_nome,
-        linhas_adicionadas=num_registros,
-    )
-
-    return 0
-
-
 def obter_vinculos(
     sessao: Session,
     uf_sigla: str,
     ano: int,
     mes: int,
+    tabela_destino: str,
     teste: bool = False,
     **kwargs,
 ) -> None:
@@ -397,6 +313,8 @@ def obter_vinculos(
         uf_sigla: Sigla da Unidade Federativa cujos BPA-i's se pretende obter.
         ano: Ano dos vínculos profissionais que se pretende obter.
         mes: Mês dos vínculos profissionais que se pretende obter.
+        tabela_destino: nome da tabela de destino, qualificado com o nome do
+            schema (formato `nome_do_schema.nome_da_tabela`).
         teste: Indica se as modificações devem ser de fato escritas no banco de
             dados (`False`, padrão). Caso seja `True`, as modificações são
             adicionadas à uma transação, e podem ser revertidas com uma chamada
@@ -422,6 +340,7 @@ def obter_vinculos(
         sessao=sessao,
         vinculos=vinculos,
     )
+    sessao.commit()
 
     if teste:
         passo = 10
@@ -436,10 +355,14 @@ def obter_vinculos(
     else:
         passo = 1000
 
-    carregar_vinculos(
+    carregamento_status = carregar_dataframe(
         sessao=sessao,
-        vinculos_transformado=vinculos_transformado,
+        df=vinculos_transformado,
+        tabela_destino=tabela_destino,
         passo=passo,
+        teste=teste,
     )
-    if not teste:
+    if teste or carregamento_status != 0:
+        sessao.rollback()
+    else:
         sessao.commit()

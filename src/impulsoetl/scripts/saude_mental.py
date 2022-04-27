@@ -134,6 +134,7 @@ def raas_disseminacao(
             uf_sigla=agendamento.uf_sigla,
             ano=agendamento.periodo_data_inicio.year,
             mes=agendamento.periodo_data_inicio.month,
+            tabela_destino=agendamento.tabela_destino,
             teste=teste,
         )
         if teste:
@@ -177,6 +178,7 @@ def bpa_i_disseminacao(
             uf_sigla=agendamento.uf_sigla,
             ano=agendamento.periodo_data_inicio.year,
             mes=agendamento.periodo_data_inicio.month,
+            tabela_destino=agendamento.tabela_destino,
             teste=teste,
         )
         if teste:
@@ -220,6 +222,7 @@ def procedimentos_disseminacao(
             uf_sigla=agendamento.uf_sigla,
             ano=agendamento.periodo_data_inicio.year,
             mes=agendamento.periodo_data_inicio.month,
+            tabela_destino=agendamento.tabela_destino,
             teste=teste,
         )
         if teste:
@@ -263,6 +266,7 @@ def aih_reduzida_disseminacao(
             uf_sigla=agendamento.uf_sigla,
             ano=agendamento.periodo_data_inicio.year,
             mes=agendamento.periodo_data_inicio.month,
+            tabela_destino=agendamento.tabela_destino,
             teste=teste,
         )
         if teste:
