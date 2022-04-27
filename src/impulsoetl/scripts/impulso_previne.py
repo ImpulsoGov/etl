@@ -3,8 +3,6 @@
 # SPDX-FileCopyrightText: 2021, 2022 ImpulsoGov <contato@impulsogov.org>
 #
 # SPDX-License-Identifier: MIT
-# flake8: noqa
-# type: ignore
 
 
 """Scripts para o produto Impulso Previne."""
@@ -16,7 +14,7 @@ from sqlalchemy.orm import Session
 
 from impulsoetl.bd import Sessao, tabelas
 from impulsoetl.loggers import logger
-from impulsoetl.sisab.relatorio_validacao.funcoes import (
+from impulsoetl.sisab.relatorio_validacao import (
     obter_validacao_municipios_producao,
 )
 
@@ -74,7 +72,6 @@ def validacao_municipios_por_producao(
             break
 
     sessao.commit()
-    return 0
 
 
 def principal(sessao: Session, teste: bool = False) -> None:
