@@ -1,5 +1,7 @@
-# flake8: noqa
-# type: ignore
+# SPDX-FileCopyrightText: 2021, 2022 ImpulsoGov <contato@impulsogov.org>
+#
+# SPDX-License-Identifier: MIT
+
 
 import requests
 from bs4 import BeautifulSoup as bs

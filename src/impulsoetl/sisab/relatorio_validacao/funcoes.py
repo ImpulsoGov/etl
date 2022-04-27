@@ -1,5 +1,8 @@
-# flake8: noqa
-# type: ignore
+# SPDX-FileCopyrightText: 2021, 2022 ImpulsoGov <contato@impulsogov.org>
+#
+# SPDX-License-Identifier: MIT
+
+
 import requests
 from impulsoetl.sisab.relatorio_validacao.suporte_extracao import head
 from io import StringIO
