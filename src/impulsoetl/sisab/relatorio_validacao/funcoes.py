@@ -3,6 +3,8 @@
 # SPDX-License-Identifier: MIT
 
 
+from __future__ import annotations
+
 import json
 import uuid
 from datetime import datetime
@@ -10,7 +12,9 @@ from io import StringIO
 
 import pandas as pd
 import requests
+from requests.models import Response
 from sqlalchemy import delete
+from sqlalchemy import Session
 
 from impulsoetl.bd import tabelas
 from impulsoetl.comum.geografias import id_sus_para_id_impulso
@@ -18,7 +22,10 @@ from impulsoetl.loggers import logger
 from impulsoetl.sisab.relatorio_validacao.suporte_extracao import head
 
 
-def obter_lista_periodos_inseridos(sessao, tabela_alvo):
+def obter_lista_periodos_inseridos(
+    sessao: Session,
+    tabela_alvo: str,
+) -> list[datetime]:
     """Obtém lista de períodos da períodos que já constam na tabela
 
     Argumentos:
@@ -41,7 +48,7 @@ def obter_lista_periodos_inseridos(sessao, tabela_alvo):
     return periodos_codigos
 
 
-def competencia_para_periodo_codigo(periodo_competencia):
+def competencia_para_periodo_codigo(periodo_competencia: str) -> str:
     """Converte a data de início de uma no código do periodo padrão da Impulso.
 
     Argumentos:
@@ -67,7 +74,11 @@ def competencia_para_periodo_codigo(periodo_competencia):
     return periodo_codigo
 
 
-def obter_data_criacao(sessao, tabela_alvo, periodo_codigo):
+def obter_data_criacao(
+    sessao: Session,
+    tabela_alvo: str,
+    periodo_codigo: str,
+) -> datetime:
     """Obtém a data de criação do registro a partir do código do período.
 
     Argumentos:
@@ -93,16 +104,17 @@ def obter_data_criacao(sessao, tabela_alvo, periodo_codigo):
 
 
 def requisicao_validacao_sisab_producao(
-    periodo_competencia,
-    envio_prazo,
-):
+    periodo_competencia: str,
+    envio_prazo: bool,
+) -> Response:
     """Obtém os dados da API do SISAB.
 
     Argumentos:
         periodo_competencia: Período de competência do dado a ser buscado no
             SISAB.
-        envio_prazo: Tipo de relatório de validação a ser obtido
-            (referência check box "no prazo" no SISAB).
+        envio_prazo: Indica se os relatórios de validação a serem considerados
+            apenas os enviados no prazo (`True`) ou se devem considerar tanto
+            envios no prazo quanto fora do prazo (`False`).
 
     Retorna:
         Resposta da requisição do SISAB, com os dados obtidos ou não.
@@ -133,23 +145,29 @@ def requisicao_validacao_sisab_producao(
 
 
 def tratamento_validacao_producao(
-    sessao,
-    resposta,
-    data_criacao,
-    envio_prazo,
-    periodo_codigo,
-):
+    sessao: Session,
+    resposta: Response,
+    data_criacao: datetime,
+    envio_prazo: bool,
+    periodo_codigo: str,
+) -> pd.DataFrame:
     """Tratamento dos dados obtidos
 
     Argumentos:
+        sessao: objeto [`sqlalchemy.orm.session.Session`][] que permite
+            acessar a base de dados da ImpulsoGov.
         resposta: Resposta da requisição efetuada no SISAB.
         data_criacao: data de criação do registro inserido.
         envio_prazo: Indica se os relatórios de validação a serem considerados
             apenas os enviados no prazo (`True`) ou se devem considerar tanto
             envios no prazo quanto fora do prazo (`False`).
+        periodo_codigo: Código do período de referência.
 
     Retorna:
-        df: Objeto `pandas.DataFrame` com os dados enriquecidos e tratados.
+        Objeto [`pandas.DataFrame`] com os dados enriquecidos e tratados.
+
+    [`sqlalchemy.orm.session.Session`]: https://docs.sqlalchemy.org/en/14/orm/session_api.html#sqlalchemy.orm.Session
+    [`pandas.DataFrame`]: https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html
     """
 
     logger.info("Dados em tratamento")
@@ -252,25 +270,26 @@ def tratamento_validacao_producao(
 
 
 def carregar_validacao_producao(
-    sessao,
-    df_validacao_tratado,
-    periodo_competencia,
-    tabela_destino,
-):
+    sessao: Session,
+    df_validacao_tratado: pd.DataFrame,
+    periodo_competencia: str,
+    tabela_destino: str,
+) -> int:
     """Carrega os dados de um arquivo validação do portal SISAB no BD da Impulso.
 
     Argumentos:
         sessao: objeto [`sqlalchemy.orm.session.Session`][] que permite
             acessar a base de dados da ImpulsoGov.
-        relatorio_validacao_df: [`DataFrame`][] contendo os dados a serem carregados
-            na tabela de destino, já no formato utilizado pelo banco de dados
-            da ImpulsoGov.
+        relatorio_validacao_df: objeto [`pandas.DataFrame`][] contendo os
+            dados a serem carregados na tabela de destino, já no formato
+            utilizado pelo banco de dados da ImpulsoGov.
 
     Retorna:
         Código de saída do processo de carregamento. Se o carregamento
         for bem sucedido, o código de saída será `0`.
 
     [`sqlalchemy.orm.session.Session`]: https://docs.sqlalchemy.org/en/14/orm/session_api.html#sqlalchemy.orm.Session
+    [`pandas.DataFrame`]: https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html
     """
 
     relatorio_validacao_df = df_validacao_tratado
@@ -313,17 +332,20 @@ def carregar_validacao_producao(
     return 0
 
 
-def testes_pre_carga(df_validacao_tratado):
+def testes_pre_carga(df_validacao_tratado: pd.DataFrame) -> None:
     """Realiza algumas validações no dataframe antes da carga ao banco.
 
     Argumentos:
-            relatorio_validacao_df: [`DataFrame`][] contendo os dados a serem carregados
-            na tabela de destino, já no formato utilizado pelo banco de dados
-            da ImpulsoGov.
+        relatorio_validacao_df: objeto [`pandas.DataFrame`][] contendo os
+            dados a serem carregados na tabela de destino, já no formato
+            utilizado pelo banco de dados da ImpulsoGov.
 
-    Retorna:
-        Código de saída do processo de carregamento. Se o carregamento
-        for bem sucedido, o código de saída será `0`.
+    Exceções:
+        Levanta uma exceção da classe [`AssertionError`][] se algum teste de
+        qualidade dos dados não for atendido.
+
+    [`pandas.DataFrame`]: https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html
+    [`AssertionError`]: https://docs.python.org/3/library/exceptions.html#AssertionError
     """
 
     assert (
@@ -356,15 +378,16 @@ def testes_pre_carga(df_validacao_tratado):
     ), "Falta de coluna no dataframe"
 
     logger.info("Testes OK!")
+    return None
 
 
 def obter_validacao_municipios_producao(
-    sessao,
-    periodo_competencia,
-    envio_prazo,
-    tabela_destino,
-    periodo_codigo,
-):
+    sessao: Session,
+    periodo_competencia: datetime,
+    envio_prazo: bool,
+    tabela_destino: str,
+    periodo_codigo: str,
+) -> None:
     """Executa o ETL de relatórios de validação dos envios ao SISAB.
 
     Argumentos:
@@ -405,4 +428,6 @@ def obter_validacao_municipios_producao(
         periodo_competencia,
         tabela_destino,
     )
+
     logger.info("Dados prontos para o commit")
+    return None
