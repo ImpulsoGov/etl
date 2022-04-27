@@ -40,8 +40,8 @@ def obter_lista_periodos_inseridos(
     """
 
     tabela = tabelas[tabela_alvo]
-    with sessao.begin():
-        periodos = sessao.query(tabela.periodo_codigo).distinct().all()
+    periodos = sessao.query(tabela.periodo_codigo).distinct().all()
+    sessao.commit()
 
     periodos_codigos = [periodo.periodo_codigo for periodo in periodos]
     logger.info("Leitura dos períodos inseridos no banco Impulso OK!")
@@ -84,12 +84,13 @@ def obter_data_criacao(
 
     tabela = tabelas[tabela_alvo]
 
-    with sessao.begin():
-        data_criacao = (
-            sessao.query(tabela)
-            .filter(tabela.c.periodo_codigo == periodo_codigo)
-            .first()
-        )
+    data_criacao = (
+        sessao.query(tabela)
+        .filter(tabela.c.periodo_codigo == periodo_codigo)
+        .first()
+    )
+    sessao.commit()
+
     if not data_criacao:
         data_criacao = datetime.now()
 
@@ -213,13 +214,13 @@ def tratamento_validacao_producao(
     )
 
     tabela_periodos = tabelas["listas_de_codigos.periodos"]
-    with sessao.begin():
-        periodo_id = (
-            sessao.query(tabela_periodos)  # type: ignore
-            .filter(tabela_periodos.c.codigo == periodo_codigo)
-            .first()
-            .id
-        )
+    periodo_id = (
+        sessao.query(tabela_periodos)  # type: ignore
+        .filter(tabela_periodos.c.codigo == periodo_codigo)
+        .first()
+        .id
+    )
+    sessao.commit()
 
     df = df.assign(periodo_id=periodo_id)
 
