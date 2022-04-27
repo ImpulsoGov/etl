@@ -14,7 +14,7 @@ import pandas as pd
 import requests
 from requests.models import Response
 from sqlalchemy import delete
-from sqlalchemy import Session
+from sqlalchemy.orm import Session
 
 from impulsoetl.bd import tabelas
 from impulsoetl.comum.geografias import id_sus_para_id_impulso
@@ -48,7 +48,7 @@ def obter_lista_periodos_inseridos(
     return periodos_codigos
 
 
-def competencia_para_periodo_codigo(periodo_competencia: str) -> str:
+def competencia_para_periodo_codigo(periodo_competencia: datetime) -> str:
     """Converte a data de início de uma no código do periodo padrão da Impulso.
 
     Argumentos:
@@ -64,14 +64,7 @@ def competencia_para_periodo_codigo(periodo_competencia: str) -> str:
         ```
     """
 
-    ano = periodo_competencia[0:4]
-    mes = ".M" + periodo_competencia[4:6]
-    if mes[2] == "0":
-        mes = ".M" + periodo_competencia[5:6]
-        periodo_codigo = ano + mes
-    else:
-        periodo_codigo = ano + mes
-    return periodo_codigo
+    return "{:%Y}.M{:%m}".format(periodo_competencia, periodo_competencia)
 
 
 def obter_data_criacao(
@@ -104,7 +97,7 @@ def obter_data_criacao(
 
 
 def requisicao_validacao_sisab_producao(
-    periodo_competencia: str,
+    periodo_competencia: datetime,
     envio_prazo: bool,
 ) -> Response:
     """Obtém os dados da API do SISAB.
@@ -131,7 +124,7 @@ def requisicao_validacao_sisab_producao(
         "j_idt44=j_idt44&unidGeo=brasil&periodo="
         + periodo_tipo
         + "&j_idt70="
-        + periodo_competencia
+        + "{:%Y%m}".format(periodo_competencia)
         + "&colunas=regiao&colunas=uf&colunas=ibge&colunas=municipio&colunas=cnes&colunas=ine"
         + envio_prazo
         + "&javax.faces.ViewState="
@@ -272,7 +265,7 @@ def tratamento_validacao_producao(
 def carregar_validacao_producao(
     sessao: Session,
     df_validacao_tratado: pd.DataFrame,
-    periodo_competencia: str,
+    periodo_competencia: datetime,
     tabela_destino: str,
 ) -> int:
     """Carrega os dados de um arquivo validação do portal SISAB no BD da Impulso.
