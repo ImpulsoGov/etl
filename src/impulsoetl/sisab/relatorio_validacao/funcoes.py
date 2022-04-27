@@ -120,13 +120,20 @@ def requisicao_validacao_sisab_producao(
     periodo_tipo = "producao"
     hd = head(url)
     vs = hd[1]  # viewstate
+
+    # Check box envio requisições no prazo marcado?
+    envio_prazo_on = ""
+    if envio_prazo:
+        envio_prazo_on += "&envioPrazo=on"
+
     payload = (
         "j_idt44=j_idt44&unidGeo=brasil&periodo="
         + periodo_tipo
         + "&j_idt70="
         + "{:%Y%m}".format(periodo_competencia)
-        + "&colunas=regiao&colunas=uf&colunas=ibge&colunas=municipio&colunas=cnes&colunas=ine"
-        + envio_prazo
+        + "&colunas=regiao&colunas=uf&colunas=ibge&colunas=municipio"
+        + "&colunas=cnes&colunas=ine"
+        + envio_prazo_on
         + "&javax.faces.ViewState="
         + vs
         + "&j_idt102=j_idt102"
@@ -208,7 +215,7 @@ def tratamento_validacao_producao(
     tabela_periodos = tabelas["listas_de_codigos.periodos"]
     with sessao.begin():
         periodo_id = (
-            sessao.query(tabela_periodos)
+            sessao.query(tabela_periodos)  # type: ignore
             .filter(tabela_periodos.c.codigo == periodo_codigo)
             .first()
             .id
