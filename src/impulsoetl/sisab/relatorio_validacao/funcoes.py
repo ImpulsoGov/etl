@@ -247,7 +247,7 @@ def tratamento_validacao_producao(
 
     df_validacao_tratado = df
     logger.info("Dados tratados")
-    print(df_validacao_tratado.head())
+    logger.debug(df_validacao_tratado.head())
     return df_validacao_tratado
 
 
@@ -295,11 +295,11 @@ def carregar_validacao_producao(
         limpar = delete(tabela_relatorio_validacao).where(
             tabela_relatorio_validacao.c.periodo_codigo == periodo_codigo
         )
-        print(limpar)
+        logger.debug(limpar)
         conector.execute(limpar)
 
     requisicao_insercao = tabela_relatorio_validacao.insert().values(registros)
-    print(requisicao_insercao)
+    logger.debug(requisicao_insercao)
 
     conector.execute(requisicao_insercao)
 
