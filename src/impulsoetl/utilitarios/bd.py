@@ -153,7 +153,7 @@ def carregar_dataframe(
     sessao: Session,
     df: pd.DataFrame,
     tabela_destino: str,
-    passo: int = 10000,
+    passo: int | None = 10000,
     teste: bool = False,
 ) -> int:
     """Carrega dados públicos para o banco de dados analítico da ImpulsoGov.
@@ -167,7 +167,8 @@ def carregar_dataframe(
             schema (formato `nome_do_schema.nome_da_tabela`).
         passo: Indica quantos registros devem ser enviados para a base de dados
             de cada vez. Por padrão, são inseridos 10.000 registros em cada
-            transação.
+            transação. Se o valor for `None`, todo o DataFrame é carregado de
+            uma vez.
         teste: Indica se o carregamento deve ser executado em modo teste. Se
             verdadeiro, faz *rollback* de todas as operações; se falso, libera
             o ponto de recuperação criado.
