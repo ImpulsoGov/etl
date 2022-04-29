@@ -24,17 +24,17 @@ def carregar_parametros(sessao: Session,parametros_transformada:pd.DataFrame,vis
     if nivel_agregacao == 'municipios':
         if visao_equipe == 'equipes-validas':
             requisicao_insercao = parametros_municipios_equipe_validas.insert().values(registros)
-            sulfixo_tabela = 'parametro_municipios_equipe_validas'
+            sufixo_tabela = 'parametro_municipios_equipe_validas'
         if visao_equipe == 'equipes-homologadas':
             requisicao_insercao = parametros_municipios_equipe_homologadas.insert().values(registros)
-            sulfixo_tabela = 'parametro_municipios_equipe_homologadas'
+            sufixo_tabela = 'parametro_municipios_equipe_homologadas'
     else:
         if visao_equipe == 'equipes-validas':
             requisicao_insercao = parametros_equipes_equipe_validas.insert().values(registros)
-            sulfixo_tabela = 'parametro_cnes_ine_equipe_validas'
+            sufixo_tabela = 'parametro_cnes_ine_equipe_validas'
         if visao_equipe == 'equipes-homologadas':
             requisicao_insercao = parametros_equipes_equipe_homologadas.insert().values(registros)
-            sulfixo_tabela = 'parametro_cnes_ine_equipe_homologadas'
+            sufixo_tabela = 'parametro_cnes_ine_equipe_homologadas'
 
     conector = sessao.connection()
     conector.execute(requisicao_insercao)
@@ -43,7 +43,7 @@ def carregar_parametros(sessao: Session,parametros_transformada:pd.DataFrame,vis
     logger.info(
         "Carregamento concluído para a tabela `{tabela_nome}`: "
         + "adicionadas {linhas_adicionadas} novas linhas.",
-        tabela_nome=f"dados_publicos._sisab_cadastros_{sulfixo_tabela}",
+        tabela_nome=f"dados_publicos._sisab_cadastros_{sufixo_tabela}",
         linhas_adicionadas=len(parametros_transformada),
     )
     
