@@ -136,3 +136,4 @@ poetry.lock
 /tmp
 *.whl
 *.exe
+*.ipynb
