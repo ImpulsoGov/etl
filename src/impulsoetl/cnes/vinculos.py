@@ -10,20 +10,22 @@ from __future__ import annotations
 
 import re
 import uuid
-from typing import Final
+from datetime import date
+from typing import Final, Generator
 
 import janitor  # noqa: F401  # nopycln: import
 import numpy as np
 import pandas as pd
 import roman
 from frozendict import frozendict
-from pysus.online_data.CNES import download
 from sqlalchemy.orm import Session
 
 from impulsoetl.comum.datas import periodo_por_data
 from impulsoetl.comum.geografias import id_sus_para_id_impulso
 from impulsoetl.loggers import logger
 from impulsoetl.utilitarios.bd import carregar_dataframe
+from impulsoetl.utilitarios.datasus_ftp import extrair_dbc_lotes
+
 
 DE_PARA_VINCULOS: Final[frozendict] = frozendict(
     {
@@ -146,6 +148,40 @@ def _romano_para_inteiro(texto: str) -> str | float:
         return str(roman.fromRoman(texto))
     except roman.InvalidRomanNumeralError:
         return texto
+
+
+def extrair_vinculos(
+    uf_sigla: str,
+    periodo_data_inicio: date,
+    passo: int = 10000,
+) -> Generator[pd.DataFrame, None, None]:
+    """Extrai registros de vínculos profissionais do FTP do DataSUS.
+
+    Argumentos:
+        uf_sigla: Sigla da Unidade Federativa cujos procedimentos se pretende
+            obter.
+        periodo_data_inicio: Dia de início da competência desejada,
+            representado como um objeto [`datetime.date`][].
+        passo: Número de registros que devem ser convertidos em DataFrame a
+            cada iteração.
+
+    Gera:
+        A cada iteração, devolve um objeto [`pandas.DataFrames`][] com um
+        trecho do arquivo de procedimentos ambulatoriais lido e convertido.
+
+    [`pandas.DataFrame`]: https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html
+    [`datetime.date`]: https://docs.python.org/3/library/datetime.html#date-objects
+    """
+
+    return extrair_dbc_lotes(
+        ftp="ftp.datasus.gov.br",
+        caminho_diretorio="/dissemin/publicos/CNES/200508_/Dados/PF",
+        arquivo_nome="PF{uf_sigla}{periodo_data_inicio:%y%m}.dbc".format(
+            uf_sigla=uf_sigla,
+            periodo_data_inicio=periodo_data_inicio,
+        ),
+        passo=passo,
+    )
 
 
 def transformar_vinculos(
@@ -299,8 +335,7 @@ def transformar_vinculos(
 def obter_vinculos(
     sessao: Session,
     uf_sigla: str,
-    ano: int,
-    mes: int,
+    periodo_data_inicio: date,
     tabela_destino: str,
     teste: bool = False,
     **kwargs,
@@ -310,9 +345,10 @@ def obter_vinculos(
     Argumentos:
         sessao: objeto [`sqlalchemy.orm.session.Session`][] que permite
             acessar a base de dados da ImpulsoGov.
-        uf_sigla: Sigla da Unidade Federativa cujos BPA-i's se pretende obter.
-        ano: Ano dos vínculos profissionais que se pretende obter.
-        mes: Mês dos vínculos profissionais que se pretende obter.
+        uf_sigla: Sigla da Unidade Federativa cujos vínculos profissionais se
+            pretende obter.
+        periodo_data_inicio: Dia de início da competência desejada,
+            representado como um objeto [`datetime.date`][].
         tabela_destino: nome da tabela de destino, qualificado com o nome do
             schema (formato `nome_do_schema.nome_da_tabela`).
         teste: Indica se as modificações devem ser de fato escritas no banco de
@@ -323,46 +359,56 @@ def obter_vinculos(
 
     [`sqlalchemy.orm.session.Session`]: https://docs.sqlalchemy.org/en/14/orm/session_api.html#sqlalchemy.orm.Session
     [`sqlalchemy.engine.Row`]: https://docs.sqlalchemy.org/en/14/core/connections.html#sqlalchemy.engine.Row
+    [`datetime.date`]: https://docs.python.org/3/library/datetime.html#date-objects
     """
     logger.info(
         "Iniciando captura de vínculos profissionais para Unidade "
-        + "Federativa '{uf_sigla}' na competencia de {mes}/{ano}.",
-        uf_sigla=uf_sigla,
-        ano=ano,
-        mes=mes,
+        + "Federativa '{}' na competencia de {:%m/%Y}.",
+        uf_sigla,
+        periodo_data_inicio,
     )
-    logger.info("Fazendo download do FTP público do DataSUS...")
-    vinculos = download(state=uf_sigla, year=ano, month=mes, group="PF")
-
-    # TODO: paralelizar transformação e carregamento de fatias do DataFrame
-    # original
-    vinculos_transformado = transformar_vinculos(
-        sessao=sessao,
-        vinculos=vinculos,
-    )
-    sessao.commit()
 
     if teste:
-        passo = 10
-        vinculos_transformado = vinculos_transformado.iloc[
-            : min(1000, len(vinculos_transformado)),
-        ]
-        if len(vinculos_transformado) == 1000:
-            logger.warning(
-                "Arquivo de vínculos profissionais truncado para 1000 "
-                + "registros para fins de teste."
-            )
+        passo = 100
     else:
-        passo = 1000
+        passo = 50000
 
-    carregamento_status = carregar_dataframe(
-        sessao=sessao,
-        df=vinculos_transformado,
-        tabela_destino=tabela_destino,
+    vinculos_lotes = extrair_vinculos(
+        uf_sigla=uf_sigla,
+        periodo_data_inicio=periodo_data_inicio,
         passo=passo,
-        teste=teste,
     )
-    if teste or carregamento_status != 0:
+
+    contador = 0
+    with sessao.begin_nested():
+        for vinculos_lote in vinculos_lotes:
+            vinculos_transformada = transformar_vinculos(
+                sessao=sessao,
+                vinculos=vinculos_lote,
+            )
+
+            carregamento_status = carregar_dataframe(
+                sessao=sessao,
+                df=vinculos_transformada,
+                tabela_destino=tabela_destino,
+                passo=None,
+                teste=teste,
+            )
+            if carregamento_status != 0:
+                raise RuntimeError(
+                    "Execução interrompida em razão de um erro no "
+                    + "carregamento."
+                )
+            contador += len(vinculos_transformada)
+            if teste and contador > 1000:
+                logger.info("Execução interrompida para fins de teste.")
+                break
+
+    if teste:
+        logger.info("Desfazendo alterações realizadas durante o teste...")
         sessao.rollback()
+        logger.info("Todas transações foram desfeitas com sucesso!")
     else:
+        logger.info("Gravando alterações no banco de dados...")
         sessao.commit()
+        logger.info("Todas as alterações foram gravadas com sucesso!")

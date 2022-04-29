@@ -220,8 +220,7 @@ def procedimentos_disseminacao(
         obter_pa(
             sessao=sessao,
             uf_sigla=agendamento.uf_sigla,
-            ano=agendamento.periodo_data_inicio.year,
-            mes=agendamento.periodo_data_inicio.month,
+            periodo_data_inicio=agendamento.periodo_data_inicio,
             tabela_destino=agendamento.tabela_destino,
             teste=teste,
         )
@@ -305,12 +304,12 @@ def principal(sessao: Session, teste: bool = False) -> None:
     [`sqlalchemy.orm.session.Session`]: https://docs.sqlalchemy.org/en/14/orm/session_api.html#sqlalchemy.orm.Session
     """
 
-    resolutividade_aps_por_condicao(sessao=sessao, teste=teste)
-    raas_disseminacao(sessao=sessao, teste=teste)
-    bpa_i_disseminacao(sessao=sessao, teste=teste)
+    # resolutividade_aps_por_condicao(sessao=sessao, teste=teste)
+    # raas_disseminacao(sessao=sessao, teste=teste)
+    # bpa_i_disseminacao(sessao=sessao, teste=teste)
     procedimentos_disseminacao(sessao=sessao, teste=teste)
-    tipo_equipe_por_tipo_producao(sessao=sessao, teste=teste)
-    aih_reduzida_disseminacao(sessao=sessao, teste=teste)
+    # tipo_equipe_por_tipo_producao(sessao=sessao, teste=teste)
+    # aih_reduzida_disseminacao(sessao=sessao, teste=teste)
     # outros scripts de saúde mental aqui...
 
 
