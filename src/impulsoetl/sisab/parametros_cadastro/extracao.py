@@ -6,6 +6,7 @@
 from __future__ import annotations
 
 import urllib
+from datetime import datetime
 from io import StringIO
 from typing import Final
 
@@ -13,7 +14,7 @@ import pandas as pd
 import requests
 
 from impulsoetl.sisab.parametros_requisicao import head
-from impulsoetl.tipos import DatetimeLike
+
 
 VISOES_EQUIPE_CODIGOS: Final[dict[str, str]] = {
     "todas-equipes": "",
@@ -28,10 +29,8 @@ NIVEL_AGREGACAO_CODIGOS: Final[dict[str, str]] = {
 
 
 def _extrair_parametros(
-    visao_equipe: str, competencia: DatetimeLike, nivel_agregacao: str
+    visao_equipe: str, competencia: datetime, nivel_agregacao: str
 ) -> str:
-    competencia = competencia.replace("-", "")
-    competencia = competencia[0:6]
     url = (
         "https://sisab.saude.gov.br/paginas/acessoRestrito/relatorio/federal"
         + "/indicadores/indicadorCadastro.xhtml"
@@ -49,8 +48,7 @@ def _extrair_parametros(
         + "&opacao-capitacao="
         + visao_equipe_codigos
         + ponderacao
-        + "&competencia="
-        + competencia
+        + "&competencia={:%Y%m}".format(competencia)
         + "&javax.faces.ViewState="
         + vs
         + "&j_idt83=j_idt83"
@@ -60,7 +58,7 @@ def _extrair_parametros(
 
 
 def extrair_parametros(
-    visao_equipe: str, competencia: DatetimeLike, nivel_agregacao: str
+    visao_equipe: str, competencia: datetime, nivel_agregacao: str
 ) -> pd.DataFrame:
 
     resposta = _extrair_parametros(
