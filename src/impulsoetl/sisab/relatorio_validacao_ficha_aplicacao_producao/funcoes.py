@@ -95,7 +95,7 @@ def obter_data_criacao(sessao,tabela, periodo_codigo):
 
 
 
-def requisicao_validacao_sisab_producao_ficha_aplicacao(periodo_competencia,envio_prazo):
+def requisicao_validacao_sisab_producao_ficha_aplicacao(periodo_competencia,ficha_codigo,aplicacao_codigo,envio_prazo):
     """Obtém os dados da API
     
     Args:
@@ -106,12 +106,14 @@ def requisicao_validacao_sisab_producao_ficha_aplicacao(periodo_competencia,envi
     resposta: Resposta da requisição do sisab, com os dados obtidos ou não
     """
 
+    #ficha_codigo = '' #virá da função principal
+    #aplicacao_codigo = '' #virá da função principal
 
     url = "https://sisab.saude.gov.br/paginas/acessoRestrito/relatorio/federal/envio/RelValidacao.xhtml"
     periodo_tipo='producao'
     hd = head(url)
     vs = hd[1] #viewstate
-    payload='j_idt44=j_idt44&unidGeo=brasil&periodo='+periodo_tipo+'&j_idt70='+periodo_competencia+'&colunas=regiao&colunas=uf&colunas=ibge&colunas=municipio&colunas=cnes&colunas=ine'+ficha_codigo+aplicacao_codigo+envio_prazo+'&javax.faces.ViewState='+vs+'&j_idt102=j_idt102'
+    payload='j_idt44=j_idt44&unidGeo=brasil&periodo='+periodo_tipo+'&j_idt70='+periodo_competencia+'&colunas=regiao&colunas=uf&colunas=ibge&colunas=municipio&colunas=cnes&colunas=tp_unidade&colunas=ine&colunas=tp_equipe'+ficha_codigo+aplicacao_codigo+envio_prazo+'&javax.faces.ViewState='+vs+'&j_idt102=j_idt102'
     headers = hd[0]
     resposta = requests.request("POST", url, headers=headers, data=payload)
     logger.info("Dados Obtidos no SISAB")
@@ -140,7 +142,7 @@ def tratamento_validacao_producao_ficha_aplicacao(sessao,resposta,data_criacao,e
 
     df_obtido = pd.read_csv ('RelatorioValidacao-2022-04-27.csv',sep=';',engine='python', skiprows=range(0,6), skipfooter=4, encoding = 'ISO-8859-1')
 
-    df_obtido['INE'] = df_obtido['INE'].fillna('0').astype('int')
+    df_obtido[['INE','Tipo Unidade','Tipo Equipe']] = df_obtido[['INE','Tipo Unidade','Tipo Equipe']].fillna('0').astype('int')
 
     assert df_obtido['Uf'].count() > 26, "Estado faltante"
 
@@ -173,8 +175,11 @@ def tratamento_validacao_producao_ficha_aplicacao(sessao,resposta,data_criacao,e
 
     df["cnes_id"] = df_obtido["CNES"]
 
+    df["cnes_nome"]= df_obtido["Tipo Unidade"]
     df["ine_id"] = df_obtido["INE"]
 
+    df["ine_tipo"] = df_obtido["Tipo Equipe"]
+    
     df["validacao_nome"] = df_obtido["Validação"]
 
     df["validacao_quantidade"] = df_obtido["Total"]
@@ -185,6 +190,8 @@ def tratamento_validacao_producao_ficha_aplicacao(sessao,resposta,data_criacao,e
 
     df["atualizacao_data"] = pd.Timestamp.now()
 
+    df["criacao_data"] = pd.Timestamp.now()#Temporário somente teste
+
     df["periodo_codigo"] = periodo_codigo
 
     df["no_prazo"] = 1 if (envio_prazo == envio_prazo_on) else 0 
@@ -193,15 +200,16 @@ def tratamento_validacao_producao_ficha_aplicacao(sessao,resposta,data_criacao,e
 
     df["aplicacao"] = aplicacao
 
-    df[["id","municipio_id_sus", "periodo_id","cnes_id",\
-        "ine_id","ine_tipo","ficha","aplicacao","validacao_nome","periodo_codigo","municipio_nome"]] = df[["id","municipio_id_sus", "periodo_id","cnes_id",\
+    df[["id","municipio_id_sus", "periodo_id","cnes_id","cnes_nome",\
+        "ine_id","ine_tipo","ficha","aplicacao","validacao_nome","periodo_codigo","municipio_nome"]] = df[["id","municipio_id_sus", "periodo_id","cnes_id","cnes_nome",\
         "ine_id","ine_tipo","ficha","aplicacao","validacao_nome","periodo_codigo","municipio_nome"]].astype("string")
-
+    
     df["validacao_quantidade"] = df["validacao_quantidade"].astype("int")
-
     df["no_prazo"] = df["no_prazo"].astype("bool")
-
+    
     df['atualizacao_data'] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+    df["criacao_data"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S") # temporário somente teste
 
     df_validacao_tratado = df 
 
@@ -211,10 +219,3 @@ def tratamento_validacao_producao_ficha_aplicacao(sessao,resposta,data_criacao,e
     
     return df_validacao_tratado
 
-    
-
-
-
-fichas = [
-    {}
-]
