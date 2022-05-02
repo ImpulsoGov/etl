@@ -20,6 +20,7 @@ from impulsoetl.sisab.parametros_cadastro import obter_parametros
 agendamentos = tabelas["configuracoes.capturas_agendamentos"]
 capturas_historico = tabelas["configuracoes.capturas_historico"]
 
+
 @logger.catch
 def cadastros_municipios_equipe_validas(
     sessao: Session,
@@ -170,7 +171,7 @@ def parametros_municipios_equipes_validas(
     logger.info(
         "Capturando parâmetros de cadastros por município.",
     )
- 
+
     operacao_id = "c07a7a29-cacf-4102-9a28-b674ae0ec609"
     visao_equipe = 'equipes-validas'
     nivel_agregacao = 'municipios'
@@ -180,7 +181,7 @@ def parametros_municipios_equipes_validas(
         .filter(agendamentos.c.operacao_id == operacao_id)
         .all()
     )
-    
+
     for agendamento in agendamentos_cadastros:
         periodo = agendamento.periodo_data_inicio
         obter_parametros(
@@ -211,7 +212,6 @@ def parametros_municipios_equipes_validas(
         logger.info("OK.")
 
 
-
 @logger.catch
 def parametros_municipios_equipes_homologada(
     sessao: Session,
@@ -221,7 +221,7 @@ def parametros_municipios_equipes_homologada(
     logger.info(
         "Capturando parâmetros de cadastros por município.",
     )
- 
+
     operacao_id = "8f593199-fcef-4023-b79a-0ed7f9050cd2"
     visao_equipe = 'equipes-homologadas'
     nivel_agregacao = 'municipios'
@@ -231,7 +231,7 @@ def parametros_municipios_equipes_homologada(
         .filter(agendamentos.c.operacao_id == operacao_id)
         .all()
     )
-    
+
     for agendamento in agendamentos_cadastros:
         periodo = agendamento.periodo_data_inicio
         obter_parametros(
@@ -271,7 +271,7 @@ def parametros_cne_ine_equipes_homologada(
     logger.info(
         "Capturando parâmetros de cadastros por estabelecimento e equipe.",
     )
- 
+
     operacao_id = "dcb03493-8ad2-4f48-bd3b-4022fc33c2c2"
     visao_equipe = 'equipes-homologadas'
     nivel_agregacao = 'estabelecimentos_equipes'
@@ -281,7 +281,7 @@ def parametros_cne_ine_equipes_homologada(
         .filter(agendamentos.c.operacao_id == operacao_id)
         .all()
     )
-    
+
     for agendamento in agendamentos_cadastros:
         periodo = agendamento.periodo_data_inicio
         obter_parametros(
@@ -321,7 +321,7 @@ def parametros_cnes_ine_equipes_validas(
     logger.info(
         "Capturando parâmetros de cadastros por estabelecimento e equipe.",
     )
- 
+
     operacao_id = "3a61f9ca-c32f-4844-b6ac-a115bd8e4b5a"
     visao_equipe = 'equipes-validas'
     nivel_agregacao = 'estabelecimentos_equipes'
@@ -331,7 +331,7 @@ def parametros_cnes_ine_equipes_validas(
         .filter(agendamentos.c.operacao_id == operacao_id)
         .all()
     )
-    
+
     for agendamento in agendamentos_cadastros:
         periodo = agendamento.periodo_data_inicio
         obter_parametros(
