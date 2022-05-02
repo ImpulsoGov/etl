@@ -11,7 +11,7 @@ import requests
 from impulsoetl.sisab.parametros_requisicao import (
     head
 )
-from impulsoetl.tipos import DatetimeLike
+from datetime import date
 
 
 VISOES_EQUIPE_CODIGOS: Final[dict[str, str]] = {
@@ -24,10 +24,9 @@ VISOES_EQUIPE_CODIGOS: Final[dict[str, str]] = {
 def _extrair_cadastros_individuais(
     visao_equipe: str,
     com_ponderacao: bool,
-    competencia: DatetimeLike,
+    competencia: date,
 ) -> str:
-    competencia = competencia.replace('-','')
-    competencia = competencia[0:6]
+
     url = (
         "https://sisab.saude.gov.br/paginas/acessoRestrito/relatorio/federal"
         + "/indicadores/indicadorCadastro.xhtml"

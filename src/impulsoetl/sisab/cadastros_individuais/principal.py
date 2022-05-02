@@ -1,6 +1,6 @@
 from __future__ import annotations
 from sqlalchemy.orm import Session
-from impulsoetl.tipos import DatetimeLike
+from datetime import date
 from impulsoetl.sisab.cadastros_individuais.carregamento import (
     carregar_cadastros,
 )
@@ -16,7 +16,7 @@ from impulsoetl.sisab.cadastros_individuais.tratamento import tratamento_dados
 def obter_cadastros_individuais(
     sessao: Session,
     visao_equipe: str,
-    periodo: DatetimeLike,
+    periodo: date,
     com_ponderacao: list[bool] = [True, False],
     teste: bool = True,
 ) -> None:

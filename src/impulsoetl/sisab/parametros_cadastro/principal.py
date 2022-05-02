@@ -1,6 +1,6 @@
 from __future__ import annotations
 from sqlalchemy.orm import Session
-from impulsoetl.tipos import DatetimeLike
+from datetime import date
 from impulsoetl.sisab.parametros_cadastro.carregamento import (
     carregar_parametros ,
 )
@@ -10,16 +10,15 @@ from impulsoetl.sisab.parametros_cadastro.extracao import (
 from impulsoetl.sisab.parametros_cadastro.teste_validacao import (
     teste_validacao,
 )
-from impulsoetl.sisab.parametros_cadastro.tratamento import tratamento_dados
+from sisab.parametros_cadastro.tratamento import tratamento_dados
 from impulsoetl.bd import Sessao
-
 
 def obter_parametros(
     sessao: Session,
     visao_equipe: str,
-    periodo: DatetimeLike,
+    periodo: date,
     nivel_agregacao: str,
-    teste: bool = False
+    teste: bool = True
 ) -> None:
     """Extrai, transforma e carrega dados de parâmetros cadastros de equipes pelo SISAB.
     Argumentos:
@@ -47,4 +46,4 @@ def obter_parametros(
     if not teste:
         sessao.commit()
 
-        
+
