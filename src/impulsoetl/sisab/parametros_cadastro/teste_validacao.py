@@ -60,17 +60,17 @@ def verifica_diferenca_ctg_ine(
 def teste_validacao(
     df: pd.DataFrame, df_tratado: pd.DataFrame, nivel_agregacao: str
 ):
-	"""Aplica testes de qualidade nos parâmetros de cadastro.
-	
-	Argumentos:
-		df: objeto `pandas.DataFrame` com os dados originais do SISAB, antes de
-			qualquer processamento.
-		df_tratado: objeto `pandas.DataFrame` que passou por preparação dos
-			dados para inserção no banco de dados da ImpulsoGov.
-		nivel_agregacao: Granularidade dos parâmetros de cadastro obtidos do
-			SISAB. Deve ser uma opção entre `'estabelecimentos_equipes'` ou
-			`'municipios'`.
-	"""
+    """Aplica testes de qualidade nos parâmetros de cadastro.
+
+    Argumentos:
+        df: objeto `pandas.DataFrame` com os dados originais do SISAB, antes de
+            qualquer processamento.
+        df_tratado: objeto `pandas.DataFrame` que passou por preparação dos
+            dados para inserção no banco de dados da ImpulsoGov.
+        nivel_agregacao: Granularidade dos parâmetros de cadastro obtidos do
+            SISAB. Deve ser uma opção entre `'estabelecimentos_equipes'` ou
+            `'municipios'`.
+    """
     assert verifica_qtd_municipios(df, df_tratado) > 5000
     assert verifica_diferenca_ctg_municpios(df, df_tratado) == 0
     assert verifica_diferenca_mun_betim(df, df_tratado) == 0
