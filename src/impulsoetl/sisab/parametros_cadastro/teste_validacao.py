@@ -1,3 +1,8 @@
+# SPDX-FileCopyrightText: 2021, 2022 ImpulsoGov <contato@impulsogov.org>
+#
+# SPDX-License-Identifier: MIT
+ 
+ 
 import pandas as pd
 
 def verifica_qtd_municipios (df:pd.DataFrame,df_tratado:pd.DataFrame) -> int:

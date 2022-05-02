@@ -1,3 +1,8 @@
+# SPDX-FileCopyrightText: 2021, 2022 ImpulsoGov <contato@impulsogov.org>
+#
+# SPDX-License-Identifier: MIT
+
+ 
 from __future__ import annotations
 from sqlalchemy.orm import Session
 from impulsoetl.tipos import DatetimeLike
