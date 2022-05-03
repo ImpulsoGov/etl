@@ -10,10 +10,11 @@ from __future__ import annotations
 
 import csv
 from io import StringIO
-from typing import Iterable
+from typing import Iterable, cast
 
 import pandas as pd
 from pandas.io.sql import SQLTable
+from psycopg2.errors import Error as Psycopg2Error
 from sqlalchemy.engine import Connection, Engine
 from sqlalchemy.exc import DBAPIError, InvalidRequestError
 from sqlalchemy.orm.session import Session
@@ -207,10 +208,8 @@ def carregar_dataframe(
 
     logger.info("Copiando registros...")
     engine = sessao.get_bind()
-    engine = engine.execution_options(isolation_level="AUTOCOMMIT")
     with engine.connect() as conexao:
         ponto_de_recuperacao = conexao.begin_nested()
-
         try:
             df.to_sql(
                 name=tabela_nome,
@@ -221,27 +220,26 @@ def carregar_dataframe(
                 chunksize=passo,
                 method=postgresql_copiar_dados,
             )
+            ponto_de_recuperacao.commit()
         # trata exceções levantadas pelo backend
-        except DBAPIError as erro:
+        except (DBAPIError, Psycopg2Error) as erro:
             ponto_de_recuperacao.rollback()
+            sessao.rollback()
+            if isinstance(erro, DBAPIError):
+                erro.hide_parameters = True
+                erro = cast(Psycopg2Error, erro.orig)
             logger.error(
                 "Erro ao inserir registros na tabela `{}` (Código {})",
                 tabela_destino,
-                erro.orig.pgcode,
+                erro.pgcode,
             )
-            erro.hide_parameters = True
             logger.debug(
                 "({}.{}) {}",
-                erro.orig.__class__.__module__,
-                erro.orig.__class__.__name__,
-                erro.orig.pgerror,
+                erro.__class__.__module__,
+                erro.__class__.__name__,
+                erro.pgerror,
             )
-            return erro.orig.pgcode
-
-        if teste:
-            ponto_de_recuperacao.rollback()
-        else:
-            ponto_de_recuperacao.commit()
+            return erro.pgcode
 
     logger.info("Carregamento concluído.")
 

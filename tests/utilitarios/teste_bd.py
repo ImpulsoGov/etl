@@ -91,22 +91,34 @@ class TesteTabelasRefletidasDicionario(object):
 
 @pytest.fixture(scope="function")
 def dataframe_exemplo() -> pd.DataFrame:
-    return pd.DataFrame({
-        "id": [26, 42, 63],
-        "Date": [
-            pd.Timestamp("2010-10-18"),
-            pd.Timestamp("2010-10-19"),
-            pd.Timestamp("2010-10-20"),
-        ],
-        "Col_1": ["X", "Y", "Z"],
-        "Col_2": [27.5, -12.5, 5.73],
-        "Col_3": [True, False, True],
-    })
+    return pd.DataFrame(
+        {
+            "date_": [
+                pd.Timestamp("2010-10-18"),
+                pd.Timestamp("2010-10-19"),
+                pd.Timestamp("2010-10-20"),
+            ],
+            "col_1": ["X", "Y", "Z"],
+            "col_2": [27.5, -12.5, 5.73],
+            "col_3": [True, False, True],
+        },
+        index=pd.Index([26, 42, 63], name="id"),
+    )
 
 
 @pytest.fixture(scope="function")
 def tabela_teste(sessao):
     try:
+        sessao.execute(
+            "CREATE TABLE IF NOT EXISTS dados_publicos.__teste123 ("
+            + "id int4, "
+            + "date_ date, "
+            + "col_1 varchar(5), "
+            + "col_2 numeric, "
+            + "col_3 bool"
+            + ");"
+        )
+        sessao.commit()
         yield "dados_publicos.__teste123"
     finally:
         sessao.execute("DROP TABLE IF EXISTS dados_publicos.__teste123;")
@@ -118,17 +130,19 @@ def teste_postgresql_copiar_dados(
     dataframe_exemplo,
     tabela_teste,
 ):
-    engine = sessao.get_bind()
     schema, tabela = tabela_teste.split(".", maxsplit=1)
-    dataframe_exemplo.to_sql(
-        name=tabela,
-        con=engine,
-        schema=schema,
-        if_exists="replace",
-        method=postgresql_copiar_dados,
-        index=False,
-    )
-    sessao.commit()
+    engine = sessao.get_bind()
+    with engine.connect() as conexao:
+        ponto_de_recuperacao = conexao.begin_nested()
+        dataframe_exemplo.to_sql(
+            name=tabela,
+            con=engine,
+            schema=schema,
+            if_exists="replace",
+            method=postgresql_copiar_dados,
+            index=False,
+        )
+        ponto_de_recuperacao.commit()
     tabela_inserida = Table(
         tabela,
         MetaData(schema=schema),
@@ -156,6 +170,7 @@ def teste_carregar_dataframe(sessao, dataframe_exemplo, tabela_teste):
         autoload_with=sessao.get_bind(),
     )
     registros_inseridos = sessao.query(tabela_inserida).all()
+    sessao.commit()
     assert registros_inseridos
     assert len(registros_inseridos) == len(dataframe_exemplo)
 
@@ -181,5 +196,6 @@ def teste_carregar_dataframe_com_erro(
         passo=10,
         teste=True,
     )
+
     assert errorcodes.lookup(carregamento_status) == erro_esperado
     assert "Erro ao inserir registros na tabela" in caplog.text
