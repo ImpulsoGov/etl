@@ -7,6 +7,7 @@
 
 from __future__ import annotations
 
+import os
 import uuid
 from typing import Final
 
@@ -280,6 +281,10 @@ def obter_raas_ps(
         ano=ano,
         mes=mes,
     )
+
+    # obter tamanho do lote de processamento
+    passo = int(os.getenv("IMPULSOETL_LOTE_TAMANHO", 100000))
+
     raas_ps = download(uf_sigla, year=ano, month=mes, group=["PS"])
 
     raas_ps_transformada = transformar_raas_ps(
@@ -289,7 +294,6 @@ def obter_raas_ps(
     sessao.commit()
 
     if teste:
-        passo = 10
         pa_transformada = raas_ps_transformada.iloc[
             : min(1000, len(raas_ps_transformada)),
         ]
@@ -297,8 +301,6 @@ def obter_raas_ps(
             logger.warning(
                 "Arquivo de RAAS truncado para 1000 registros para teste.",
             )
-    else:
-        passo = 10000
 
     carregamento_status = carregar_dataframe(
         sessao=sessao,

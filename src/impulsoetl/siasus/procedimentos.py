@@ -8,6 +8,7 @@
 
 from __future__ import annotations
 
+import os
 import uuid
 from datetime import date
 from typing import Final, Generator
@@ -400,10 +401,8 @@ def obter_pa(
         periodo_data_inicio,
     )
 
-    if teste:
-        passo = 100
-    else:
-        passo = 50000
+    # obter tamanho do lote de processamento
+    passo = int(os.getenv("IMPULSOETL_LOTE_TAMANHO", 100000))
 
     pa_lotes = extrair_pa(
         uf_sigla=uf_sigla,

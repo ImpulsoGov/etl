@@ -120,12 +120,18 @@ def teste_transformar_raas_ps(sessao, raas_ps):
         )
 
 
-def teste_carregar_raas_ps(sessao, raas_ps_transformada, tabela_teste, caplog):
+def teste_carregar_raas_ps(
+    sessao,
+    raas_ps_transformada,
+    tabela_teste,
+    passo,
+    caplog,
+):
     codigo_saida = carregar_dataframe(
         sessao=sessao,
         df=raas_ps_transformada.iloc[:10],
         tabela_destino=tabela_teste,
-        passo=10,
+        passo=passo,
         teste=True,
     )
 

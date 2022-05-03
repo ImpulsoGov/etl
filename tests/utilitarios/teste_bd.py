@@ -153,12 +153,12 @@ def teste_postgresql_copiar_dados(
     assert len(registros_inseridos) == len(dataframe_exemplo)
 
 
-def teste_carregar_dataframe(sessao, dataframe_exemplo, tabela_teste):
+def teste_carregar_dataframe(sessao, dataframe_exemplo, tabela_teste, passo):
     carregamento_status = carregar_dataframe(
         sessao=sessao,
         df=dataframe_exemplo,
         tabela_destino=tabela_teste,
-        passo=10,
+        passo=passo,
         teste=True,
     )
     assert carregamento_status == 0
@@ -187,13 +187,14 @@ def teste_carregar_dataframe_com_erro(
     dataframe_exemplo,
     tabela,
     erro_esperado,
+    passo,
     caplog,
 ):
     carregamento_status = carregar_dataframe(
         sessao=sessao,
         df=dataframe_exemplo,
         tabela_destino=tabela,
-        passo=10,
+        passo=passo,
         teste=True,
     )
 

@@ -68,3 +68,14 @@ def envelope_sessao(engine):
 def sessao(envelope_sessao):
     yield envelope_sessao
     envelope_sessao.rollback()
+
+
+@pytest.fixture(scope="session")
+def passo():
+    # reduz o tamanho do lote para inserção no banco de dados
+    lote_tamanho_original = os.getenv("IMPULSOETL_LOTE_TAMANHO")
+    os.environ["IMPULSOETL_LOTE_TAMANHO"] = "100"
+    try:
+        yield 100
+    finally:
+        os.environ["IMPULSOETL_LOTE_TAMANHO"] = lote_tamanho_original

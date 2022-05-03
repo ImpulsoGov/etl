@@ -8,6 +8,7 @@
 
 from __future__ import annotations
 
+import os
 import uuid
 from typing import Final
 
@@ -410,6 +411,10 @@ def obter_aih_rd(
         ano=ano,
         mes=mes,
     )
+
+    # obter tamanho do lote de processamento
+    passo = int(os.getenv("IMPULSOETL_LOTE_TAMANHO", 100000))
+
     logger.info("Fazendo download do FTP público do DataSUS...")
     aih_rd = download(uf_sigla, year=ano, month=mes)
 
@@ -419,7 +424,6 @@ def obter_aih_rd(
     sessao.commit()
 
     if teste:
-        passo = 10
         aih_rd_transformada = aih_rd_transformada.iloc[
             : min(1000, len(aih_rd_transformada)),
         ]
@@ -428,8 +432,6 @@ def obter_aih_rd(
                 "Arquivo de autorizações hospitalares truncado para 1000 "
                 + "registros para fins de teste."
             )
-    else:
-        passo = 1000
 
     carregamento_status = carregar_dataframe(
         sessao=sessao,

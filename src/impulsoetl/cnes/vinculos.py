@@ -8,6 +8,7 @@
 
 from __future__ import annotations
 
+import os
 import re
 import uuid
 from datetime import date
@@ -368,10 +369,8 @@ def obter_vinculos(
         periodo_data_inicio,
     )
 
-    if teste:
-        passo = 100
-    else:
-        passo = 50000
+    # obter tamanho do lote de processamento
+    passo = int(os.getenv("IMPULSOETL_LOTE_TAMANHO", 100000))
 
     vinculos_lotes = extrair_vinculos(
         uf_sigla=uf_sigla,

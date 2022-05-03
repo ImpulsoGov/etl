@@ -122,12 +122,18 @@ def teste_transformar_aih_rd(sessao, aih_rd):
         )
 
 
-def teste_carregar_aih_rd(sessao, aih_rd_transformada, tabela_teste, caplog):
+def teste_carregar_aih_rd(
+    sessao,
+    aih_rd_transformada,
+    tabela_teste,
+    passo,
+    caplog,
+):
     carregamento_status = carregar_dataframe(
         sessao=sessao,
         df=aih_rd_transformada.iloc[:10],
         tabela_destino=tabela_teste,
-        passo=10,
+        passo=passo,
         teste=True,
     )
 

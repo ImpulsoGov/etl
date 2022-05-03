@@ -102,20 +102,20 @@ def teste_colunas_datas():
     "uf_sigla,periodo_data_inicio",
     [("SE", date(2021, 8, 1))],
 )
-def teste_extrair_pa(uf_sigla, periodo_data_inicio):
+def teste_extrair_pa(uf_sigla, periodo_data_inicio, passo):
     iterador_registros_procedimentos = extrair_pa(
         uf_sigla=uf_sigla,
         periodo_data_inicio=periodo_data_inicio,
-        passo=100
+        passo=passo,
     )
     lote_1 = next(iterador_registros_procedimentos)
     assert isinstance(lote_1, pd.DataFrame)
-    assert len(lote_1) == 100
+    assert len(lote_1) == passo
     for coluna in DE_PARA_PA.keys():
         assert coluna in lote_1
     lote_2 = next(iterador_registros_procedimentos)
     assert isinstance(lote_2, pd.DataFrame)
-    assert len(lote_2) == 100
+    assert len(lote_2) > 0
 
 
 @pytest.mark.integracao
@@ -148,12 +148,12 @@ def teste_transformar_pa(sessao, pa):
         )
 
 
-def teste_carregar_pa(sessao, pa_transformada, caplog, tabela_teste):
+def teste_carregar_pa(sessao, pa_transformada, caplog, tabela_teste, passo):
     codigo_saida = carregar_dataframe(
         sessao=sessao,
         df=pa_transformada.iloc[:10],
         tabela_destino=tabela_teste,
-        passo=10,
+        passo=passo,
         teste=True,
     )
 
