@@ -365,6 +365,21 @@ def transformar_pa(
     return pa_transformada
 
 
+def validar_pa(pa_transformada: pd.DataFrame) -> pd.DataFrame:
+    assert isinstance(pa_transformada, pd.DataFrame), "Não é um DataFrame"
+    assert len(pa_transformada) > 0, "DataFrame vazio."
+    nulos_por_coluna = pa_transformada.applymap(pd.isna).sum()
+    assert nulos_por_coluna["quantidade_apresentada"] == 0, (
+        "A quantidade apresentada é um valor nulo."
+    )
+    assert nulos_por_coluna["quantidade_aprovada"] == 0, (
+        "A quantidade aprovada é um valor nulo."
+    )
+    assert nulos_por_coluna["realizacao_periodo_data_inicio"] == 0, (
+        "A competência de realização é um valor nulo."
+    )
+
+
 def obter_pa(
     sessao: Session,
     uf_sigla: str,
@@ -411,9 +426,23 @@ def obter_pa(
     )
 
     contador = 0
-    with sessao.begin_nested():
+    with sessao.begin_nested() as ponto_de_recuperacao:
         for pa_lote in pa_lotes:
             pa_transformada = transformar_pa(sessao=sessao, pa=pa_lote)
+            try:
+                validar_pa(pa_transformada)
+            except AssertionError as mensagem:
+                ponto_de_recuperacao.rollback()
+                sessao.rollback()
+                if os.getenv(
+                    "IMPULSOETL_AMBIENTE",
+                    "desenvolvimento",
+                ) == "desenvolvimento":
+                    breakpoint()
+                raise RuntimeError(
+                    "Dados inválidos encontrados após a transformação:"
+                    + " {}".format(mensagem),
+                )
 
             carregamento_status = carregar_dataframe(
                 sessao=sessao,
@@ -423,6 +452,8 @@ def obter_pa(
                 teste=teste,
             )
             if carregamento_status != 0:
+                ponto_de_recuperacao.rollback()
+                sessao.rollback()
                 raise RuntimeError(
                     "Execução interrompida em razão de um erro no "
                     + "carregamento."
