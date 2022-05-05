@@ -51,6 +51,7 @@ def validacao_municipios_por_producao(
         .filter(agendamentos.c.operacao_id == operacao_id)
         .all()
     )
+    sessao.commit()
 
     logger.info("Leitura dos Agendamentos ok!")
 
