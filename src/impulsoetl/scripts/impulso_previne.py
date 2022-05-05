@@ -8,13 +8,18 @@
 """Scripts para o produto Impulso Previne."""
 
 
+import pandas as pd
+from requests import head
 from sqlalchemy.orm import Session
 
 from impulsoetl.bd import Sessao, tabelas
 from impulsoetl.loggers import logger
+
 from impulsoetl.sisab.cadastros_individuais import obter_cadastros_individuais
 from impulsoetl.sisab.parametros_cadastro import obter_parametros
-# from impulsoetl.sisab.validacao import obter_validacao_municipios_por_producao
+from impulsoetl.sisab.relatorio_validacao import (
+    obter_validacao_municipios_producao,
+)
 
 
 agendamentos = tabelas["configuracoes.capturas_agendamentos"]
@@ -323,6 +328,33 @@ def validacao_municipios_por_producao(
 
     # Ler agendamentos e rodar ETL para cada agendamento pendente
     # ...
+    agendamentos = tabelas["configuracoes.capturas_agendamentos"]
+    agendamentos_relatorio_validacao = (
+        sessao.query(agendamentos)
+        .filter(agendamentos.c.operacao_id == operacao_id)
+        .all()
+    )
+    sessao.commit()
+
+    logger.info("Leitura dos Agendamentos ok!")
+
+    envio_prazo_lista = [True, False]
+
+    for agendamento in agendamentos_relatorio_validacao:
+        for tipo in envio_prazo_lista:
+            envio_prazo = tipo
+            obter_validacao_municipios_producao(
+                sessao=sessao,
+                periodo_competencia=agendamento.periodo_data_inicio,
+                envio_prazo=envio_prazo,
+                tabela_destino=agendamento.tabela_destino,
+                periodo_codigo=agendamento.periodo_codigo,
+            )
+
+        if teste:  # evitar rodar muitas iterações
+            break
+
+    sessao.commit()
 
 
 def principal(sessao: Session, teste: bool = False) -> None:
