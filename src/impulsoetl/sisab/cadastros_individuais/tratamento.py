@@ -4,21 +4,20 @@
 
 
 import uuid
-from datetime import datetime
+from datetime import date, datetime
 
 import pandas as pd
 from sqlalchemy.orm import Session
 
 from impulsoetl.comum.datas import periodo_por_codigo, periodo_por_data
 from impulsoetl.comum.geografias import id_sus_para_id_impulso
-from impulsoetl.tipos import DatetimeLike
 
 
 def tratamento_dados(
     sessao: Session,
     dados_sisab_cadastros: pd.DataFrame,
     com_ponderacao: bool,
-    periodo: DatetimeLike,
+    periodo: date,
 ) -> pd.DataFrame:
 
     tabela_consolidada = pd.DataFrame(
@@ -56,8 +55,8 @@ def tratamento_dados(
         "%Y-%m-%d %H:%M:%S"
     )
 
-    periodo = periodo_por_codigo(sessao=sessao, codigo=periodo_cod[3])
-    tabela_consolidada["periodo_id"] = periodo.id
+    periodo_obj = periodo_por_codigo(sessao=sessao, codigo=periodo_cod[3])
+    tabela_consolidada["periodo_id"] = periodo_obj.id
     tabela_consolidada["unidade_geografica_id"] = tabela_consolidada[
         "municipio_id_sus"
     ].apply(

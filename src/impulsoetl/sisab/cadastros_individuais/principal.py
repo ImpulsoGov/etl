@@ -5,9 +5,10 @@
 
 from __future__ import annotations
 
+from datetime import date
+
 from sqlalchemy.orm import Session
 
-from impulsoetl.tipos import DatetimeLike
 from impulsoetl.sisab.cadastros_individuais.carregamento import (
     carregar_cadastros,
 )
@@ -23,12 +24,12 @@ from impulsoetl.sisab.cadastros_individuais.tratamento import tratamento_dados
 def obter_cadastros_individuais(
     sessao: Session,
     visao_equipe: str,
-    periodo: DatetimeLike,
+    periodo: date,
     com_ponderacao: list[bool] = [True, False],
     teste: bool = True,
 ) -> None:
     """Extrai, transforma e carrega dados de cadastros de equipes pelo SISAB.
-
+    
     Argumentos:
         sessao: objeto [`sqlalchemy.orm.session.Session`][] que permite
             acessar a base de dados da ImpulsoGov.
@@ -45,7 +46,8 @@ def obter_cadastros_individuais(
             dados (`False`, padrão). Caso seja `True`, as modificações são
             adicionadas à uma transação, e podem ser revertidas com uma chamada
             posterior ao método [`Session.rollback()`][] da sessão gerada com o
-            SQLAlchemy."""
+            SQLAlchemy.
+    """
 
     for status_ponderacao in com_ponderacao:
         df = extrair_cadastros_individuais(

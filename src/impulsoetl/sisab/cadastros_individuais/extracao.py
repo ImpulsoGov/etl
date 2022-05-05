@@ -6,16 +6,14 @@
 from __future__ import annotations
 
 import urllib
+from datetime import date
 from io import StringIO
 from typing import Final
 
 import pandas as pd
 import requests
 
-from impulsoetl.sisab.cadastros_individuais.parametros_requisicao import (
-    head,
-)
-from impulsoetl.tipos import DatetimeLike
+from impulsoetl.sisab.cadastros_individuais.parametros_requisicao import head
 
 
 VISOES_EQUIPE_CODIGOS: Final[dict[str, str]] = {
@@ -28,10 +26,9 @@ VISOES_EQUIPE_CODIGOS: Final[dict[str, str]] = {
 def _extrair_cadastros_individuais(
     visao_equipe: str,
     com_ponderacao: bool,
-    competencia: DatetimeLike,
+    competencia: date,
 ) -> str:
-    competencia = pd.Timestamp(competencia)
-    competencia = competencia[0:6]
+
     url = (
         "https://sisab.saude.gov.br/paginas/acessoRestrito/relatorio/federal"
         + "/indicadores/indicadorCadastro.xhtml"
@@ -59,7 +56,7 @@ def _extrair_cadastros_individuais(
 def extrair_cadastros_individuais(
     visao_equipe: str,
     com_ponderacao: bool,
-    competencia: DatetimeLike,
+    competencia: date,
 ) -> pd.DataFrame:
 
     resposta = _extrair_cadastros_individuais(
