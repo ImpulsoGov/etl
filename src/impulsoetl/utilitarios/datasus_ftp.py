@@ -11,7 +11,7 @@ from __future__ import annotations
 from ftplib import FTP  # noqa: B402  # nosec: B402
 from pathlib import Path
 from tempfile import TemporaryDirectory, NamedTemporaryFile
-from typing import Generator
+from typing import Generator, cast
 
 import pandas as pd
 from dbfread import DBF
@@ -19,6 +19,36 @@ from more_itertools import ichunked
 from pysus.utilities.readdbc import dbc2dbf
 
 from impulsoetl.loggers import logger
+
+
+def _checar_arquivo_corrompido(
+    tamanho_arquivo_ftp: int,
+    tamanho_arquivo_local: int,
+) -> bool:
+    """Informa se um arquivo baixado do FTP está corrompido."""
+
+    logger.info("Checando integridade do arquivo baixado...")
+    logger.debug(
+        "Tamanho declarado do arquivo no FTP: {:n} bytes",
+        tamanho_arquivo_ftp,
+    )
+    logger.debug(
+        "Tamanho do arquivo baixado: {:n} bytes",
+        tamanho_arquivo_local,
+    )
+    if tamanho_arquivo_ftp > tamanho_arquivo_local:
+        logger.error(
+            "Tamanho no servidor é maior do que o do arquivo baixado.",
+        )
+        return True
+    elif tamanho_arquivo_ftp < tamanho_arquivo_local:
+        logger.error(
+            "Tamanho no servidor é menor do que o do arquivo baixado.",
+        )
+        return True
+    else:
+        logger.info("OK!")
+        return False
 
 
 def extrair_dbc_lotes(
@@ -76,6 +106,18 @@ def extrair_dbc_lotes(
                 arquivo_dbc.write,
             )
             logger.info("Download concluído.")
+
+            if _checar_arquivo_corrompido(
+                tamanho_arquivo_ftp=cast(int, cliente_ftp.size(arquivo_nome)),
+                tamanho_arquivo_local=Path(arquivo_dbc.name).stat().st_size,
+            ):
+                raise RuntimeError(
+                    "A extração da fonte `{}{}` ".format(
+                        ftp,
+                        caminho_diretorio,
+                    )
+                    + "falhou porque o arquivo baixado está corrompido."
+                )
 
             logger.info("Descompactando arquivo DBC...")
             arquivo_dbf_caminho = Path(diretorio_temporario, arquivo_dbf_nome)
