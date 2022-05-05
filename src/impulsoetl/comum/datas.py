@@ -12,6 +12,7 @@ from __future__ import annotations
 from datetime import datetime, timedelta, timezone
 from functools import lru_cache
 
+from sqlalchemy.engine import Row
 from sqlalchemy.orm import Session
 
 from impulsoetl.bd import tabelas
@@ -52,6 +53,26 @@ def periodo_por_data(
         )
         .one()
     )
+
+
+@lru_cache(365)
+def periodo_por_codigo(sessao: Session, codigo: str) -> Row:
+    """Busca um período a partir do seu código.
+
+    Argumentos:
+        sessao: objeto [`sqlalchemy.orm.session.Session`][] que permite
+            acessar a base de dados da ImpulsoGov.
+        codigo: Código do período que se pretende buscar.
+
+    Retorna:
+        Objeto da classe `sqlalchemy.engine.Row` contendo informações do
+        período correspondente.
+
+    [`sqlalchemy.orm.session.Session`]: https://docs.sqlalchemy.org/en/14/orm/session_api.html#sqlalchemy.orm.Session
+    [`sqlalchemy.engine.Row`]: https://docs.sqlalchemy.org/en/14/core/connections.html#sqlalchemy.engine.Row
+    """
+
+    return sessao.query(periodos).filter(periodos.c.codigo == codigo).one()
 
 
 @lru_cache(60)
