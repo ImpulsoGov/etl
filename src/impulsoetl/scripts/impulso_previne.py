@@ -58,12 +58,11 @@ def validacao_municipios_por_producao(
     envio_prazo_lista = [True, False]
 
     for agendamento in agendamentos_relatorio_validacao:
-        periodo_competencia = agendamento.periodo_data_inicio.strftime("%Y%m")
         for tipo in envio_prazo_lista:
             envio_prazo = tipo
             obter_validacao_municipios_producao(
                 sessao=sessao,
-                periodo_competencia=periodo_competencia,
+                periodo_competencia=agendamento.periodo_data_inicio,
                 envio_prazo=envio_prazo,
                 tabela_destino=agendamento.tabela_destino,
                 periodo_codigo=agendamento.periodo_codigo,

@@ -7,7 +7,7 @@ from __future__ import annotations
 
 import json
 import uuid
-from datetime import datetime
+from datetime import date, datetime
 from io import StringIO
 
 import pandas as pd
@@ -40,7 +40,7 @@ def obter_lista_periodos_inseridos(
     """
 
     tabela = tabelas[tabela_alvo]
-    periodos = sessao.query(tabela.periodo_codigo).distinct().all()
+    periodos = sessao.query(tabela.c.periodo_codigo).distinct().all()
     sessao.commit()
 
     periodos_codigos = [periodo.periodo_codigo for periodo in periodos]
@@ -48,7 +48,7 @@ def obter_lista_periodos_inseridos(
     return periodos_codigos
 
 
-def competencia_para_periodo_codigo(periodo_competencia: datetime) -> str:
+def competencia_para_periodo_codigo(periodo_competencia: date) -> str:
     """Converte a data de início de uma no código do periodo padrão da Impulso.
 
     Argumentos:
@@ -64,7 +64,7 @@ def competencia_para_periodo_codigo(periodo_competencia: datetime) -> str:
         ```
     """
 
-    return "{:%Y}.M{:%m}".format(periodo_competencia, periodo_competencia)
+    return "{:%Y}.M{}".format(periodo_competencia, periodo_competencia.month)
 
 
 def obter_data_criacao(
@@ -84,21 +84,21 @@ def obter_data_criacao(
 
     tabela = tabelas[tabela_alvo]
 
-    data_criacao = (
+    data_criacao_obj = (
         sessao.query(tabela)
         .filter(tabela.c.periodo_codigo == periodo_codigo)
         .first()
     )
     sessao.commit()
 
-    if not data_criacao:
-        data_criacao = datetime.now()
-
-    return data_criacao
+    try:
+        return data_criacao_obj.criacao_data  # type: ignore
+    except AttributeError:
+        return datetime.now()
 
 
 def requisicao_validacao_sisab_producao(
-    periodo_competencia: datetime,
+    periodo_competencia: date,
     envio_prazo: bool,
 ) -> Response:
     """Obtém os dados da API do SISAB.
@@ -273,7 +273,7 @@ def tratamento_validacao_producao(
 def carregar_validacao_producao(
     sessao: Session,
     df_validacao_tratado: pd.DataFrame,
-    periodo_competencia: datetime,
+    periodo_competencia: date,
     tabela_destino: str,
 ) -> int:
     """Carrega os dados de um arquivo validação do portal SISAB no BD da Impulso.
@@ -304,8 +304,6 @@ def carregar_validacao_producao(
 
     tabela_relatorio_validacao = tabelas[tabela_destino]
 
-    conector = sessao.connection()
-
     periodo_codigo = competencia_para_periodo_codigo(periodo_competencia)
 
     periodos_inseridos = obter_lista_periodos_inseridos(sessao, tabela_destino)
@@ -316,12 +314,11 @@ def carregar_validacao_producao(
             tabela_relatorio_validacao.c.periodo_codigo == periodo_codigo
         )
         logger.debug(limpar)
-        conector.execute(limpar)
+        sessao.execute(limpar)
 
     requisicao_insercao = tabela_relatorio_validacao.insert().values(registros)
-    logger.debug(requisicao_insercao)
 
-    conector.execute(requisicao_insercao)
+    sessao.execute(requisicao_insercao)
 
     logger.info(
         "Carregamento concluído para a tabela `{tabela_nome}`: "
@@ -384,7 +381,7 @@ def testes_pre_carga(df_validacao_tratado: pd.DataFrame) -> None:
 
 def obter_validacao_municipios_producao(
     sessao: Session,
-    periodo_competencia: datetime,
+    periodo_competencia: date,
     envio_prazo: bool,
     tabela_destino: str,
     periodo_codigo: str,
