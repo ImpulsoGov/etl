@@ -18,38 +18,27 @@ from sqlalchemy import delete
 #----------- importações para carga
 from impulsoetl.loggers import logger
 from impulsoetl.bd import tabelas
+from sqlalchemy import delete
 # importacao para transformacao
+from impulsoetl.comum.geografias import id_sus_para_id_impulso
 from frozenlist import FrozenList
 from impulsoetl.bd import Sessao
 
-#------------------------------------------------------- USO LOCAL
-periodo_tipo='producao' #produção ou envio
+def obter_lista_registros_inseridos(sessao,ficha_tipo,aplicacao_tipo):
+    """Obtém lista de períodos da períodos que já constam na tabela
+        Returns:
+        periodos_lista: períodos que já constam na tabela destino
+    """    
 
-periodo_competencia='202202'  #AAAAMM periodo averiguado
-
-ano = periodo_competencia[0:4]
-
-mes = '.M'+periodo_competencia[5:6]
-
-periodo_codigo = ano+mes
-
-envio_prazo_on = '&envioPrazo=on' #Check box envio requisições no prazo marcado
-
-
-envio_prazo=[] #preencher envio_prazo_on ou deixar vazio ou usar '' em caso de querer os 2 de uma vez 
-
-ficha = "Cadastro Individual"
-
-aplicacao = "CDS Offline"
-
-cadastro_individual_cod = "&j_idt87=2"
-
-cds_offline_cod = "&j_idt92=0"
-
-ficha_codigo = cadastro_individual_cod
-
-aplicacao_codigo = cds_offline_cod
-#------------------------------------------------------------ USO LOCAL
+    
+    engine = sessao.get_bind()
+    tabela_alvo="dados_publicos._sisab_validacao_municipios_por_producao_ficha_por_aplicacao"
+    registros = pd.read_sql_query(
+            f"""select distinct periodo_codigo from {tabela_alvo} where ficha = '{ficha_tipo}' and aplicacao = '{aplicacao_tipo}';""",
+            engine    )
+    registros = registros['periodo_codigo'].tolist()
+    logger.info("Leitura dos períodos inseridos no banco Impulso OK!")
+    return registros
 
 def competencia_para_periodo_codigo(periodo_competencia):
     """Essa função converte o período de competência de determinado relatorio no código do periodo padrão da impulso
@@ -69,6 +58,7 @@ def competencia_para_periodo_codigo(periodo_competencia):
     else:
         periodo_codigo = ano + mes
     return periodo_codigo
+
 
 def obter_data_criacao(sessao,tabela, periodo_codigo):
     """Obtém a data de criação do registro que já consta na tabela baseado no período
@@ -147,22 +137,24 @@ def tratamento_validacao_producao_ficha_aplicacao(sessao,resposta,data_criacao,e
     assert df_obtido['Uf'].count() > 26, "Estado faltante"
 
     colunas = ["id",
-    "municipio_id_sus",
-    "periodo_id",
-    "cnes_id",
-    "cnes_nome",
-    "ine_id",
-    "ine_tipo",
-    "ficha",
-    "aplicacao",           
-    "validacao_nome",
-    "validacao_quantidade",
-    "criacao_data",
-    "atualizacao_data",
-    "periodo_codigo",
-    "no_prazo",
-    "municipio_nome"] 
-    df = pd.DataFrame(columns=colunas) 
+        "municipio_id_sus",
+        "periodo_id",
+        "cnes_id",
+        "cnes_nome",
+        "ine_id",
+        "ine_tipo",
+        "ficha",
+        "aplicacao",           
+        "validacao_nome",
+        "validacao_quantidade",
+        "criacao_data",
+        "atualizacao_data",
+        "periodo_codigo",
+        "no_prazo",
+        "municipio_nome",
+        "unidade_geografica_id"]
+
+    df = pd.DataFrame(columns=colunas)      
 
     periodo_id = pd.read_sql_query(
         f"select id  from listas_de_codigos.periodos where codigo  = '{periodo_codigo}';",
@@ -200,6 +192,8 @@ def tratamento_validacao_producao_ficha_aplicacao(sessao,resposta,data_criacao,e
 
     df["aplicacao"] = aplicacao
 
+    df["unidade_geografica_id"] = df["municipio_id_sus"].apply(lambda row: id_sus_para_id_impulso(sessao, id_sus=row))
+
     df[["id","municipio_id_sus", "periodo_id","cnes_id","cnes_nome",\
         "ine_id","ine_tipo","ficha","aplicacao","validacao_nome","periodo_codigo","municipio_nome"]] = df[["id","municipio_id_sus", "periodo_id","cnes_id","cnes_nome",\
         "ine_id","ine_tipo","ficha","aplicacao","validacao_nome","periodo_codigo","municipio_nome"]].astype("string")
@@ -218,4 +212,93 @@ def tratamento_validacao_producao_ficha_aplicacao(sessao,resposta,data_criacao,e
     print(df_validacao_tratado.head())
     
     return df_validacao_tratado
+
+
+def testes_pre_carga_validacao_ficha_aplicacao_producao (df_validacao_tratado):
+    """Realiza algumas validações no dataframe antes da carga ao banco.
+    Argumentos:
+            relatorio_validacao_df: [`DataFrame`][] contendo os dados a serem carregados
+            na tabela de destino, já no formato utilizado pelo banco de dados
+            da ImpulsoGov.
+    Retorna:
+        Código de saída do processo de carregamento. Se o carregamento
+        for bem sucedido, o código de saída será `0`.
+    """
+
+
+    assert [
+            (sum(df_validacao_tratado['cnes_id'].isna()) == 0, "Dado ausente em cnes_id"),
+            (sum(df_validacao_tratado['id'].isna()) == 0, "Id do registro ausente"),
+            (sum(df_validacao_tratado['ine_id'].isna()) == 0, "ine_id ausente"),
+            (sum(df_validacao_tratado['ficha'].isna()) == 0, "Nome da ficha ausente"),
+            (sum(df_validacao_tratado['aplicacao'].isna()) == 0, "Nome da aplicacao ausente"),
+            (sum(df_validacao_tratado['validacao_nome'].isna()) == 0, "Nome da validacão ausente"),
+            (sum(df_validacao_tratado['municipio_nome'].isna()) == 0, "Nome de município ausente"),
+            (df_validacao_tratado['unidade_geografica_id'].nunique() == df_validacao_tratado['municipio_id_sus'].nunique() , "Falta de unidade geográfica"),
+            (sum(df_validacao_tratado['validacao_quantidade']) > 0, "Quantidade de validação inválida"),
+            (len(df_validacao_tratado.columns) == 17, "Falta de coluna no dataframe")
+    ]
+
+    logger.info("Testes OK!")
+
+
+def carregar_validacao_ficha_aplicacao_producao(sessao,df_validacao_tratado,periodo_competencia,ficha_tipo,aplicacao_tipo,tabela_destino):
+    """Carrega os dados de um arquivo validação do portal SISAB no BD da Impulso.
+    Argumentos:
+        sessao: objeto [`sqlalchemy.orm.session.Session`][] que permite
+            acessar a base de dados da ImpulsoGov.
+        relatorio_validacao_df: [`DataFrame`][] contendo os dados a serem carregados
+            na tabela de destino, já no formato utilizado pelo banco de dados
+            da ImpulsoGov.
+    Retorna:
+        Código de saída do processo de carregamento. Se o carregamento
+        for bem sucedido, o código de saída será `0`.
+     """
+
+    
+    engine = sessao.get_bind()
+    
+    relatorio_validacao_df = df_validacao_tratado
+
+    registros = json.loads(
+        relatorio_validacao_df.to_json(
+            orient="records",
+            date_format="iso",
+        )
+    )
+
+
+    tabela_relatorio_validacao = tabelas[tabela_destino]
+
+    conector = sessao.connection()
+
+    periodo_codigo = competencia_para_periodo_codigo(periodo_competencia)
+
+    registros_inseridos = obter_lista_registros_inseridos(sessao,ficha_tipo,aplicacao_tipo)
+
+
+    if periodo_codigo in registros_inseridos:
+
+        limpar = delete(tabela_relatorio_validacao)\
+        .where((tabela_relatorio_validacao.c.periodo_codigo == periodo_codigo)\
+            and(where((tabela_relatorio_validacao.c.ficha == ficha_tipo))\
+                and(where((tabela_relatorio_validacao.c.aplicacao == aplicacao_tipo)))))
+        conector.execute(limpar)
+        
+
+    requisicao_insercao = tabela_relatorio_validacao.insert().values(registros)
+    #print(requisicao_insercao)
+
+    conector.execute(requisicao_insercao)
+    
+    logger.info(
+    "Carregamento concluído para a tabela `{tabela_nome}`: "
+    + "adicionadas {linhas_adicionadas} novas linhas.",
+    tabela_nome=tabelas[tabela_destino], 
+    linhas_adicionadas=len(relatorio_validacao_df))
+
+
+
+
+
 
