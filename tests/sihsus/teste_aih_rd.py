@@ -6,6 +6,7 @@
 
 
 import re
+from datetime import date
 
 import pandas as pd
 import pytest
@@ -15,6 +16,7 @@ from impulsoetl.sihsus.aih_rd import (
     COLUNAS_DATA_AAAAMMDD,
     DE_PARA_AIH_RD,
     TIPOS_AIH_RD,
+    extrair_aih_rd,
     obter_aih_rd,
     transformar_aih_rd,
 )
@@ -92,6 +94,26 @@ def teste_colunas_datas():
     assert all(col in TIPOS_AIH_RD.keys() for col in COLUNAS_DATA_AAAAMMDD)
 
 
+@pytest.mark.parametrize(
+    "uf_sigla,periodo_data_inicio",
+    [("SE", date(2021, 8, 1))],
+)
+def teste_extrair_pa(uf_sigla, periodo_data_inicio, passo):
+    iterador_registros_procedimentos = extrair_aih_rd(
+        uf_sigla=uf_sigla,
+        periodo_data_inicio=periodo_data_inicio,
+        passo=passo,
+    )
+    lote_1 = next(iterador_registros_procedimentos)
+    assert isinstance(lote_1, pd.DataFrame)
+    assert len(lote_1) == passo
+    for coluna in DE_PARA_AIH_RD.keys():
+        assert coluna in lote_1
+    lote_2 = next(iterador_registros_procedimentos)
+    assert isinstance(lote_2, pd.DataFrame)
+    assert len(lote_2) > 0
+
+
 @pytest.mark.integracao
 def teste_transformar_aih_rd(sessao, aih_rd):
     aih_rd_transformada = transformar_aih_rd(
@@ -145,19 +167,20 @@ def teste_carregar_aih_rd(
 
 @pytest.mark.integracao
 @pytest.mark.parametrize(
-    "uf_sigla",
-    ["SE"],
+    "uf_sigla,periodo_data_inicio",
+    [("SE", date(2021, 8, 1))],
 )
-@pytest.mark.parametrize(
-    "ano,mes",
-    [(2021, 8)],
-)
-def teste_obter_aih_rd(sessao, uf_sigla, ano, mes, tabela_teste, caplog):
+def teste_obter_aih_rd(
+    sessao,
+    uf_sigla,
+    periodo_data_inicio,
+    tabela_teste,
+    caplog,
+):
     obter_aih_rd(
         sessao=sessao,
         uf_sigla=uf_sigla,
-        ano=ano,
-        mes=mes,
+        periodo_data_inicio=periodo_data_inicio,
         tabela_destino=tabela_teste,
         teste=True,
     )
