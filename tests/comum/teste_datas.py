@@ -11,7 +11,42 @@ from __future__ import annotations
 import pandas as pd
 import pytest
 
-from impulsoetl.comum.datas import obter_proximo_periodo, periodo_por_data
+from impulsoetl.comum.datas import (
+    de_aaaammdd_para_timestamp,
+    obter_proximo_periodo,
+    periodo_por_data,
+)
+
+
+@pytest.mark.parametrize(
+    "texto,data_esperada",
+    [
+        ("20201005", pd.Timestamp(2020, 10, 5)),
+        ("2020 1 7", pd.Timestamp(2020, 1, 7)),
+        ("20202 13", pd.Timestamp(2020, 2, 13)),
+    ],
+)
+def teste_de_aaaammdd_para_timestamp(texto, data_esperada):
+    data = de_aaaammdd_para_timestamp(texto)
+    assert isinstance(data, pd.Timestamp)
+    assert data == data_esperada
+
+
+@pytest.mark.parametrize(
+    "comportamento",
+    ["raise", "ignore", "coerce"],
+)
+def teste_de_aaaammdd_para_timestamp_incorreto(comportamento):
+    texto_incorreto = "blablabla"
+    if comportamento == "raise":
+        with pytest.raises(ValueError):
+            de_aaaammdd_para_timestamp(texto_incorreto, erros=comportamento)
+    else:
+        data = de_aaaammdd_para_timestamp(texto_incorreto, erros=comportamento)
+        if comportamento == "ignore":
+            assert data == texto_incorreto
+        if comportamento == "coerce":
+            assert pd.isna(data)
 
 
 @pytest.mark.parametrize(
