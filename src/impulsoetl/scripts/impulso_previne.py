@@ -8,8 +8,6 @@
 """Scripts para o produto Impulso Previne."""
 
 
-import pandas as pd
-from requests import head
 from sqlalchemy.orm import Session
 
 from impulsoetl.bd import Sessao, tabelas
