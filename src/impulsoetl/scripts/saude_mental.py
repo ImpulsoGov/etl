@@ -302,11 +302,11 @@ def principal(sessao: Session, teste: bool = False) -> None:
     [`sqlalchemy.orm.session.Session`]: https://docs.sqlalchemy.org/en/14/orm/session_api.html#sqlalchemy.orm.Session
     """
 
-    # resolutividade_aps_por_condicao(sessao=sessao, teste=teste)
-    # raas_disseminacao(sessao=sessao, teste=teste)
+    resolutividade_aps_por_condicao(sessao=sessao, teste=teste)
+    raas_disseminacao(sessao=sessao, teste=teste)
     bpa_i_disseminacao(sessao=sessao, teste=teste)
-    # procedimentos_disseminacao(sessao=sessao, teste=teste)
-    # tipo_equipe_por_tipo_producao(sessao=sessao, teste=teste)
+    procedimentos_disseminacao(sessao=sessao, teste=teste)
+    tipo_equipe_por_tipo_producao(sessao=sessao, teste=teste)
     aih_reduzida_disseminacao(sessao=sessao, teste=teste)
     # outros scripts de saúde mental aqui...
 
