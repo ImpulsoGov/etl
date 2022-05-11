@@ -107,17 +107,22 @@ def dataframe_exemplo() -> pd.DataFrame:
 
 
 @pytest.fixture(scope="function")
+def dataframe_exemplo_dados_faltantes(dataframe_exemplo) -> pd.DataFrame:
+    return dataframe_exemplo.assign(col_3=[True, False, None])
+
+
+@pytest.fixture(scope="function")
 def tabela_teste(sessao):
     try:
         sessao.execute(
             "CREATE TABLE IF NOT EXISTS dados_publicos.__teste123 ("
-            + "id int4, "
             + "date_ date, "
             + "col_1 varchar(5), "
             + "col_2 numeric, "
-            + "col_3 bool"
+            + "col_3 bool NOT NULL"
             + ");"
         )
+        sessao.execute("DELETE FROM dados_publicos.__teste123;")
         sessao.commit()
         yield "dados_publicos.__teste123"
     finally:
@@ -170,9 +175,32 @@ def teste_carregar_dataframe(sessao, dataframe_exemplo, tabela_teste, passo):
         autoload_with=sessao.get_bind(),
     )
     registros_inseridos = sessao.query(tabela_inserida).all()
-    sessao.commit()
     assert registros_inseridos
     assert len(registros_inseridos) == len(dataframe_exemplo)
+
+
+def teste_carregar_dataframe_incompleto(
+    sessao,
+    dataframe_exemplo_dados_faltantes,
+    tabela_teste,
+):
+    carregamento_status = carregar_dataframe(
+        sessao=sessao,
+        df=dataframe_exemplo_dados_faltantes,
+        tabela_destino=tabela_teste,
+        passo=2,
+        teste=True,
+    )
+    assert carregamento_status == "23502"  # Erro "not null violation"
+    sessao.commit()
+    schema, tabela = tabela_teste.split(".", maxsplit=1)
+    tabela_inserida = Table(
+        tabela,
+        MetaData(schema=schema),
+        autoload_with=sessao.get_bind(),
+    )
+    registros_inseridos = sessao.query(tabela_inserida).all()
+    assert len(registros_inseridos) == 0
 
 
 @pytest.mark.parametrize(
