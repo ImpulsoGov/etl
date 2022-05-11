@@ -12,12 +12,7 @@ from sqlalchemy.orm import Session
 
 from impulsoetl.bd import Sessao, tabelas
 from impulsoetl.loggers import logger
-from impulsoetl.sisab.cadastros_individuais.principal import (
-    obter_cadastros_individuais,
-)
-
-# from impulsoetl.sisab.validacao import obter_validacao_municipios_por_producao
-
+from impulsoetl.sisab.relatorio_validacao_ficha_aplicacao_producao.funcoes import obter_validacao_ficha_aplicacao_producao
 
 agendamentos = tabelas["configuracoes.capturas_agendamentos"]
 capturas_historico = tabelas["configuracoes.capturas_historico"]
@@ -80,7 +75,7 @@ def cadastros_municipios_equipe_homologada(
         "Capturando Cadastros de equipes válidas por município.",
     )
 
-    operacao_id = "c668a75e-9eeb-4176-874b-98d7553222f2"
+     #operacao_id = "c668a75e-9eeb-4176-874b-98d7553222f2"
     visao_equipe = "equipes-homologadas"
     agendamentos_cadastros = (
         sessao.query(agendamentos)
@@ -198,6 +193,71 @@ def principal(sessao: Session, teste: bool = False) -> None:
     validacao_municipios_por_producao(sessao=sessao, teste=teste)
     # outros scripts do Impulso Previne aqui...
 
+def validacao_producao_ficha_por_aplicacao( 
+    sessao: Session,
+    teste: bool = False,
+) -> None:
+    
+        # este já é o ID definitivo da operação!
+    operacao_id = "c577c9fd-6a8e-43e3-9d65-042ad2268cf0"
+
+    # Ler agendamentos e rodar ETL para cada agendamento pendente
+    # ...
+    agendamentos = tabelas["configuracoes.capturas_agendamentos"]
+    agendamentos_relatorio_validacao = (
+        sessao.query(agendamentos)
+        .filter(agendamentos.c.operacao_id == operacao_id)
+        .all()
+    )
+    sessao.commit()
+
+    logger.info("Leitura dos Agendamentos ok!")
+
+    envio_prazo_lista = [True, False]
+    
+    fichas = {
+        "Cadastro individual":"&j_idt87=2",
+        "Atendimento individual":"&j_idt87=4",
+        "Procedimentos":"&j_idt87=7",
+        "Visita Domiciliar":"&j_idt87=8"
+    }
+
+    aplicacoes = {
+        "CDS-offline":"&j_idt92=0",
+        "CDS-online":"&j_idt92=1",
+        "PEC":"&j_idt92=2",
+        "Sistema proprio":"&j_idt92=3",
+        "Android ACS":"&j_idt92=4"
+    }
+
+    for agendamento in agendamentos_relatorio_validacao:
+        for ficha_tipo, ficha_codigo in fichas.items():
+            for aplicacao_tipo, aplicacao_codigo in aplicacoes.items():
+                if ficha_tipo == "Cadastro individual" and aplicacao_tipo == "PEC" or \
+                    ficha_tipo == "Visita Domiciliar" and aplicacao_tipo == "PEC" or \
+                        ficha_tipo == "Atendimento individual" and aplicacao_tipo == "Android ACS" or \
+                            ficha_tipo == "Procedimentos" and aplicacao_tipo == "Android ACS":
+                            break
+                for tipo in envio_prazo_lista:
+                    envio_prazo = tipo
+                    obter_validacao_ficha_aplicacao_producao(
+                        sessao=sessao,
+                        periodo_competencia=agendamento.periodo_data_inicio,
+                        ficha_tipo = ficha_tipo,
+                        aplicacao_tipo = aplicacao_tipo,
+                        ficha_codigo = ficha_codigo,
+                        aplicacao_codigo = aplicacao_codigo,
+                        envio_prazo=envio_prazo,
+                        tabela_destino=agendamento.tabela_destino,
+                        periodo_codigo=agendamento.periodo_codigo
+                    )
+
+        if teste:  # evitar rodar muitas iterações
+            break
+
+    sessao.commit()
+
+    
 
 if __name__ == "__main__":
     with Sessao() as sessao:
