@@ -132,8 +132,7 @@ def raas_disseminacao(
         obter_raas_ps(
             sessao=sessao,
             uf_sigla=agendamento.uf_sigla,
-            ano=agendamento.periodo_data_inicio.year,
-            mes=agendamento.periodo_data_inicio.month,
+            periodo_data_inicio=agendamento.periodo_data_inicio,
             tabela_destino=agendamento.tabela_destino,
             teste=teste,
         )
