@@ -426,48 +426,36 @@ def obter_pa(
     )
 
     contador = 0
-    with sessao.begin_nested() as ponto_de_recuperacao:
-        for pa_lote in pa_lotes:
-            pa_transformada = transformar_pa(sessao=sessao, pa=pa_lote)
-            try:
-                validar_pa(pa_transformada)
-            except AssertionError as mensagem:
-                ponto_de_recuperacao.rollback()
-                sessao.rollback()
-                if os.getenv(
-                    "IMPULSOETL_AMBIENTE",
-                    "desenvolvimento",
-                ) == "desenvolvimento":
-                    breakpoint()
-                raise RuntimeError(
-                    "Dados inválidos encontrados após a transformação:"
-                    + " {}".format(mensagem),
-                )
-
-            carregamento_status = carregar_dataframe(
-                sessao=sessao,
-                df=pa_transformada,
-                tabela_destino=tabela_destino,
-                passo=None,
-                teste=teste,
+    for pa_lote in pa_lotes:
+        pa_transformada = transformar_pa(sessao=sessao, pa=pa_lote)
+        try:
+            validar_pa(pa_transformada)
+        except AssertionError as mensagem:
+            sessao.rollback()
+            raise RuntimeError(
+                "Dados inválidos encontrados após a transformação:"
+                + " {}".format(mensagem),
             )
-            if carregamento_status != 0:
-                ponto_de_recuperacao.rollback()
-                sessao.rollback()
-                raise RuntimeError(
-                    "Execução interrompida em razão de um erro no "
-                    + "carregamento."
-                )
-            contador += len(pa_lote)
-            if teste and contador > 1000:
-                logger.info("Execução interrompida para fins de teste.")
-                break
+
+        carregamento_status = carregar_dataframe(
+            sessao=sessao,
+            df=pa_transformada,
+            tabela_destino=tabela_destino,
+            passo=None,
+            teste=teste,
+        )
+        if carregamento_status != 0:
+            sessao.rollback()
+            raise RuntimeError(
+                "Execução interrompida em razão de um erro no "
+                + "carregamento."
+            )
+        contador += len(pa_lote)
+        if teste and contador > 1000:
+            logger.info("Execução interrompida para fins de teste.")
+            break
 
     if teste:
         logger.info("Desfazendo alterações realizadas durante o teste...")
         sessao.rollback()
         logger.info("Todas transações foram desfeitas com sucesso!")
-    else:
-        logger.info("Gravando alterações no banco de dados...")
-        sessao.commit()
-        logger.info("Todas as alterações foram gravadas com sucesso!")

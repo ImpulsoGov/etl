@@ -379,35 +379,30 @@ def obter_vinculos(
     )
 
     contador = 0
-    with sessao.begin_nested():
-        for vinculos_lote in vinculos_lotes:
-            vinculos_transformada = transformar_vinculos(
-                sessao=sessao,
-                vinculos=vinculos_lote,
-            )
+    for vinculos_lote in vinculos_lotes:
+        vinculos_transformada = transformar_vinculos(
+            sessao=sessao,
+            vinculos=vinculos_lote,
+        )
 
-            carregamento_status = carregar_dataframe(
-                sessao=sessao,
-                df=vinculos_transformada,
-                tabela_destino=tabela_destino,
-                passo=None,
-                teste=teste,
+        carregamento_status = carregar_dataframe(
+            sessao=sessao,
+            df=vinculos_transformada,
+            tabela_destino=tabela_destino,
+            passo=None,
+            teste=teste,
+        )
+        if carregamento_status != 0:
+            raise RuntimeError(
+                "Execução interrompida em razão de um erro no "
+                + "carregamento."
             )
-            if carregamento_status != 0:
-                raise RuntimeError(
-                    "Execução interrompida em razão de um erro no "
-                    + "carregamento."
-                )
-            contador += len(vinculos_transformada)
-            if teste and contador > 1000:
-                logger.info("Execução interrompida para fins de teste.")
-                break
+        contador += len(vinculos_transformada)
+        if teste and contador > 1000:
+            logger.info("Execução interrompida para fins de teste.")
+            break
 
     if teste:
         logger.info("Desfazendo alterações realizadas durante o teste...")
         sessao.rollback()
         logger.info("Todas transações foram desfeitas com sucesso!")
-    else:
-        logger.info("Gravando alterações no banco de dados...")
-        sessao.commit()
-        logger.info("Todas as alterações foram gravadas com sucesso!")

@@ -325,29 +325,28 @@ def obter_raas_ps(
     )
 
     contador = 0
-    with sessao.begin_nested():
-        for raas_ps_lote in raas_ps_lotes:
-            raas_ps_transformada = transformar_raas_ps(
-                sessao=sessao,
-                raas_ps=raas_ps_lote,
-            )
+    for raas_ps_lote in raas_ps_lotes:
+        raas_ps_transformada = transformar_raas_ps(
+            sessao=sessao,
+            raas_ps=raas_ps_lote,
+        )
 
-            carregamento_status = carregar_dataframe(
-                sessao=sessao,
-                df=raas_ps_transformada,
-                tabela_destino=tabela_destino,
-                passo=None,
-                teste=teste,
+        carregamento_status = carregar_dataframe(
+            sessao=sessao,
+            df=raas_ps_transformada,
+            tabela_destino=tabela_destino,
+            passo=None,
+            teste=teste,
+        )
+        if carregamento_status != 0:
+            raise RuntimeError(
+                "Execução interrompida em razão de um erro no "
+                + "carregamento."
             )
-            if carregamento_status != 0:
-                raise RuntimeError(
-                    "Execução interrompida em razão de um erro no "
-                    + "carregamento."
-                )
-            contador += len(raas_ps_lote)
-            if teste and contador > 1000:
-                logger.info("Execução interrompida para fins de teste.")
-                break
+        contador += len(raas_ps_lote)
+        if teste and contador > 1000:
+            logger.info("Execução interrompida para fins de teste.")
+            break
 
     if teste:
         logger.info("Desfazendo alterações realizadas durante o teste...")

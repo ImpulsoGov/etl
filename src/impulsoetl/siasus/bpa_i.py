@@ -310,35 +310,30 @@ def obter_bpa_i(
     )
 
     contador = 0
-    with sessao.begin_nested():
-        for bpa_i_lote in bpa_i_lotes:
-            bpa_i_transformada = transformar_bpa_i(
-                sessao=sessao,
-                bpa_i=bpa_i_lote,
-            )
+    for bpa_i_lote in bpa_i_lotes:
+        bpa_i_transformada = transformar_bpa_i(
+            sessao=sessao,
+            bpa_i=bpa_i_lote,
+        )
 
-            carregamento_status = carregar_dataframe(
-                sessao=sessao,
-                df=bpa_i_transformada,
-                tabela_destino=tabela_destino,
-                passo=None,
-                teste=teste,
+        carregamento_status = carregar_dataframe(
+            sessao=sessao,
+            df=bpa_i_transformada,
+            tabela_destino=tabela_destino,
+            passo=None,
+            teste=teste,
+        )
+        if carregamento_status != 0:
+            raise RuntimeError(
+                "Execução interrompida em razão de um erro no "
+                + "carregamento."
             )
-            if carregamento_status != 0:
-                raise RuntimeError(
-                    "Execução interrompida em razão de um erro no "
-                    + "carregamento."
-                )
-            contador += len(bpa_i_lote)
-            if teste and contador > 1000:
-                logger.info("Execução interrompida para fins de teste.")
-                break
+        contador += len(bpa_i_lote)
+        if teste and contador > 1000:
+            logger.info("Execução interrompida para fins de teste.")
+            break
 
     if teste:
         logger.info("Desfazendo alterações realizadas durante o teste...")
         sessao.rollback()
         logger.info("Todas transações foram desfeitas com sucesso!")
-    else:
-        logger.info("Gravando alterações no banco de dados...")
-        sessao.commit()
-        logger.info("Todas as alterações foram gravadas com sucesso!")
