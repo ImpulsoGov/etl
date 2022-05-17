@@ -62,7 +62,7 @@ def verifica_diferenca_ctg_ine(
     return df['INE'].nunique() - df_tratado['ine_id'].nunique()
 
 
-def teste_validacao(df: pd.DataFrame, df_tratado: pd.Dataframe) -> None:
+def teste_validacao(df: pd.DataFrame, df_tratado: pd.DataFrame) -> None:
     assert verifica_qtd_municipios(df, df_tratado) > 5000
     assert verifica_diferenca_ctg_municpios(df, df_tratado) == 0
     assert verifica_diferenca_mun_betim(df, df_tratado) == 0

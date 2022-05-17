@@ -10,8 +10,8 @@ from impulsoetl.sisab.parametros_cadastro.extracao import (
 from impulsoetl.sisab.parametros_cadastro.teste_validacao import (
     teste_validacao,
 )
-from sisab.parametros_cadastro.tratamento import tratamento_dados
-from impulsoetl.bd import Sessao
+from impulsoetl.sisab.parametros_cadastro.tratamento import tratamento_dados
+
 
 def obter_parametros(
     sessao: Session,

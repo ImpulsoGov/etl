@@ -13,7 +13,7 @@ from typing import Final
 import pandas as pd
 import requests
 
-from impulsoetl.sisab.cadastros_individuais.parametros_requisicao import head
+from impulsoetl.sisab.parametros_requisicao import head
 
 
 VISOES_EQUIPE_CODIGOS: Final[dict[str, str]] = {
