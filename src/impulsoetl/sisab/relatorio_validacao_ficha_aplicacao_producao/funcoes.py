@@ -17,19 +17,22 @@ from impulsoetl.comum.geografias import id_sus_para_id_impulso
 from impulsoetl.sisab.relatorio_validacao_ficha_aplicacao_producao.suporte_extracao import head
 
 
+
 def obter_lista_registros_inseridos(
     sessao: Session,
-    tabela_alvo: str,
+    tabela_destino: str,
     ficha_tipo: str,
-    aplicacao_tipo: str
+    aplicacao_tipo: str,
+    periodo_codigo: str
     ):
     """Obtém lista de registro da períodos que já constam na tabela
 
         Argumentos:
         sessao: objeto [`sqlalchemy.orm.session.Session`][] que permite acessar a base de dados da ImpulsoGov.
-        tabela_alvo: Tabela alvo da busca.
+        tabela_destino: Tabela que irá acondicionar os dados.
         ficha_tipo: Tipo de ficha que será filtro para a requisição no sisab
         aplicacao_tipo: Tipo de aplicacao que será filtro para a requisicão no sisab
+        periodo_codigo: Código do período de referência.
 
 
     Retorna:
@@ -39,7 +42,7 @@ def obter_lista_registros_inseridos(
     """  
     
 
-    tabela = tabelas[tabela_alvo]
+    tabela = tabelas[tabela_destino]
     registros = sessao.query(tabela.c.periodo_codigo).distinct().where((tabela.c.periodo_codigo == periodo_codigo)\
             and((tabela.c.ficha == ficha_tipo)\
                 and((tabela.c.aplicacao == aplicacao_tipo)))).all()
@@ -49,26 +52,6 @@ def obter_lista_registros_inseridos(
     logger.info("Leitura dos períodos inseridos no banco Impulso OK!")
     return registros_codigos
 
-def competencia_para_periodo_codigo(periodo_competencia):
-    """Essa função converte o período de competência de determinado relatorio no código do periodo padrão da impulso
-    EX: 202203 para 2022.M3
-    Args:
-        periodo_competencia (str): período de competência de determinado relatório
-    Returns:
-        periodo código
-    """
-
-
-    ano = periodo_competencia[0:4]
-    mes = ".M" + periodo_competencia[4:6]
-    if mes[2] == '0':
-        mes = ".M" + periodo_competencia[5:6]
-        periodo_codigo = ano + mes
-    else:
-        periodo_codigo = ano + mes
-    return periodo_codigo
-
-
 def obter_data_criacao(
     sessao: Session,
     tabela_destino: str,
@@ -76,8 +59,8 @@ def obter_data_criacao(
     ) -> datetime:
     """Obtém a data de criação do registro a partir do código do período.
     Argumentos:
-        tabela_alvo: Tabela alvo da busca.
-        periodo_codigo: Período de referência da data.
+        tabela_destino: Tabela destino dos dados alvo da busca.
+        periodo_codigo: Código do período de referência.
     Retorna:
         Data de criação do registro, como um objeto `datetime`.
     """
@@ -97,47 +80,71 @@ def obter_data_criacao(
         return datetime.now()
 
 
-def requisicao_validacao_sisab_producao_ficha_aplicacao(periodo_competencia,ficha_codigo,aplicacao_codigo,envio_prazo):
+def requisicao_validacao_sisab_producao_ficha_aplicacao(
+    periodo_competencia:date,
+    ficha_codigo:str,
+    aplicacao_codigo:str,
+    envio_prazo:bool):
     """Obtém os dados da API
     
     Args:
         periodo_competencia: Período de competência do dado a ser buscado no sisab
+        ficha_codigo: Código da ficha a ser preenchida na requisição
+        aplicacao_codigo: Código da aplicação a ser preenchida na requisição
         envio_prazo(bool): Tipo de relatório de validação a ser obtido (referência check box "no prazo" no sisab)  
     
     Returns:
     resposta: Resposta da requisição do sisab, com os dados obtidos ou não
     """
 
-    print(f'{periodo_competencia},{ficha_codigo},{aplicacao_codigo},{envio_prazo}')
+    
+    if envio_prazo == True:
+        envio_tipo = "&envioPrazo=on"
+    else:
+        envio_tipo = ""
+    
     url = "https://sisab.saude.gov.br/paginas/acessoRestrito/relatorio/federal/envio/RelValidacao.xhtml"
     periodo_tipo='producao'
     hd = head(url)
     vs = hd[1] #viewstate
-    payload='j_idt44=j_idt44&unidGeo=brasil&periodo='+periodo_tipo+'&j_idt70='+periodo_competencia+'&colunas=regiao&colunas=uf&colunas=ibge&colunas=municipio&colunas=cnes&colunas=tp_unidade&colunas=ine&colunas=tp_equipe'+ficha_codigo+aplicacao_codigo+envio_prazo+'&javax.faces.ViewState='+vs+'&j_idt102=j_idt102'
+    payload='j_idt44=j_idt44&unidGeo=brasil&periodo='+periodo_tipo+'&j_idt70='+"{:%Y%m}".format(periodo_competencia)+'&colunas=regiao&colunas=uf&colunas=ibge&colunas=municipio&colunas=cnes&colunas=tp_unidade&colunas=ine&colunas=tp_equipe'+ficha_codigo+aplicacao_codigo+envio_tipo+'&javax.faces.ViewState='+vs+'&j_idt102=j_idt102'
     headers = hd[0]
     resposta = requests.request("POST", url, headers=headers, data=payload)
     logger.info("Dados Obtidos no SISAB")
     return resposta
 
 
-def tratamento_validacao_producao_ficha_aplicacao(sessao,resposta,data_criacao,ficha_tipo,aplicacao_tipo,envio_prazo,periodo_codigo):
+def tratamento_validacao_producao_ficha_aplicacao(
+    sessao: Session,
+    data_criacao: date,
+    resposta: Response,
+    ficha_tipo: str,
+    aplicacao_tipo: str,
+    envio_prazo: str,
+    periodo_codigo: str):
     """Tratamento dos dados obtidos 
 
     Args:
+    sessao: objeto [`sqlalchemy.orm.session.Session`][] que permite acessar a base de dados da ImpulsoGov.
+    data_criacao: Data de criação da tabela alvo
     resposta (requests.models.Response): Resposta da requisição efetuada no sisab
+    ficha_tipo: Nome da ficha requisitada
+    aplicacao_tipo: Nome da aplicacao requisitada
+    envio_prazo (bool): Tipo de relatório de validação a ser obtido (referência check box "no prazo" no sisab) 
 
 
     Returns:
     df: dataframe com os dados enriquecidos e tratados em formato pandas dataframe  
     """
 
-
+    tabela_periodos = tabelas["listas_de_codigos.periodos"]
+    
     logger.info("Dados em tratamento")
 
     envio_prazo_on = '&envioPrazo=on'
     
-    df_obtido = pd.read_csv(StringIO(resposta.text),sep=';',encoding = 'ISO-8859-1', skiprows=range(0,4), skipfooter=4,  engine='python') #ORIGINAL DIRETO DA EXTRAÇÃO
-
+    df_obtido = pd.read_csv(StringIO(resposta.text),sep=';',encoding = 'ISO-8859-1', skiprows=range(0,6), skipfooter=4,  engine='python') #ORIGINAL DIRETO DA EXTRAÇÃO
+    #df_obtido = pd.read_csv('RelatorioValidacao-2022-05-08.csv',sep=';',engine='python', skiprows=range(0,6), skipfooter=4, encoding = 'ISO-8859-1')
     assert df_obtido['Uf'].count() > 26, "Estado faltante"
     
     df_obtido[['INE','Tipo Unidade','Tipo Equipe']] = df_obtido[['INE','Tipo Unidade','Tipo Equipe']].fillna('0').astype('int')
@@ -224,15 +231,12 @@ def tratamento_validacao_producao_ficha_aplicacao(sessao,resposta,data_criacao,f
     return df_validacao_tratado
 
 
-def testes_pre_carga_validacao_ficha_aplicacao_producao (df_validacao_tratado):
+def testes_pre_carga_validacao_ficha_aplicacao_producao (df_validacao_tratado: pd.DataFrame):
     """Realiza algumas validações no dataframe antes da carga ao banco.
     Argumentos:
-            relatorio_validacao_df: [`DataFrame`][] contendo os dados a serem carregados
+            df_validacao_tratado [`DataFrame`][] contendo os dados a serem carregados
             na tabela de destino, já no formato utilizado pelo banco de dados
             da ImpulsoGov.
-    Retorna:
-        Código de saída do processo de carregamento. Se o carregamento
-        for bem sucedido, o código de saída será `0`.
     """
 
 
@@ -252,14 +256,24 @@ def testes_pre_carga_validacao_ficha_aplicacao_producao (df_validacao_tratado):
     logger.info("Testes OK!")
 
 
-def carregar_validacao_ficha_aplicacao_producao(sessao,df_validacao_tratado,periodo_competencia,ficha_tipo,aplicacao_tipo,tabela_destino):
+def carregar_validacao_ficha_aplicacao_producao(
+    sessao: Session,
+    df_validacao_tratado: pd.DataFrame,
+    periodo_codigo: str,
+    ficha_tipo: str,
+    aplicacao_tipo: str,
+    tabela_destino: str):
     """Carrega os dados de um arquivo validação do portal SISAB no BD da Impulso.
     Argumentos:
         sessao: objeto [`sqlalchemy.orm.session.Session`][] que permite
             acessar a base de dados da ImpulsoGov.
-        relatorio_validacao_df: [`DataFrame`][] contendo os dados a serem carregados
+        df_validacao_tratado: [`DataFrame`][] contendo os dados a serem carregados
             na tabela de destino, já no formato utilizado pelo banco de dados
             da ImpulsoGov.
+        periodo_codigo: Código do período de referência.
+        ficha_tipo: Nome da ficha requisitada
+        aplicacao_tipo: Nome da aplicacao requisitada
+        tabela_destino: Tabela que irá acondicionar os dados.
     Retorna:
         Código de saída do processo de carregamento. Se o carregamento
         for bem sucedido, o código de saída será `0`.
@@ -275,12 +289,11 @@ def carregar_validacao_ficha_aplicacao_producao(sessao,df_validacao_tratado,peri
         )
     )
 
-
+    
     tabela_relatorio_validacao = tabelas[tabela_destino]
 
-    periodo_codigo = competencia_para_periodo_codigo(periodo_competencia)
-
-    registros_inseridos = obter_lista_registros_inseridos(sessao,ficha_tipo,aplicacao_tipo)
+    
+    registros_inseridos = obter_lista_registros_inseridos(sessao,tabela_destino,ficha_tipo,aplicacao_tipo,periodo_codigo)
 
 
     if periodo_codigo in registros_inseridos:
@@ -307,7 +320,7 @@ def carregar_validacao_ficha_aplicacao_producao(sessao,df_validacao_tratado,peri
 
 def obter_validacao_ficha_aplicacao_producao(
     sessao: Session,
-    periodo_competencia,
+    periodo_competencia: date,
     ficha_tipo: str,
     aplicacao_tipo: str,
     ficha_codigo: str,
@@ -351,11 +364,12 @@ def obter_validacao_ficha_aplicacao_producao(
         
 
     testes_pre_carga_validacao_ficha_aplicacao_producao(df_validacao_tratado)
-
+    
+    
     carregar_validacao_ficha_aplicacao_producao(
         sessao,
         df_validacao_tratado,
-        periodo_competencia,
+        periodo_codigo,
         ficha_tipo,
         aplicacao_tipo,
         tabela_destino
@@ -363,6 +377,4 @@ def obter_validacao_ficha_aplicacao_producao(
 
     logger.info("Dados prontos para o commit")
     return None
-
-
 

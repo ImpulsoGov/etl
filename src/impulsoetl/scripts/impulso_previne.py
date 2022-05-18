@@ -3,7 +3,8 @@
 # SPDX-FileCopyrightText: 2021, 2022 ImpulsoGov <contato@impulsogov.org>
 #
 # SPDX-License-Identifier: MIT
-
+# flake8: noqa
+# type: ignore
 
 """Scripts para o produto Impulso Previne."""
 
@@ -251,6 +252,8 @@ def validacao_producao_ficha_por_aplicacao(
                         tabela_destino=agendamento.tabela_destino,
                         periodo_codigo=agendamento.periodo_codigo
                     )
+
+                    #sessao.commit()
 
         if teste:  # evitar rodar muitas iterações
             break
