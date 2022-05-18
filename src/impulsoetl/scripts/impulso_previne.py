@@ -255,10 +255,27 @@ def validacao_producao_ficha_por_aplicacao(
 
                     #sessao.commit()
 
-        if teste:  # evitar rodar muitas iterações
-            break
+                if teste:  # evitar rodar muitas iterações
+                    break
 
+    logger.info("Registrando captura bem-sucedida...")
+    # NOTE: necessário registrar a operação de captura em nível de UF,
+    # mesmo que o gatilho na tabela de destino no banco de dados já
+    # registre a captura em nível dos municípios automaticamente quando há
+    # a inserção de uma nova linha
+    requisicao_inserir_historico = capturas_historico.insert(
+        {
+            "operacao_id": operacao_id,
+            "periodo_id": agendamento.periodo_id,
+            "unidade_geografica_id": agendamento.unidade_geografica_id,
+        }
+    )
+    conector = sessao.connection()
+    conector.execute(requisicao_inserir_historico)
     sessao.commit()
+    logger.info("OK.")
+
+    
 
     
 
