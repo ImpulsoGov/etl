@@ -2,4 +2,3 @@
 #
 # SPDX-License-Identifier: MIT
 
-from impulsoetl.sisab.indicadores_municipios.principal import obter_indicadores_desempenho

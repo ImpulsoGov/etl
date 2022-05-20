@@ -37,7 +37,7 @@ def carregar_indicadores(sessao: Session,indicadores_transformada:pd.DataFrame,v
     logger.info(
         "Carregamento concluído para a tabela `{tabela_nome}`: "
         + "adicionadas {linhas_adicionadas} novas linhas.",
-        tabela_nome=f"dados_publicos.sisab_indicadores_municipios_{sufixo_tabela}",
+        tabela_nome= "dados_publicos.sisab_indicadores_municipios_{}".format(sufixo_tabela),
         linhas_adicionadas=len(indicadores_transformada),
     )
     
