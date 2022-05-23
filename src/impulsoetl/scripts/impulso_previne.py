@@ -76,7 +76,7 @@ def cadastros_municipios_equipe_homologada(
         "Capturando Cadastros de equipes válidas por município.",
     )
 
-     #operacao_id = "c668a75e-9eeb-4176-874b-98d7553222f2"
+    operacao_id = "c668a75e-9eeb-4176-874b-98d7553222f2"
     visao_equipe = "equipes-homologadas"
     agendamentos_cadastros = (
         sessao.query(agendamentos)
@@ -234,11 +234,13 @@ def validacao_producao_ficha_por_aplicacao(
     for agendamento in agendamentos_relatorio_validacao:
         for ficha_tipo, ficha_codigo in fichas.items():
             for aplicacao_tipo, aplicacao_codigo in aplicacoes.items():
-                if ficha_tipo == "Cadastro individual" and aplicacao_tipo == "PEC" or \
-                    ficha_tipo == "Visita Domiciliar" and aplicacao_tipo == "PEC" or \
-                        ficha_tipo == "Atendimento individual" and aplicacao_tipo == "Android ACS" or \
-                            ficha_tipo == "Procedimentos" and aplicacao_tipo == "Android ACS":
-                            break
+                if (
+                        (ficha_tipo == "Cadastro individual" and aplicacao_tipo == "PEC")  # não precisa de \
+                        or (ficha_tipo == "Visita Domiciliar" and aplicacao_tipo == "PEC")
+                        or (ficha_tipo == "Atendimento individual" and aplicacao_tipo == "Android ACS")
+                        or (ficha_tipo == "Procedimentos" and aplicacao_tipo == "Android ACS")
+                    ):
+                    break
                 for tipo in envio_prazo_lista:
                     envio_prazo = tipo
                     obter_validacao_ficha_aplicacao_producao(
@@ -253,31 +255,25 @@ def validacao_producao_ficha_por_aplicacao(
                         periodo_codigo=agendamento.periodo_codigo
                     )
 
-                    #sessao.commit()
+                    if teste:  # evitar rodar muitas iterações
+                        break
 
-                if teste:  # evitar rodar muitas iterações
-                    break
-
-    logger.info("Registrando captura bem-sucedida...")
-    # NOTE: necessário registrar a operação de captura em nível de UF,
-    # mesmo que o gatilho na tabela de destino no banco de dados já
-    # registre a captura em nível dos municípios automaticamente quando há
-    # a inserção de uma nova linha
-    requisicao_inserir_historico = capturas_historico.insert(
-        {
-            "operacao_id": operacao_id,
-            "periodo_id": agendamento.periodo_id,
-            "unidade_geografica_id": agendamento.unidade_geografica_id,
-        }
-    )
-    conector = sessao.connection()
-    conector.execute(requisicao_inserir_historico)
-    sessao.commit()
-    logger.info("OK.")
-
-    
-
-    
+        logger.info("Registrando captura bem-sucedida...")
+        # NOTE: necessário registrar a operação de captura em nível de UF,
+        # mesmo que o gatilho na tabela de destino no banco de dados já
+        # registre a captura em nível dos municípios automaticamente quando há
+        # a inserção de uma nova linha
+        requisicao_inserir_historico = capturas_historico.insert(
+            {
+                "operacao_id": operacao_id,
+                "periodo_id": agendamento.periodo_id,
+                "unidade_geografica_id": agendamento.unidade_geografica_id,
+            }
+        )
+        conector = sessao.connection()
+        conector.execute(requisicao_inserir_historico)
+        sessao.commit()
+        logger.info("OK.")
 
 if __name__ == "__main__":
     with Sessao() as sessao:

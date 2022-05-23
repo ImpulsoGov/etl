@@ -15,15 +15,13 @@ from impulsoetl.loggers import logger
 from impulsoetl.bd import tabelas
 from impulsoetl.comum.geografias import id_sus_para_id_impulso
 from impulsoetl.sisab.relatorio_validacao_ficha_aplicacao_producao.suporte_extracao import head
+from sqlalchemy import and_
 
 
 
 def obter_lista_registros_inseridos(
     sessao: Session,
-    tabela_destino: str,
-    ficha_tipo: str,
-    aplicacao_tipo: str,
-    periodo_codigo: str
+    tabela_destino: str
     ):
     """Obtém lista de registro da períodos que já constam na tabela
 
@@ -43,14 +41,12 @@ def obter_lista_registros_inseridos(
     
 
     tabela = tabelas[tabela_destino]
-    registros = sessao.query(tabela.c.periodo_codigo).distinct().where((tabela.c.periodo_codigo == periodo_codigo)\
-            and((tabela.c.ficha == ficha_tipo)\
-                and((tabela.c.aplicacao == aplicacao_tipo)))).all()
-    sessao.commit()
+    registros =( sessao.query(tabela.c.periodo_codigo,tabela.c.ficha,tabela.c.aplicacao)
+                .distinct(tabela.c.periodo_codigo,tabela.c.ficha,tabela.c.aplicacao)
+    )
 
-    registros_codigos = [periodo.periodo_codigo for periodo in registros]
     logger.info("Leitura dos períodos inseridos no banco Impulso OK!")
-    return registros_codigos
+    return registros
 
 def obter_data_criacao(
     sessao: Session,
@@ -72,7 +68,7 @@ def obter_data_criacao(
     .filter(tabela.c.periodo_codigo == periodo_codigo)
     .first()
     )
-    sessao.commit()
+    
 
     try:
         return data_criacao_obj.criacao_data  # type: ignore
@@ -81,10 +77,12 @@ def obter_data_criacao(
 
 
 def requisicao_validacao_sisab_producao_ficha_aplicacao(
-    periodo_competencia:date,
+    periodo_competencia,
     ficha_codigo:str,
     aplicacao_codigo:str,
-    envio_prazo:bool):
+    envio_prazo:bool
+    ):
+    
     """Obtém os dados da API
     
     Args:
@@ -96,18 +94,20 @@ def requisicao_validacao_sisab_producao_ficha_aplicacao(
     Returns:
     resposta: Resposta da requisição do sisab, com os dados obtidos ou não
     """
+    periodo_competencia = "{:%Y%m}".format(periodo_competencia)
+    print(periodo_competencia)
 
-    
     if envio_prazo == True:
         envio_tipo = "&envioPrazo=on"
     else:
         envio_tipo = ""
-    
+
+    logger.info("iniciando conexão com o SISAB")
     url = "https://sisab.saude.gov.br/paginas/acessoRestrito/relatorio/federal/envio/RelValidacao.xhtml"
     periodo_tipo='producao'
     hd = head(url)
     vs = hd[1] #viewstate
-    payload='j_idt44=j_idt44&unidGeo=brasil&periodo='+periodo_tipo+'&j_idt70='+"{:%Y%m}".format(periodo_competencia)+'&colunas=regiao&colunas=uf&colunas=ibge&colunas=municipio&colunas=cnes&colunas=tp_unidade&colunas=ine&colunas=tp_equipe'+ficha_codigo+aplicacao_codigo+envio_tipo+'&javax.faces.ViewState='+vs+'&j_idt102=j_idt102'
+    payload='j_idt44=j_idt44&unidGeo=brasil&periodo='+periodo_tipo+'&j_idt70='+periodo_competencia+'&colunas=regiao&colunas=uf&colunas=ibge&colunas=municipio&colunas=cnes&colunas=tp_unidade&colunas=ine&colunas=tp_equipe'+ficha_codigo+aplicacao_codigo+envio_tipo+'&javax.faces.ViewState='+vs+'&j_idt102=j_idt102'
     headers = hd[0]
     resposta = requests.request("POST", url, headers=headers, data=payload)
     logger.info("Dados Obtidos no SISAB")
@@ -116,8 +116,8 @@ def requisicao_validacao_sisab_producao_ficha_aplicacao(
 
 def tratamento_validacao_producao_ficha_aplicacao(
     sessao: Session,
-    data_criacao: date,
-    resposta: Response,
+    data_criacao,
+    resposta,
     ficha_tipo: str,
     aplicacao_tipo: str,
     envio_prazo: str,
@@ -140,16 +140,14 @@ def tratamento_validacao_producao_ficha_aplicacao(
     tabela_periodos = tabelas["listas_de_codigos.periodos"]
     
     logger.info("Dados em tratamento")
-
-    envio_prazo_on = '&envioPrazo=on'
-    
+   
     df_obtido = pd.read_csv(StringIO(resposta.text),sep=';',encoding = 'ISO-8859-1', skiprows=range(0,6), skipfooter=4,  engine='python') #ORIGINAL DIRETO DA EXTRAÇÃO
-    #df_obtido = pd.read_csv('RelatorioValidacao-2022-05-08.csv',sep=';',engine='python', skiprows=range(0,6), skipfooter=4, encoding = 'ISO-8859-1')
+    
     assert df_obtido['Uf'].count() > 26, "Estado faltante"
     
     df_obtido[['INE','Tipo Unidade','Tipo Equipe']] = df_obtido[['INE','Tipo Unidade','Tipo Equipe']].fillna('0').astype('int')
 
-    colunas = ["id",
+    colunas = [
         "municipio_id_sus",
         "periodo_id",
         "cnes_id",
@@ -195,15 +193,13 @@ def tratamento_validacao_producao_ficha_aplicacao(
 
     df["municipio_nome"] = df_obtido["Municipio"]
 
-    df['id'] = df.apply(lambda row:uuid.uuid4(), axis=1)
-
     df["atualizacao_data"] = pd.Timestamp.now()
 
     df["criacao_data"] = data_criacao
 
     df["periodo_codigo"] = periodo_codigo
 
-    df["no_prazo"] = 1 if (envio_prazo == envio_prazo_on) else 0 
+    df["no_prazo"] = 1 if (envio_prazo == True) else 0 
 
     df["ficha"] = ficha_tipo
 
@@ -211,8 +207,8 @@ def tratamento_validacao_producao_ficha_aplicacao(
 
     df["unidade_geografica_id"] = df["municipio_id_sus"].apply(lambda row: id_sus_para_id_impulso(sessao, id_sus=row))
 
-    df[["id","municipio_id_sus", "periodo_id","cnes_id","cnes_nome",\
-        "ine_id","ine_tipo","ficha","aplicacao","validacao_nome","periodo_codigo","municipio_nome"]] = df[["id","municipio_id_sus", "periodo_id","cnes_id","cnes_nome",\
+    df[["municipio_id_sus", "periodo_id","cnes_id","cnes_nome",
+        "ine_id","ine_tipo","ficha","aplicacao","validacao_nome","periodo_codigo","municipio_nome"]] = df[["municipio_id_sus", "periodo_id","cnes_id","cnes_nome",
         "ine_id","ine_tipo","ficha","aplicacao","validacao_nome","periodo_codigo","municipio_nome"]].astype("string")
     
     df["validacao_quantidade"] = df["validacao_quantidade"].astype("int")
@@ -220,7 +216,7 @@ def tratamento_validacao_producao_ficha_aplicacao(
     
     df['atualizacao_data'] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-    df["criacao_data"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S") # temporário somente teste
+    df["criacao_data"] = data_criacao
 
     df_validacao_tratado = df 
 
@@ -240,18 +236,17 @@ def testes_pre_carga_validacao_ficha_aplicacao_producao (df_validacao_tratado: p
     """
 
 
-    assert [
-            (sum(df_validacao_tratado['cnes_id'].isna()) == 0, "Dado ausente em cnes_id"),
-            (sum(df_validacao_tratado['id'].isna()) == 0, "Id do registro ausente"),
-            (sum(df_validacao_tratado['ine_id'].isna()) == 0, "ine_id ausente"),
-            (sum(df_validacao_tratado['ficha'].isna()) == 0, "Nome da ficha ausente"),
-            (sum(df_validacao_tratado['aplicacao'].isna()) == 0, "Nome da aplicacao ausente"),
-            (sum(df_validacao_tratado['validacao_nome'].isna()) == 0, "Nome da validacão ausente"),
-            (sum(df_validacao_tratado['municipio_nome'].isna()) == 0, "Nome de município ausente"),
-            (df_validacao_tratado['unidade_geografica_id'].nunique() == df_validacao_tratado['municipio_id_sus'].nunique() , "Falta de unidade geográfica"),
-            (sum(df_validacao_tratado['validacao_quantidade']) > 0, "Quantidade de validação inválida"),
-            (len(df_validacao_tratado.columns) == 17, "Falta de coluna no dataframe")
-    ]
+    assert all ([
+            sum(df_validacao_tratado['cnes_id'].isna()) == 0, "Dado ausente em cnes_id",
+            sum(df_validacao_tratado['ine_id'].isna()) == 0, "ine_id ausente",
+            sum(df_validacao_tratado['ficha'].isna()) == 0, "Nome da ficha ausente",
+            sum(df_validacao_tratado['aplicacao'].isna()) == 0, "Nome da aplicacao ausente",
+            sum(df_validacao_tratado['validacao_nome'].isna()) == 0, "Nome da validacão ausente",
+            sum(df_validacao_tratado['municipio_nome'].isna()) == 0, "Nome de município ausente",
+            df_validacao_tratado['unidade_geografica_id'].nunique() == df_validacao_tratado['municipio_id_sus'].nunique() , "Falta de unidade geográfica",
+            sum(df_validacao_tratado['validacao_quantidade']) > 0, "Quantidade de validação inválida",
+            len(df_validacao_tratado.columns) == 16, "Falta de coluna no dataframe" 
+    ])
 
     logger.info("Testes OK!")
 
@@ -293,18 +288,23 @@ def carregar_validacao_ficha_aplicacao_producao(
     tabela_relatorio_validacao = tabelas[tabela_destino]
 
     
-    registros_inseridos = obter_lista_registros_inseridos(sessao,tabela_destino,ficha_tipo,aplicacao_tipo,periodo_codigo)
-
-
-    if periodo_codigo in registros_inseridos:
-
-        limpar = delete(tabela_relatorio_validacao)\
-        .where((tabela_relatorio_validacao.c.periodo_codigo == periodo_codigo)\
-            and((tabela_relatorio_validacao.c.ficha == ficha_tipo)\
-                and((tabela_relatorio_validacao.c.aplicacao == aplicacao_tipo))))
+    registros_inseridos = obter_lista_registros_inseridos(sessao,tabela_destino)
+        
+    if any([
+	registro.aplicacao == aplicacao_tipo
+		and registro.ficha == ficha_tipo
+		and registro.periodo_codigo == periodo_codigo
+	for registro in registros_inseridos
+    ]):
+        limpar = (
+                delete(tabela_relatorio_validacao).
+                where(tabela_relatorio_validacao.c.periodo_codigo == periodo_codigo).
+                where(tabela_relatorio_validacao.c.ficha == ficha_tipo).
+                where(tabela_relatorio_validacao.c.aplicacao == aplicacao_tipo)
+                )
         logger.debug(limpar)
         sessao.execute(limpar)
-        
+
 
     requisicao_insercao = tabela_relatorio_validacao.insert().values(registros)
     sessao.execute(requisicao_insercao)
@@ -320,15 +320,15 @@ def carregar_validacao_ficha_aplicacao_producao(
 
 def obter_validacao_ficha_aplicacao_producao(
     sessao: Session,
-    periodo_competencia: date,
+    periodo_competencia,
     ficha_tipo: str,
     aplicacao_tipo: str,
     ficha_codigo: str,
     aplicacao_codigo: str,
     envio_prazo: bool,
     tabela_destino: str,
-    periodo_codigo: str,
-) -> None:
+    periodo_codigo: str
+    ) -> None:
     """Executa o ETL de relatórios de validação dos envios ao SISAB.
     Argumentos:
         sessao: objeto [`sqlalchemy.orm.session.Session`][] que permite
@@ -342,37 +342,41 @@ def obter_validacao_ficha_aplicacao_producao(
             `nome_do_schema.nome_da_tabela`).
         periodo_codigo: Código do período de referência.
     [`sqlalchemy.orm.session.Session`]: https://docs.sqlalchemy.org/en/14/orm/session_api.html#sqlalchemy.orm.Session
+        ficha_tipo: Nome da ficha requisitada
+        aplicacao_tipo: Nome da aplicacao requisitada
+        ficha_codigo: Código da ficha a ser preenchida na requisição
+        aplicacao_codigo: Código da aplicação a ser preenchida na requisição
     """
-
+  
     data_criacao = obter_data_criacao(sessao, tabela_destino, periodo_codigo)
 
     resposta = requisicao_validacao_sisab_producao_ficha_aplicacao(
-        periodo_competencia,
-        ficha_codigo,
-        aplicacao_codigo,
-        envio_prazo
+        periodo_competencia=periodo_competencia,
+        ficha_codigo=ficha_codigo,
+        aplicacao_codigo=aplicacao_codigo,
+        envio_prazo=envio_prazo,
     )
 
     df_validacao_tratado = tratamento_validacao_producao_ficha_aplicacao(
-        sessao,
-        resposta,
-        data_criacao,
-        ficha_tipo,
-        aplicacao_tipo,
-        envio_prazo,
-        periodo_codigo)
+        sessao=sessao,
+        resposta=resposta,
+        data_criacao=data_criacao,
+        ficha_tipo=ficha_tipo,
+        aplicacao_tipo=aplicacao_tipo,
+        envio_prazo=envio_prazo,
+        periodo_codigo=periodo_codigo)
         
 
-    testes_pre_carga_validacao_ficha_aplicacao_producao(df_validacao_tratado)
+    testes_pre_carga_validacao_ficha_aplicacao_producao(df_validacao_tratado=df_validacao_tratado)
     
     
     carregar_validacao_ficha_aplicacao_producao(
-        sessao,
-        df_validacao_tratado,
-        periodo_codigo,
-        ficha_tipo,
-        aplicacao_tipo,
-        tabela_destino
+        sessao=sessao,
+        df_validacao_tratado=df_validacao_tratado,
+        periodo_codigo=periodo_codigo,
+        ficha_tipo=ficha_tipo,
+        aplicacao_tipo=aplicacao_tipo,
+        tabela_destino=tabela_destino
     )
 
     logger.info("Dados prontos para o commit")
