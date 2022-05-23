@@ -7,6 +7,7 @@
 
 
 import re
+from datetime import date
 
 import pandas as pd
 import pytest
@@ -16,6 +17,7 @@ from impulsoetl.siasus.raas_ps import (
     COLUNAS_DATA_AAAAMMDD,
     DE_PARA_RAAS_PS,
     TIPOS_RAAS_PS,
+    extrair_raas_ps,
     obter_raas_ps,
     transformar_raas_ps,
 )
@@ -90,6 +92,28 @@ def teste_colunas_datas():
     assert all(col in TIPOS_RAAS_PS.keys() for col in COLUNAS_DATA_AAAAMMDD)
 
 
+@pytest.mark.parametrize(
+    "uf_sigla,periodo_data_inicio",
+    [("SE", date(2021, 8, 1))],
+)
+def teste_extrair_raas_ps(uf_sigla, periodo_data_inicio, passo):
+    iterador_registros_procedimentos = extrair_raas_ps(
+        uf_sigla=uf_sigla,
+        periodo_data_inicio=periodo_data_inicio,
+        passo=passo,
+    )
+    lote_1 = next(iterador_registros_procedimentos)
+    assert isinstance(lote_1, pd.DataFrame)
+    assert len(lote_1) == 100
+    colunas_encontradas = [col.strip() for col in lote_1.columns]
+    colunas_previstas = [col.strip() for col in DE_PARA_RAAS_PS.keys()]
+    for coluna_prevista in colunas_previstas:
+        assert coluna_prevista in colunas_encontradas
+    lote_2 = next(iterador_registros_procedimentos)
+    assert isinstance(lote_2, pd.DataFrame)
+    assert len(lote_2) == 100
+
+
 @pytest.mark.integracao
 def teste_transformar_raas_ps(sessao, raas_ps):
     raas_ps_transformada = transformar_raas_ps(
@@ -120,12 +144,18 @@ def teste_transformar_raas_ps(sessao, raas_ps):
         )
 
 
-def teste_carregar_raas_ps(sessao, raas_ps_transformada, tabela_teste, caplog):
+def teste_carregar_raas_ps(
+    sessao,
+    raas_ps_transformada,
+    tabela_teste,
+    passo,
+    caplog,
+):
     codigo_saida = carregar_dataframe(
         sessao=sessao,
         df=raas_ps_transformada.iloc[:10],
         tabela_destino=tabela_teste,
-        passo=10,
+        passo=passo,
         teste=True,
     )
 
@@ -137,19 +167,20 @@ def teste_carregar_raas_ps(sessao, raas_ps_transformada, tabela_teste, caplog):
 
 @pytest.mark.integracao
 @pytest.mark.parametrize(
-    "uf_sigla",
-    ["SE"],
+    "uf_sigla,periodo_data_inicio",
+    [("SE", date(2021, 8, 1))],
 )
-@pytest.mark.parametrize(
-    "ano,mes",
-    [(2021, 8)],
-)
-def teste_obter_raas_ps(sessao, uf_sigla, ano, mes, tabela_teste, caplog):
+def teste_obter_raas_ps(
+    sessao,
+    uf_sigla,
+    periodo_data_inicio,
+    tabela_teste,
+    caplog,
+):
     obter_raas_ps(
         sessao=sessao,
         uf_sigla=uf_sigla,
-        ano=ano,
-        mes=mes,
+        periodo_data_inicio=periodo_data_inicio,
         tabela_destino=tabela_teste,
         teste=True,
     )

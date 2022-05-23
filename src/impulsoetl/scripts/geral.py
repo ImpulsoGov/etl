@@ -37,8 +37,7 @@ def vinculos_disseminacao(
         obter_vinculos(
             sessao=sessao,
             uf_sigla=agendamento.uf_sigla,
-            ano=agendamento.periodo_data_inicio.year,
-            mes=agendamento.periodo_data_inicio.month,
+            periodo_data_inicio=agendamento.periodo_data_inicio,
             tabela_destino=agendamento.tabela_destino,
             teste=teste,
         )
@@ -94,7 +93,7 @@ def principal(sessao: Session, teste: bool = False) -> None:
     """
 
     vinculos_disseminacao(sessao=sessao, teste=teste)
-    ceps(sessao=sessao, teste=teste)
+    # ceps(sessao=sessao, teste=teste)
     # outros scripts de uso geral aqui...
 
 

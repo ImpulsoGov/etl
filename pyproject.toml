@@ -88,6 +88,7 @@ Unidecode = { version = "1.3.2", optional = true }
 # GDAL = "3.3.2"
 roman = {version = "^3.3", extras = ["impulsoetl"]}
 types-psycopg2 = "^2.9.11"
+more-itertools = {version = "^8.12.0", extras = ["impulsoetl"]}
 
 
 

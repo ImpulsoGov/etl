@@ -10,10 +10,11 @@ from __future__ import annotations
 
 import csv
 from io import StringIO
-from typing import Iterable
+from typing import Iterable, cast
 
 import pandas as pd
 from pandas.io.sql import SQLTable
+from psycopg2.errors import Error as Psycopg2Error
 from sqlalchemy.engine import Connection, Engine
 from sqlalchemy.exc import DBAPIError, InvalidRequestError
 from sqlalchemy.orm.session import Session
@@ -153,7 +154,7 @@ def carregar_dataframe(
     sessao: Session,
     df: pd.DataFrame,
     tabela_destino: str,
-    passo: int = 10000,
+    passo: int | None = 10000,
     teste: bool = False,
 ) -> int:
     """Carrega dados públicos para o banco de dados analítico da ImpulsoGov.
@@ -167,7 +168,8 @@ def carregar_dataframe(
             schema (formato `nome_do_schema.nome_da_tabela`).
         passo: Indica quantos registros devem ser enviados para a base de dados
             de cada vez. Por padrão, são inseridos 10.000 registros em cada
-            transação.
+            transação. Se o valor for `None`, todo o DataFrame é carregado de
+            uma vez.
         teste: Indica se o carregamento deve ser executado em modo teste. Se
             verdadeiro, faz *rollback* de todas as operações; se falso, libera
             o ponto de recuperação criado.
@@ -205,42 +207,40 @@ def carregar_dataframe(
     )
 
     logger.info("Copiando registros...")
-    engine = sessao.get_bind()
-    engine = engine.execution_options(isolation_level="AUTOCOMMIT")
-    with engine.connect() as conexao:
-        ponto_de_recuperacao = conexao.begin_nested()
 
-        try:
-            df.to_sql(
-                name=tabela_nome,
-                con=conexao,
-                schema=schema_nome,
-                if_exists="append",
-                index=False,
-                chunksize=passo,
-                method=postgresql_copiar_dados,
-            )
-        # trata exceções levantadas pelo backend
-        except DBAPIError as erro:
-            ponto_de_recuperacao.rollback()
-            logger.error(
-                "Erro ao inserir registros na tabela `{}` (Código {})",
-                tabela_destino,
-                erro.orig.pgcode,
-            )
+    ponto_de_recuperacao = sessao.begin_nested()
+    conexao = sessao.connection()
+    try:
+        df.to_sql(
+            name=tabela_nome,
+            con=conexao,
+            schema=schema_nome,
+            if_exists="append",
+            index=False,
+            chunksize=passo,
+            method=postgresql_copiar_dados,
+        )
+    # trata exceções levantadas pelo backend
+    except (DBAPIError, Psycopg2Error) as erro:
+        ponto_de_recuperacao.rollback()
+        sessao.rollback()
+        if isinstance(erro, DBAPIError):
             erro.hide_parameters = True
-            logger.debug(
-                "({}.{}) {}",
-                erro.orig.__class__.__module__,
-                erro.orig.__class__.__name__,
-                erro.orig.pgerror,
-            )
-            return erro.orig.pgcode
-
-        if teste:
-            ponto_de_recuperacao.rollback()
-        else:
-            ponto_de_recuperacao.commit()
+            erro = cast(Psycopg2Error, erro.orig)
+        logger.error(
+            "Erro ao inserir registros na tabela `{}` (Código {})",
+            tabela_destino,
+            erro.pgcode,
+        )
+        logger.debug(
+            "({}.{}) {}",
+            erro.__class__.__module__,
+            erro.__class__.__name__,
+            erro.pgerror,
+        )
+        return erro.pgcode
+    else:
+        ponto_de_recuperacao.commit()
 
     logger.info("Carregamento concluído.")
 

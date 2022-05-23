@@ -6,6 +6,7 @@
 
 
 import re
+from datetime import date
 
 import pandas as pd
 import pytest
@@ -15,6 +16,7 @@ from impulsoetl.siasus.bpa_i import (
     COLUNAS_DATA_AAAAMMDD,
     DE_PARA_BPA_I,
     TIPOS_BPA_I,
+    extrair_bpa_i,
     obter_bpa_i,
     transformar_bpa_i,
 )
@@ -84,6 +86,26 @@ def teste_colunas_datas():
     assert all(col in TIPOS_BPA_I.keys() for col in COLUNAS_DATA_AAAAMMDD)
 
 
+@pytest.mark.parametrize(
+    "uf_sigla,periodo_data_inicio",
+    [("SE", date(2021, 8, 1))],
+)
+def teste_extrair_pa(uf_sigla, periodo_data_inicio, passo):
+    iterador_registros_procedimentos = extrair_bpa_i(
+        uf_sigla=uf_sigla,
+        periodo_data_inicio=periodo_data_inicio,
+        passo=passo,
+    )
+    lote_1 = next(iterador_registros_procedimentos)
+    assert isinstance(lote_1, pd.DataFrame)
+    assert len(lote_1) == 100
+    for coluna in DE_PARA_BPA_I.keys():
+        assert coluna in lote_1
+    lote_2 = next(iterador_registros_procedimentos)
+    assert isinstance(lote_2, pd.DataFrame)
+    assert len(lote_2) == 100
+
+
 @pytest.mark.integracao
 def teste_transformar_bpa_i(sessao, bpa_i):
     bpa_i_transformada = transformar_bpa_i(
@@ -114,13 +136,18 @@ def teste_transformar_bpa_i(sessao, bpa_i):
         )
 
 
-def teste_carregar_bpa_i(sessao, bpa_i_transformada, caplog, tabela_teste):
-
+def teste_carregar_bpa_i(
+    sessao,
+    bpa_i_transformada,
+    caplog,
+    tabela_teste,
+    passo,
+):
     codigo_saida = carregar_dataframe(
         sessao=sessao,
         df=bpa_i_transformada.iloc[:10],
         tabela_destino=tabela_teste,
-        passo=10,
+        passo=passo,
         teste=True,
     )
 
@@ -132,19 +159,20 @@ def teste_carregar_bpa_i(sessao, bpa_i_transformada, caplog, tabela_teste):
 
 @pytest.mark.integracao
 @pytest.mark.parametrize(
-    "uf_sigla",
-    ["SE"],
+    "uf_sigla,periodo_data_inicio",
+    [("SE", date(2021, 8, 1))],
 )
-@pytest.mark.parametrize(
-    "ano,mes",
-    [(2021, 8)],
-)
-def teste_obter_bpa_i(sessao, uf_sigla, ano, mes, caplog, tabela_teste):
+def teste_obter_bpa_i(
+    sessao,
+    uf_sigla,
+    periodo_data_inicio,
+    caplog,
+    tabela_teste,
+):
     obter_bpa_i(
         sessao=sessao,
         uf_sigla=uf_sigla,
-        ano=ano,
-        mes=mes,
+        periodo_data_inicio=periodo_data_inicio,
         tabela_destino=tabela_teste,
         teste=True,
     )
