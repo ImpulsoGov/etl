@@ -12,7 +12,6 @@ from typing import Final
 
 import pandas as pd
 import requests
-
 from impulsoetl.sisab.parametros_requisicao import head
 
 

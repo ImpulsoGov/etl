@@ -3,7 +3,6 @@
 # SPDX-License-Identifier: MIT
 
 """Declara representações das tabelas relativas ao SISAB."""
-
 from impulsoetl.bd import tabelas
 
 parametros_municipios_equipe_validas = tabelas[

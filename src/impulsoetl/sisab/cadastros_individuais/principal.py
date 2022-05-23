@@ -8,7 +8,6 @@ from __future__ import annotations
 from datetime import date
 
 from sqlalchemy.orm import Session
-
 from impulsoetl.sisab.cadastros_individuais.carregamento import (
     carregar_cadastros,
 )
@@ -67,5 +66,3 @@ def obter_cadastros_individuais(
             cadastros_transformada=df_tratado,
             visao_equipe=visao_equipe,
         )
-        if not teste:
-            sessao.commit()
