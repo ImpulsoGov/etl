@@ -4,14 +4,15 @@
 
 
 import logging
+import os
 
 import pytest
 from _pytest.logging import caplog as _caplog  # noqa: F401  # nopycln: import
 from dotenv import load_dotenv
 from loguru import logger
+from sqlalchemy import create_engine
+from sqlalchemy.engine import Engine, URL
 from sqlalchemy.orm import sessionmaker
-
-from impulsoetl.bd import engine
 
 
 @pytest.fixture(scope="session", autouse=True)
@@ -38,7 +39,26 @@ def caplog(_caplog):  # noqa: F811
 
 
 @pytest.fixture(scope="session")
-def envelope_sessao():
+def engine() -> Engine:
+    BD_HOST = os.getenv("IMPULSOETL_BD_HOST", "localhost")
+    BD_PORTA = int(os.getenv("IMPULSOETL_BD_PORTA", "5432"))
+    BD_NOME = os.getenv("IMPULSOETL_BD_NOME", "principal")
+    BD_USUARIO = os.getenv("IMPULSOETL_BD_USUARIO", "etl")
+    BD_SENHA = os.getenv("IMPULSOETL_BD_SENHA", None)
+
+    BD_URL = URL.create(
+        drivername="postgresql+psycopg2",
+        username=BD_USUARIO,
+        password=BD_SENHA,
+        host=BD_HOST,
+        port=BD_PORTA,
+        database=BD_NOME,
+    )
+    return create_engine(BD_URL, pool_pre_ping=True)
+
+
+@pytest.fixture(scope="session")
+def envelope_sessao(engine):
     Sessao = sessionmaker(bind=engine)
     with Sessao() as sessao:
         yield sessao

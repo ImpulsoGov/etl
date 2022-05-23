@@ -39,6 +39,7 @@ def vinculos_disseminacao(
             uf_sigla=agendamento.uf_sigla,
             ano=agendamento.periodo_data_inicio.year,
             mes=agendamento.periodo_data_inicio.month,
+            tabela_destino=agendamento.tabela_destino,
             teste=teste,
         )
 

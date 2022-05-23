@@ -16,10 +16,10 @@ from impulsoetl.cnes.vinculos import (
     COLUNAS_DATA_AAAAMM,
     DE_PARA_VINCULOS,
     TIPOS_VINCULOS,
-    carregar_vinculos,
     obter_vinculos,
     transformar_vinculos,
 )
+from impulsoetl.utilitarios.bd import carregar_dataframe
 
 
 @pytest.fixture(scope="module")
@@ -40,6 +40,28 @@ def _vinculos_transformado():
 @pytest.fixture(scope="function")
 def vinculos_transformado(_vinculos_transformado):
     return _vinculos_transformado.copy()
+
+
+@pytest.fixture(scope="function")
+def tabela_teste(sessao):
+    try:
+        # copiar estrutura da tabela original
+        sessao.execute(
+            "create table "
+            + "dados_publicos._cnes_vinculos_disseminacao ("
+            + "like dados_publicos.cnes_vinculos_disseminacao "
+            + "including all"
+            + ");",
+        )
+        sessao.commit()
+        yield "dados_publicos._cnes_vinculos_disseminacao"
+    finally:
+        sessao.rollback()
+        sessao.execute(
+            "drop table if exists "
+            + "dados_publicos._cnes_vinculos_disseminacao;",
+        )
+        sessao.commit()
 
 
 def teste_de_para(vinculos):
@@ -106,24 +128,24 @@ def teste_transformar_vinculos(sessao, vinculos):
         )
 
 
-def teste_carregar_vinculos(sessao, vinculos_transformado, caplog):
-    codigo_saida = carregar_vinculos(
+def teste_carregar_vinculos(
+    sessao,
+    vinculos_transformado,
+    tabela_teste,
+    caplog,
+):
+    carregamento_status = carregar_dataframe(
         sessao=sessao,
-        vinculos_transformado=vinculos_transformado.iloc[:10],
+        df=vinculos_transformado.iloc[:10],
+        tabela_destino=tabela_teste,
+        passo=10,
+        teste=True,
     )
 
-    assert codigo_saida == 0
+    assert carregamento_status == 0
 
     logs = caplog.text
-    assert (
-        "Carregamento concluído para a tabela "
-        + "`dados_publicos.cnes_vinculos_disseminacao`"
-    ) in logs, "Carregamento para a tabela de destino não foi concluído."
-
-    linhas_esperadas = 10
-    assert (
-        "adicionadas {} novas linhas.".format(linhas_esperadas) in logs
-    ), "Número incorreto de linhas adicionadas à tabela."
+    assert "Carregamento concluído" in logs
 
 
 @pytest.mark.integracao
@@ -135,20 +157,15 @@ def teste_carregar_vinculos(sessao, vinculos_transformado, caplog):
     "ano,mes",
     [(2021, 8)],
 )
-def teste_obter_vinculos(sessao, uf_sigla, ano, mes, caplog):
+def teste_obter_vinculos(sessao, uf_sigla, ano, mes, tabela_teste, caplog):
     obter_vinculos(
         sessao=sessao,
         uf_sigla=uf_sigla,
         ano=ano,
         mes=mes,
+        tabela_destino=tabela_teste,
         teste=True,
     )
 
     logs = caplog.text
-    assert "Carregamento concluído para a tabela " in logs
-    linhas_adicionadas = re.search("adicionadas ([0-9]+) novas linhas.", logs)
-    assert linhas_adicionadas
-    num_linhas_adicionadas = sum(
-        int(num) for num in linhas_adicionadas.groups()
-    )
-    assert num_linhas_adicionadas > 0
+    assert "Carregamento concluído" in logs

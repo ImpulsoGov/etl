@@ -87,6 +87,7 @@ Unidecode = { version = "1.3.2", optional = true }
 # e https://github.com/python-poetry/poetry/issues/845
 # GDAL = "3.3.2"
 roman = {version = "^3.3", extras = ["impulsoetl"]}
+types-psycopg2 = "^2.9.11"
 
 
 
