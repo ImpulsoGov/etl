@@ -17,7 +17,8 @@ def indicadores_regras_id_por_periodo(
         sessao.query(indicadores_regras)
         .filter(indicadores_regras.c.nome == indicador)
         .filter(indicadores_regras.c.versao_inicio <= data)
-        .filter(or_(indicadores_regras.c.versao_fim >= data, indicadores_regras.c.versao_fim == None))
+        .filter(or_(indicadores_regras.c.versao_fim >= data, indicadores_regras.c.versao_fim is None))
+        .first().id
         
     )
 
@@ -31,8 +32,7 @@ def tratamento_dados(sessao:Session, dados_sisab_indicadores:pd.DataFrame,period
     tabela_consolidada[['municipio_id_sus','numerador','denominador_estimado','denominador_informado','nota_porcentagem']] = dados_sisab_indicadores.loc[:, ['ibge','numerador','denominador_estimado','denominador_informado','nota'] ]  
     tabela_consolidada['indicadores_nome'] = indicador
     indicadores_regras_id = indicadores_regras_id_por_periodo(sessao=sessao,indicador=indicador, data=periodo)
-    tabela_consolidada['indicadores_regras_id'] = indicadores_regras_id[0][0]
-    tabela_consolidada["id"] = tabela_consolidada.apply(lambda row: uuid.uuid4(), axis=1)
+    tabela_consolidada['indicadores_regras_id'] = indicadores_regras_id
     tabela_consolidada['criacao_data'] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     tabela_consolidada['atualizacao_data'] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     periodo_cod = periodo_por_data(sessao=sessao, data=periodo)
@@ -50,7 +50,6 @@ def tratamento_dados(sessao:Session, dados_sisab_indicadores:pd.DataFrame,period
     tabela_consolidada.reset_index(drop=True, inplace=True)
 
     # Formatação de tipo
-    tabela_consolidada['id'] = tabela_consolidada['id'].astype('string')
     tabela_consolidada['municipio_id_sus'] = tabela_consolidada['municipio_id_sus'].astype('string')
     tabela_consolidada['periodo_id'] = tabela_consolidada['periodo_id'].astype('string')
     tabela_consolidada['periodo_codigo'] = tabela_consolidada['periodo_codigo'].astype('string')

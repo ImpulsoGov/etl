@@ -30,8 +30,7 @@ def carregar_indicadores(sessao: Session,indicadores_transformada:pd.DataFrame,v
         requisicao_insercao = indicadores_todas_equipes.insert().values(registros)
         sufixo_tabela = 'equipe_todas'
 
-    conector = sessao.connection()
-    conector.execute(requisicao_insercao)
+    sessao.execute(requisicao_insercao)
 
 
     logger.info(
