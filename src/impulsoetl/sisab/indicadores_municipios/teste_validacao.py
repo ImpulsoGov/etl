@@ -3,6 +3,9 @@
 # SPDX-License-Identifier: MIT
 
 
+"""Verifica a qualidade dos dados de indicadores de desempenho."""
+
+
 import pandas as pd
 
 

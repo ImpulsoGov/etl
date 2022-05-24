@@ -3,6 +3,9 @@
 # SPDX-License-Identifier: MIT
 
 
+"""Junta etapas do fluxo de ETL de indicadores de desempenho dos municípios."""
+
+
 from __future__ import annotations
 
 from datetime import date

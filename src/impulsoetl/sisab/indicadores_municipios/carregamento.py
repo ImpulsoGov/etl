@@ -3,6 +3,9 @@
 # SPDX-License-Identifier: MIT
 
 
+"""Carrega dados de indicadores de desempenho no banco de dados da Impulso."""
+
+
 from __future__ import annotations
 
 import json

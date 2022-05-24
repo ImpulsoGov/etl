@@ -3,7 +3,9 @@
 # SPDX-License-Identifier: MIT
 
 
-"""Declara representações das tabelas relativas ao SISAB."""
+"""Declara representações das tabelas relativas a indicadores de desempenho."""
+
+
 from impulsoetl.bd import tabelas
 
 indicadores_equipe_validas = tabelas[

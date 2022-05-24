@@ -3,6 +3,9 @@
 # SPDX-License-Identifier: MIT
 
 
+"""Extrai dados de indicadores de desempenho a partir do SISAB."""
+
+
 from __future__ import annotations
 
 from datetime import date

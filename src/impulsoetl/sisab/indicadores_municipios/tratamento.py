@@ -3,6 +3,9 @@
 # SPDX-License-Identifier: MIT
 
 
+"""Processa dados de indicadores de desempenho para o formato usado no BD."""
+
+
 from datetime import date, datetime
 
 import pandas as pd
