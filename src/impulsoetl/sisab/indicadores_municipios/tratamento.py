@@ -1,3 +1,8 @@
+# SPDX-FileCopyrightText: 2021, 2022 ImpulsoGov <contato@impulsogov.org>
+#
+# SPDX-License-Identifier: MIT
+
+
 from datetime import date, datetime
 
 import pandas as pd
