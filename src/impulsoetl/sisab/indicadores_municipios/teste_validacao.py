@@ -68,12 +68,6 @@ def verifica_validade_nota(df_tratado: pd.DataFrame):
         return row["nota_porcentagem"] >= 0 and row["nota_porcentagem"] <= 100
 
 
-def verifica_validade_numerador(df_tratado: pd.DataFrame) -> int:
-    """Verifica se os valores de numerador é menor que denominador estimado"""
-    for index, row in df_tratado.iterrows():
-        return row["denominador_estimado"] <= row["numerador"]
-
-
 def teste_validacao(
     df: pd.DataFrame, df_tratado: pd.DataFrame, indicador: str
 ):

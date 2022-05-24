@@ -5,7 +5,6 @@ import json
 import pandas as pd
 from sqlalchemy.orm import Session
 
-from impulsoetl.bd import logger
 from impulsoetl.loggers import logger
 from impulsoetl.sisab.indicadores_municipios.modelos import (
     indicadores_equipe_homologadas,

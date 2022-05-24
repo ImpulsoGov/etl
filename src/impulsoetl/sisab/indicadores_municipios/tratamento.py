@@ -1,4 +1,3 @@
-import uuid
 from datetime import date, datetime
 
 import pandas as pd
@@ -10,14 +9,14 @@ from impulsoetl.comum.geografias import id_sus_para_id_impulso
 from impulsoetl.sisab.indicadores_municipios.modelos import indicadores_regras
 
 
-def indicadores_regras_id_por_periodo(
+def indicadores_regras_id_por_periodo(  # noqa: WPS122
     sessao: Session,
     indicador: str,
     data=date,
 ):
 
     return (
-        sessao.query(indicadores_regras)
+        sessao.query(indicadores_regras)  # type: ignore
         .filter(indicadores_regras.c.nome == indicador)
         .filter(indicadores_regras.c.versao_inicio <= data)
         .filter(
@@ -83,8 +82,8 @@ def tratamento_dados(
     )
     periodo_cod = periodo_por_data(sessao=sessao, data=periodo)
     tabela_consolidada["periodo_codigo"] = periodo_cod[3]
-    periodo = periodo_por_codigo(sessao=sessao, codigo=periodo_cod[3])
-    tabela_consolidada["periodo_id"] = periodo.id
+    periodo_obj = periodo_por_codigo(sessao=sessao, codigo=periodo_cod[3])
+    tabela_consolidada["periodo_id"] = periodo_obj.id
     tabela_consolidada["unidade_geografica_id"] = tabela_consolidada[
         "municipio_id_sus"
     ].apply(
