@@ -9,6 +9,7 @@ import json
 
 import pandas as pd
 from sqlalchemy.orm import Session
+
 from impulsoetl.sisab.cadastros_individuais.modelos import (
     cadastros_equipe_homologadas,
     cadastros_equipe_validas,

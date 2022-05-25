@@ -38,6 +38,7 @@ def obter_parametros(
             adicionadas à uma transação, e podem ser revertidas com uma chamada
             posterior ao método [`Session.rollback()`][] da sessão gerada com o
             SQLAlchemy."""
+            
     df = extrair_parametros(visao_equipe=visao_equipe,competencia=periodo,nivel_agregacao=nivel_agregacao)
     df_tratado = tratamento_dados(sessao=sessao,dados_sisab_cadastros=df,periodo=periodo,nivel_agregacao=nivel_agregacao)
     teste_validacao(df, df_tratado,nivel_agregacao=nivel_agregacao)

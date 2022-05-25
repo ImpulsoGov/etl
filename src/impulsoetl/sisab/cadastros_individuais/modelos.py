@@ -4,6 +4,7 @@
 
 
 """Declara representações das tabelas relativas ao SISAB."""
+
 from impulsoetl.bd import tabelas
 
 cadastros_equipe_validas = tabelas[

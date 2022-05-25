@@ -2,6 +2,7 @@
 #
 # SPDX-License-Identifier: MIT
 
+
 from __future__ import annotations
 import json
 import pandas as pd
@@ -13,7 +14,6 @@ from impulsoetl.sisab.parametros_cadastro.modelos import (
     parametros_municipios_equipe_homologadas,
     parametros_municipios_equipe_validas,
 )
-
 
 
 def carregar_parametros(

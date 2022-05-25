@@ -8,6 +8,7 @@ from __future__ import annotations
 from datetime import date
 
 from sqlalchemy.orm import Session
+
 from impulsoetl.sisab.cadastros_individuais.carregamento import (
     carregar_cadastros,
 )
