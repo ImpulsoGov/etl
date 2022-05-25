@@ -240,7 +240,7 @@ def validacao_producao_ficha_por_aplicacao(
                         or (ficha_tipo == "Atendimento individual" and aplicacao_tipo == "Android ACS")
                         or (ficha_tipo == "Procedimentos" and aplicacao_tipo == "Android ACS")
                     ):
-                    break
+                    continue
                 for tipo in envio_prazo_lista:
                     envio_prazo = tipo
                     obter_validacao_ficha_aplicacao_producao(
