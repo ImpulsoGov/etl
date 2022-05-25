@@ -59,7 +59,7 @@ def verifica_diferenca_ctg_ine(
     df_tratado: pd.DataFrame,
 ) -> int:
     """Verifica se há diferença na contagem de equipes."""
-    return df['INE'].nunique() - df_tratado['ine_id'].nunique()
+    return df['INE'].nunique() - df_tratado['equipe_id_ine'].nunique()
 
 
 def teste_validacao(df: pd.DataFrame, df_tratado: pd.DataFrame) -> None:

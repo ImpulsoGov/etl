@@ -67,5 +67,3 @@ def obter_cadastros_individuais(
             cadastros_transformada=df_tratado,
             visao_equipe=visao_equipe,
         )
-        if not teste:
-            sessao.commit()
