@@ -22,18 +22,17 @@ def obter_lista_registros_inseridos(
     sessao: Session,
     tabela_destino: str,
 ) -> Query:
-    """Obtém lista de registro da períodos que já constam na tabela
+    """Obtém lista de registro da períodos que já constam na tabela.
 
-        Argumentos:
-        sessao: objeto [`sqlalchemy.orm.session.Session`][] que permite acessar a base de dados da ImpulsoGov.
+    Argumentos:
+        sessao: objeto [`sqlalchemy.orm.session.Session`][] que permite
+        acessar a base de dados da ImpulsoGov.
         tabela_destino: Tabela que irá acondicionar os dados.
-        ficha_tipo: Tipo de ficha que será filtro para a requisição no sisab
-        aplicacao_tipo: Tipo de aplicacao que será filtro para a requisicão no sisab
-        periodo_codigo: Código do período de referência.
 
 
     Retorna:
-        Lista de períodos que já constam na tabela destino filtrados por ficha e aplicação.
+        Lista de períodos que já constam na tabela destino filtrados por ficha
+        e aplicação.
 
     [`sqlalchemy.orm.session.Session`]: https://docs.sqlalchemy.org/en/14/orm/session_api.html#sqlalchemy.orm.Session
     """
@@ -53,11 +52,18 @@ def obter_data_criacao(
     periodo_codigo: str,
 ) -> datetime:
     """Obtém a data de criação do registro a partir do código do período.
+
     Argumentos:
+        sessao: objeto [`sqlalchemy.orm.session.Session`][] que permite acessar
+            a base de dados da Impulso Gov.
         tabela_destino: Tabela destino dos dados alvo da busca.
         periodo_codigo: Código do período de referência.
+
     Retorna:
-        Data de criação do registro, como um objeto `datetime`.
+        Data de criação do registro, como um objeto [`datetime`][].
+
+    [`sqlalchemy.orm.session.Session`]: https://docs.sqlalchemy.org/en/14/orm/session_api.html#sqlalchemy.orm.Session
+    [`datetime`]: https://docs.python.org/3/library/datetime.html#datetime-objects
     """
 
     tabela = tabelas[tabela_destino]
@@ -81,16 +87,18 @@ def requisicao_validacao_sisab_producao_ficha_aplicacao(
     envio_prazo: bool,
 ) -> Response:
 
-    """Obtém os dados da API
+    """Obtém relatórios de validação do SISAB, por ficha e por aplicação. 
 
-    Args:
-        periodo_competencia: Período de competência do dado a ser buscado no sisab
+    Argumentos:
+        periodo_competencia: Período de competência do dado a ser buscado no
+            SISAB.
         ficha_codigo: Código da ficha a ser preenchida na requisição
-        aplicacao_codigo: Código da aplicação a ser preenchida na requisição
-        envio_prazo(bool): Tipo de relatório de validação a ser obtido (referência check box "no prazo" no sisab)
+        aplicacao_codigo: Código da aplicação a ser preenchida na requisição.
+        envio_prazo: Tipo de relatório de validação a ser obtido (referência
+            check box "no prazo" no SISAB).
 
-    Returns:
-    resposta: Resposta da requisição do sisab, com os dados obtidos ou não
+    Retorna:
+        Resposta da requisição do SISAB, com os dados obtidos ou não.
     """
     periodo_competencia_AAAAMM = "{:%Y%m}".format(periodo_competencia)
     print(periodo_competencia_AAAAMM)
@@ -110,7 +118,8 @@ def requisicao_validacao_sisab_producao_ficha_aplicacao(
         + periodo_tipo
         + "&j_idt70="
         + periodo_competencia_AAAAMM
-        + "&colunas=regiao&colunas=uf&colunas=ibge&colunas=municipio&colunas=cnes&colunas=tp_unidade&colunas=ine&colunas=tp_equipe"
+        + "&colunas=regiao&colunas=uf&colunas=ibge&colunas=municipio"
+        + "&colunas=cnes&colunas=tp_unidade&colunas=ine&colunas=tp_equipe"
         + ficha_codigo
         + aplicacao_codigo
         + envio_tipo
@@ -135,17 +144,22 @@ def tratamento_validacao_producao_ficha_aplicacao(
 ) -> pd.DataFrame:
     """Tratamento dos dados obtidos
 
-    Args:
-    sessao: objeto [`sqlalchemy.orm.session.Session`][] que permite acessar a base de dados da ImpulsoGov.
-    data_criacao: Data de criação da tabela alvo
-    resposta (requests.models.Response): Resposta da requisição efetuada no sisab
-    ficha_tipo: Nome da ficha requisitada
-    aplicacao_tipo: Nome da aplicacao requisitada
-    envio_prazo (bool): Tipo de relatório de validação a ser obtido (referência check box "no prazo" no sisab)
+    Argumentos:
+        sessao: objeto [`sqlalchemy.orm.session.Session`][] que permite acessar
+            a base de dados da Impulso Gov.
+        data_criacao: Data de criação da tabela alvo
+        resposta: Resposta da requisição efetuada no sisab
+        ficha_tipo: Nome da ficha requisitada
+        aplicacao_tipo: Nome da aplicacao requisitada
+        envio_prazo: Tipo de relatório de validação a ser obtido (referência
+            check box "no prazo" no SISAB.)
 
 
-    Returns:
-    df: dataframe com os dados enriquecidos e tratados em formato pandas dataframe
+    Retorna:
+        Objeto [`pandas.DataFrame`][] com os dados enriquecidos e tratados.
+
+    [`sqlalchemy.orm.session.Session`]: https://docs.sqlalchemy.org/en/14/orm/session_api.html#sqlalchemy.orm.Session
+    [`pandas.DataFrame`]: https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html
     """
 
     tabela_periodos = tabelas["listas_de_codigos.periodos"]
@@ -284,10 +298,16 @@ def testes_pre_carga_validacao_ficha_aplicacao_producao(
     df_validacao_tratado: pd.DataFrame,
 ) -> None:
     """Realiza algumas validações no dataframe antes da carga ao banco.
+
     Argumentos:
-            df_validacao_tratado [`DataFrame`][] contendo os dados a serem carregados
-            na tabela de destino, já no formato utilizado pelo banco de dados
-            da ImpulsoGov.
+            df_validacao_tratado: objeto [`pandas.DataFrame`][] contendo os
+                dados a serem carregados na tabela de destino, já no formato
+                utilizado pelo banco de dados da Impulso Gov.
+    
+    Exceções:
+        Levanta uma exceção `AssertionError` caso alguma das validações falhe.
+
+    [`pandas.DataFrame`]: https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html
     """
 
     assert all(
@@ -326,20 +346,25 @@ def carregar_validacao_ficha_aplicacao_producao(
     aplicacao_tipo: str,
     tabela_destino: str,
 ) -> int:
-    """Carrega os dados de um arquivo validação do portal SISAB no BD da Impulso.
+    """Carrega relatório de validação por ficha e aplicação no BD da Impulso.
+
     Argumentos:
         sessao: objeto [`sqlalchemy.orm.session.Session`][] que permite
             acessar a base de dados da ImpulsoGov.
-        df_validacao_tratado: [`DataFrame`][] contendo os dados a serem carregados
-            na tabela de destino, já no formato utilizado pelo banco de dados
-            da ImpulsoGov.
+        df_validacao_tratado: objeto [`pandas.DataFrame`][] contendo os dados a 
+            serem carregados na tabela de destino, já no formato utilizado pelo
+            banco de dados da Impulso Gov.
         periodo_codigo: Código do período de referência.
         ficha_tipo: Nome da ficha requisitada
         aplicacao_tipo: Nome da aplicacao requisitada
         tabela_destino: Tabela que irá acondicionar os dados.
+
     Retorna:
         Código de saída do processo de carregamento. Se o carregamento
         for bem sucedido, o código de saída será `0`.
+
+    [`sqlalchemy.orm.session.Session`]: https://docs.sqlalchemy.org/en/14/orm/session_api.html#sqlalchemy.orm.Session
+    [`pandas.DataFrame`]: https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html
     """
 
     relatorio_validacao_df = df_validacao_tratado
@@ -400,10 +425,15 @@ def obter_validacao_ficha_aplicacao_producao(
     tabela_destino: str,
     periodo_codigo: str,
 ) -> None:
-    """Executa o ETL de relatórios de validação dos envios ao SISAB.
+    """Executa o ETL de relatórios de validação por ficha e aplicação do SISAB.
+
     Argumentos:
         sessao: objeto [`sqlalchemy.orm.session.Session`][] que permite
             acessar a base de dados da ImpulsoGov.
+        ficha_tipo: Nome da ficha requisitada
+        aplicacao_tipo: Nome da aplicacao requisitada
+        ficha_codigo: Código da ficha a ser preenchida na requisição
+        aplicacao_codigo: Código da aplicação a ser preenchida na requisição.
         periodo_competencia: Data de início do período de referência do dado.
         envio_prazo: Indica se os relatórios de validação a serem considerados
             apenas os enviados no prazo (`True`) ou se devem considerar tanto
@@ -412,11 +442,8 @@ def obter_validacao_ficha_aplicacao_producao(
             onde serão carregados os dados capturados (no formato
             `nome_do_schema.nome_da_tabela`).
         periodo_codigo: Código do período de referência.
+
     [`sqlalchemy.orm.session.Session`]: https://docs.sqlalchemy.org/en/14/orm/session_api.html#sqlalchemy.orm.Session
-        ficha_tipo: Nome da ficha requisitada
-        aplicacao_tipo: Nome da aplicacao requisitada
-        ficha_codigo: Código da ficha a ser preenchida na requisição
-        aplicacao_codigo: Código da aplicação a ser preenchida na requisição
     """
 
     data_criacao = obter_data_criacao(sessao, tabela_destino, periodo_codigo)
