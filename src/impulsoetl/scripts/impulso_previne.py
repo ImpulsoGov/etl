@@ -367,6 +367,7 @@ def parametros_cnes_ine_equipes_validas(
         sessao.commit()
         logger.info("OK.")
 
+
 @logger.catch
 def indicadores_municipios_equipe_validas(
     sessao: Session,
@@ -506,6 +507,7 @@ def indicadores_municipios_equipe_todas(
         conector.execute(requisicao_inserir_historico)
         sessao.commit()
         logger.info("OK.")
+
 
 @logger.catch
 def validacao_municipios_por_producao(
