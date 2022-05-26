@@ -6,6 +6,7 @@
 
 
 import re
+from datetime import date
 
 import pandas as pd
 import pytest
@@ -15,10 +16,11 @@ from impulsoetl.siasus.procedimentos import (
     COLUNAS_DATA_AAAAMM,
     DE_PARA_PA,
     TIPOS_PA,
-    carregar_pa,
+    extrair_pa,
     obter_pa,
     transformar_pa,
 )
+from impulsoetl.utilitarios.bd import carregar_dataframe
 
 
 @pytest.fixture(scope="module")
@@ -39,6 +41,27 @@ def _pa_transformada():
 @pytest.fixture(scope="function")
 def pa_transformada(_pa_transformada):
     return _pa_transformada.copy()
+
+
+@pytest.fixture(scope="function")
+def tabela_teste(sessao):
+    try:
+        # copiar estrutura da tabela original
+        sessao.execute(
+            "create table dados_publicos._siasus_procedimentos_ambulatoriais ("
+            + "like dados_publicos.siasus_procedimentos_ambulatoriais "
+            + "including all"
+            + ");",
+        )
+        sessao.commit()
+        yield "dados_publicos._siasus_procedimentos_ambulatoriais"
+    finally:
+        sessao.rollback()
+        sessao.execute(
+            "drop table if exists "
+            + "dados_publicos._siasus_procedimentos_ambulatoriais;",
+        )
+        sessao.commit()
 
 
 def teste_de_para(pa):
@@ -75,6 +98,26 @@ def teste_colunas_datas():
     assert all(col in TIPOS_PA.keys() for col in COLUNAS_DATA_AAAAMM)
 
 
+@pytest.mark.parametrize(
+    "uf_sigla,periodo_data_inicio",
+    [("SE", date(2021, 8, 1))],
+)
+def teste_extrair_pa(uf_sigla, periodo_data_inicio, passo):
+    iterador_registros_procedimentos = extrair_pa(
+        uf_sigla=uf_sigla,
+        periodo_data_inicio=periodo_data_inicio,
+        passo=passo,
+    )
+    lote_1 = next(iterador_registros_procedimentos)
+    assert isinstance(lote_1, pd.DataFrame)
+    assert len(lote_1) == passo
+    for coluna in DE_PARA_PA.keys():
+        assert coluna in lote_1
+    lote_2 = next(iterador_registros_procedimentos)
+    assert isinstance(lote_2, pd.DataFrame)
+    assert len(lote_2) > 0
+
+
 @pytest.mark.integracao
 def teste_transformar_pa(sessao, pa):
     pa_transformada = transformar_pa(
@@ -105,49 +148,40 @@ def teste_transformar_pa(sessao, pa):
         )
 
 
-def teste_carregar_pa(sessao, pa_transformada, caplog):
-    codigo_saida = carregar_pa(
+def teste_carregar_pa(sessao, pa_transformada, caplog, tabela_teste, passo):
+    codigo_saida = carregar_dataframe(
         sessao=sessao,
-        pa_transformada=pa_transformada.iloc[:10],
+        df=pa_transformada.iloc[:10],
+        tabela_destino=tabela_teste,
+        passo=passo,
+        teste=True,
     )
 
     assert codigo_saida == 0
 
     logs = caplog.text
-    assert (
-        "Carregamento concluído para a tabela "
-        + "`dados_publicos.siasus_procedimentos_ambulatoriais`"
-    ) in logs, "Carregamento para a tabela de destino não foi concluído."
-
-    linhas_esperadas = 10
-    assert (
-        "adicionadas {} novas linhas.".format(linhas_esperadas) in logs
-    ), "Número incorreto de linhas adicionadas à tabela."
+    assert "Carregamento concluído" in logs
 
 
 @pytest.mark.integracao
 @pytest.mark.parametrize(
-    "uf_sigla",
-    ["SE"],
+    "uf_sigla,periodo_data_inicio",
+    [("SE", date(2021, 8, 1))],
 )
-@pytest.mark.parametrize(
-    "ano,mes",
-    [(2021, 8)],
-)
-def teste_obter_pa(sessao, uf_sigla, ano, mes, caplog):
+def teste_obter_pa(
+    sessao,
+    uf_sigla,
+    periodo_data_inicio,
+    caplog,
+    tabela_teste,
+):
     obter_pa(
         sessao=sessao,
         uf_sigla=uf_sigla,
-        ano=ano,
-        mes=mes,
+        periodo_data_inicio=periodo_data_inicio,
+        tabela_destino=tabela_teste,
         teste=True,
     )
 
     logs = caplog.text
-    assert "Carregamento concluído para a tabela " in logs
-    linhas_adicionadas = re.search("adicionadas ([0-9]+) novas linhas.", logs)
-    assert linhas_adicionadas
-    num_linhas_adicionadas = sum(
-        int(num) for num in linhas_adicionadas.groups()
-    )
-    assert num_linhas_adicionadas > 0
+    assert "Carregamento concluído" in logs

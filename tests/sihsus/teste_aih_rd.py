@@ -6,6 +6,7 @@
 
 
 import re
+from datetime import date
 
 import pandas as pd
 import pytest
@@ -15,10 +16,11 @@ from impulsoetl.sihsus.aih_rd import (
     COLUNAS_DATA_AAAAMMDD,
     DE_PARA_AIH_RD,
     TIPOS_AIH_RD,
-    carregar_aih_rd,
+    extrair_aih_rd,
     obter_aih_rd,
     transformar_aih_rd,
 )
+from impulsoetl.utilitarios.bd import carregar_dataframe
 
 
 @pytest.fixture(scope="module")
@@ -39,6 +41,28 @@ def _aih_rd_transformada():
 @pytest.fixture(scope="function")
 def aih_rd_transformada(_aih_rd_transformada):
     return _aih_rd_transformada.copy()
+
+
+@pytest.fixture(scope="function")
+def tabela_teste(sessao):
+    try:
+        # copiar estrutura da tabela original
+        sessao.execute(
+            "create table "
+            + "dados_publicos._sihsus_aih_reduzida_disseminacao ("
+            + "like dados_publicos.sihsus_aih_reduzida_disseminacao "
+            + "including all"
+            + ");",
+        )
+        sessao.commit()
+        yield "dados_publicos._sihsus_aih_reduzida_disseminacao"
+    finally:
+        sessao.rollback()
+        sessao.execute(
+            "drop table if exists "
+            + "dados_publicos._sihsus_aih_reduzida_disseminacao;",
+        )
+        sessao.commit()
 
 
 def teste_de_para(aih_rd):
@@ -68,6 +92,26 @@ def teste_tipos(aih_rd):
 
 def teste_colunas_datas():
     assert all(col in TIPOS_AIH_RD.keys() for col in COLUNAS_DATA_AAAAMMDD)
+
+
+@pytest.mark.parametrize(
+    "uf_sigla,periodo_data_inicio",
+    [("SE", date(2021, 8, 1))],
+)
+def teste_extrair_pa(uf_sigla, periodo_data_inicio, passo):
+    iterador_registros_procedimentos = extrair_aih_rd(
+        uf_sigla=uf_sigla,
+        periodo_data_inicio=periodo_data_inicio,
+        passo=passo,
+    )
+    lote_1 = next(iterador_registros_procedimentos)
+    assert isinstance(lote_1, pd.DataFrame)
+    assert len(lote_1) == passo
+    for coluna in DE_PARA_AIH_RD.keys():
+        assert coluna in lote_1
+    lote_2 = next(iterador_registros_procedimentos)
+    assert isinstance(lote_2, pd.DataFrame)
+    assert len(lote_2) > 0
 
 
 @pytest.mark.integracao
@@ -100,49 +144,47 @@ def teste_transformar_aih_rd(sessao, aih_rd):
         )
 
 
-def teste_carregar_aih_rd(sessao, aih_rd_transformada, caplog):
-    codigo_saida = carregar_aih_rd(
+def teste_carregar_aih_rd(
+    sessao,
+    aih_rd_transformada,
+    tabela_teste,
+    passo,
+    caplog,
+):
+    carregamento_status = carregar_dataframe(
         sessao=sessao,
-        aih_rd_transformada=aih_rd_transformada.iloc[:10],
+        df=aih_rd_transformada.iloc[:10],
+        tabela_destino=tabela_teste,
+        passo=passo,
+        teste=True,
     )
 
-    assert codigo_saida == 0
+    assert carregamento_status == 0
 
     logs = caplog.text
-    assert (
-        "Carregamento concluído para a tabela "
-        + "`dados_publicos.sihsus_aih_reduzida_disseminacao`"
-    ) in logs, "Carregamento para a tabela de destino não foi concluído."
-
-    linhas_esperadas = 10
-    assert (
-        "adicionadas {} novas linhas.".format(linhas_esperadas) in logs
-    ), "Número incorreto de linhas adicionadas à tabela."
+    assert "Carregamento concluído" in logs
 
 
 @pytest.mark.integracao
 @pytest.mark.parametrize(
-    "uf_sigla",
-    ["SE"],
+    "uf_sigla,periodo_data_inicio",
+    [("SE", date(2021, 8, 1))],
 )
-@pytest.mark.parametrize(
-    "ano,mes",
-    [(2021, 8)],
-)
-def teste_obter_aih_rd(sessao, uf_sigla, ano, mes, caplog):
+def teste_obter_aih_rd(
+    sessao,
+    uf_sigla,
+    periodo_data_inicio,
+    tabela_teste,
+    caplog,
+):
     obter_aih_rd(
         sessao=sessao,
         uf_sigla=uf_sigla,
-        ano=ano,
-        mes=mes,
+        periodo_data_inicio=periodo_data_inicio,
+        tabela_destino=tabela_teste,
         teste=True,
     )
+    sessao.commit()
 
     logs = caplog.text
-    assert "Carregamento concluído para a tabela " in logs
-    linhas_adicionadas = re.search("adicionadas ([0-9]+) novas linhas.", logs)
-    assert linhas_adicionadas
-    num_linhas_adicionadas = sum(
-        int(num) for num in linhas_adicionadas.groups()
-    )
-    assert num_linhas_adicionadas > 0
+    assert "Carregamento concluído" in logs

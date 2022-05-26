@@ -6,23 +6,26 @@
 """Obtém dados dos Boletins de Produção Ambulatorial individualizados (BPA-i).
 """
 
+
 from __future__ import annotations
 
-import json
+import os
 import uuid
-from typing import Final
+from datetime import date
+from typing import Final, Generator
 
 import janitor  # noqa: F401  # nopycln: import
 import numpy as np
 import pandas as pd
 from frozendict import frozendict
-from pysus.online_data.SIA import download
 from sqlalchemy.orm import Session
 
 from impulsoetl.comum.datas import periodo_por_data
 from impulsoetl.comum.geografias import id_sus_para_id_impulso
 from impulsoetl.loggers import logger
-from impulsoetl.siasus.modelos import bpa_i as tabela_destino
+from impulsoetl.utilitarios.bd import carregar_dataframe
+from impulsoetl.utilitarios.datasus_ftp import extrair_dbc_lotes
+
 
 DE_PARA_BPA_I: Final[frozendict] = frozendict(
     {
@@ -123,6 +126,40 @@ COLUNAS_NUMERICAS: Final[list[str]] = [
     for nome_coluna, tipo_coluna in TIPOS_BPA_I.items()
     if tipo_coluna.lower() == "int64" or tipo_coluna.lower() == "float64"
 ]
+
+
+def extrair_bpa_i(
+    uf_sigla: str,
+    periodo_data_inicio: date,
+    passo: int = 10000,
+) -> Generator[pd.DataFrame, None, None]:
+    """Extrai registros de Boletins de Produção Ambulatorial do FTP do DataSUS.
+
+    Argumentos:
+        uf_sigla: Sigla da Unidade Federativa cujos procedimentos se pretende
+            obter.
+        periodo_data_inicio: Dia de início da competência desejada,
+            representado como um objeto [`datetime.date`][].
+        passo: Número de registros que devem ser convertidos em DataFrame a
+            cada iteração.
+
+    Gera:
+        A cada iteração, devolve um objeto [`pandas.DataFrames`][] com um
+        trecho do arquivo de procedimentos ambulatoriais lido e convertido.
+
+    [`pandas.DataFrame`]: https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html
+    [`datetime.date`]: https://docs.python.org/3/library/datetime.html#date-objects
+    """
+
+    return extrair_dbc_lotes(
+        ftp="ftp.datasus.gov.br",
+        caminho_diretorio="/dissemin/publicos/SIASUS/200801_/Dados",
+        arquivo_nome="BI{uf_sigla}{periodo_data_inicio:%y%m}.dbc".format(
+            uf_sigla=uf_sigla,
+            periodo_data_inicio=periodo_data_inicio,
+        ),
+        passo=passo,
+    )
 
 
 def transformar_bpa_i(
@@ -228,96 +265,11 @@ def transformar_bpa_i(
     return bpa_i_transformada
 
 
-def carregar_bpa_i(
-    sessao: Session,
-    bpa_i_transformada: pd.DataFrame,
-    passo: int = 1000,
-) -> int:
-    """Carrega os dados de um arquivo de disseminação de BPAi no BD da Impulso.
-
-    Argumentos:
-        sessao: objeto [`sqlalchemy.orm.session.Session`][] que permite
-            acessar a base de dados da ImpulsoGov.
-        bpa_i_transformada: [`DataFrame`][] contendo os dados a serem
-            carregados na tabela de destino, já no formato utilizado pelo banco
-            de dados da ImpulsoGov (conforme retornado pela função
-            [`transformar_bpa_i()`][]).
-        passo: Indica quantos registros devem ser enviados para a base de dados
-            de cada vez.
-
-    Retorna:
-        Código de saída do processo de carregamento. Se o carregamento
-        for bem sucedido, o código de saída será `0`.
-
-    [`sqlalchemy.orm.session.Session`]: https://docs.sqlalchemy.org/en/14/orm/session_api.html#sqlalchemy.orm.Session
-    [`DataFrame`]: https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html
-    [`transformar_bpa_i()`]: impulsoetl.siasus.bpa_i.transformar_bpa_i
-    """
-
-    tabela_nome = tabela_destino.key
-    num_registros = len(bpa_i_transformada)
-    logger.info(
-        "Carregando {num_registros} registros de BPA-i para a tabela"
-        "`{tabela_nome}`...",
-        num_registros=num_registros,
-        tabela_nome=tabela_nome,
-    )
-
-    logger.info("Processando dados para JSON e de volta para um dicionário...")
-    registros = json.loads(
-        bpa_i_transformada.to_json(
-            orient="records",
-            date_format="iso",
-        )
-    )
-
-    conector = sessao.connection()
-
-    # Iterar por fatias do total de registro. Isso é necessário porque
-    # executar todas as inserções em uma única operação acarretaria um consumo
-    # proibitivo de memória
-    contador = 0
-    while contador < num_registros:
-        logger.info(
-            "Enviando registros para a tabela de destino "
-            "({contador} de {num_registros})...",
-            contador=contador,
-            num_registros=num_registros,
-        )
-        subconjunto_registros = registros[
-            contador : min(num_registros, contador + passo)
-        ]
-        requisicao_insercao = tabela_destino.insert().values(
-            subconjunto_registros,
-        )
-        try:
-            conector.execute(requisicao_insercao)
-        except Exception as err:
-            mensagem_erro = str(err)
-            if len(mensagem_erro) > 500:
-                mensagem_erro = mensagem_erro[:500]
-            logger.error(mensagem_erro)
-            breakpoint()
-            sessao.rollback()
-            return 1
-
-        contador += passo
-
-    logger.info(
-        "Carregamento concluído para a tabela `{tabela_nome}`: "
-        + "adicionadas {linhas_adicionadas} novas linhas.",
-        tabela_nome=tabela_nome,
-        linhas_adicionadas=num_registros,
-    )
-
-    return 0
-
-
 def obter_bpa_i(
     sessao: Session,
     uf_sigla: str,
-    ano: int,
-    mes: int,
+    periodo_data_inicio: date,
+    tabela_destino: str,
     teste: bool = False,
     **kwargs,
 ) -> None:
@@ -327,8 +279,10 @@ def obter_bpa_i(
         sessao: objeto [`sqlalchemy.orm.session.Session`][] que permite
             acessar a base de dados da ImpulsoGov.
         uf_sigla: Sigla da Unidade Federativa cujos BPA-i's se pretende obter.
-        ano: Ano dos BPA-i's que se pretende obter.
-        mes: Mês das BPA-i's que se pretende obter.
+        periodo_data_inicio: Dia de início da competência desejada,
+            representado como um objeto [`datetime.date`][].
+        tabela_destino: nome da tabela de destino, qualificado com o nome do
+            schema (formato `nome_do_schema.nome_da_tabela`).
         teste: Indica se as modificações devem ser de fato escritas no banco de
             dados (`False`, padrão). Caso seja `True`, as modificações são
             adicionadas à uma transação, e podem ser revertidas com uma chamada
@@ -337,36 +291,49 @@ def obter_bpa_i(
 
     [`sqlalchemy.orm.session.Session`]: https://docs.sqlalchemy.org/en/14/orm/session_api.html#sqlalchemy.orm.Session
     [`sqlalchemy.engine.Row`]: https://docs.sqlalchemy.org/en/14/core/connections.html#sqlalchemy.engine.Row
+    [`datetime.date`]: https://docs.python.org/3/library/datetime.html#date-objects
     """
     logger.info(
         "Iniciando captura de BPA-i's para Unidade Federativa "
-        + "'{uf_sigla}' na competencia de {mes}/{ano}.",
-        uf_sigla=uf_sigla,
-        ano=ano,
-        mes=mes,
+        + "Federativa '{}' na competencia de {:%m/%Y}.",
+        uf_sigla,
+        periodo_data_inicio,
     )
-    logger.info("Fazendo download do FTP público do DataSUS...")
-    bpa_i = download(uf_sigla, year=ano, month=mes, group=["BI"])
 
-    # TODO: paralelizar transformação e carregamento de fatias do DataFrame
-    # original
-    if teste:
-        passo = 10
-        if len(bpa_i) > 1000:
-            bpa_i = bpa_i[:1000]
-            logger.warning(
-                "DataFrame de BPA-i's truncado para 1000 registros para fins "
-                + "de teste.",
-            )
-    else:
-        passo = 1000
+    # obter tamanho do lote de processamento
+    passo = int(os.getenv("IMPULSOETL_LOTE_TAMANHO", 100000))
 
-    bpa_i_transformada = transformar_bpa_i(sessao=sessao, bpa_i=bpa_i)
-
-    carregar_bpa_i(
-        sessao=sessao,
-        bpa_i_transformada=bpa_i_transformada,
+    bpa_i_lotes = extrair_bpa_i(
+        uf_sigla=uf_sigla,
+        periodo_data_inicio=periodo_data_inicio,
         passo=passo,
     )
-    if not teste:
-        sessao.commit()
+
+    contador = 0
+    for bpa_i_lote in bpa_i_lotes:
+        bpa_i_transformada = transformar_bpa_i(
+            sessao=sessao,
+            bpa_i=bpa_i_lote,
+        )
+
+        carregamento_status = carregar_dataframe(
+            sessao=sessao,
+            df=bpa_i_transformada,
+            tabela_destino=tabela_destino,
+            passo=None,
+            teste=teste,
+        )
+        if carregamento_status != 0:
+            raise RuntimeError(
+                "Execução interrompida em razão de um erro no "
+                + "carregamento."
+            )
+        contador += len(bpa_i_lote)
+        if teste and contador > 1000:
+            logger.info("Execução interrompida para fins de teste.")
+            break
+
+    if teste:
+        logger.info("Desfazendo alterações realizadas durante o teste...")
+        sessao.rollback()
+        logger.info("Todas transações foram desfeitas com sucesso!")
