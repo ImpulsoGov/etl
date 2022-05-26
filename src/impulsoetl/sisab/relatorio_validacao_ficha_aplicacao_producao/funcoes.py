@@ -313,24 +313,17 @@ def testes_pre_carga_validacao_ficha_aplicacao_producao(
     assert all(
         [
             sum(df_validacao_tratado["cnes_id"].isna()) == 0,
-            "Dado ausente em cnes_id",
             sum(df_validacao_tratado["ine_id"].isna()) == 0,
-            "ine_id ausente",
             sum(df_validacao_tratado["ficha"].isna()) == 0,
-            "Nome da ficha ausente",
             sum(df_validacao_tratado["aplicacao"].isna()) == 0,
-            "Nome da aplicacao ausente",
             sum(df_validacao_tratado["validacao_nome"].isna()) == 0,
-            "Nome da validacão ausente",
             sum(df_validacao_tratado["municipio_nome"].isna()) == 0,
-            "Nome de município ausente",
-            df_validacao_tratado["unidade_geografica_id"].nunique()
-            == df_validacao_tratado["municipio_id_sus"].nunique(),
-            "Falta de unidade geográfica",
+            (
+                df_validacao_tratado["unidade_geografica_id"].nunique()
+                == df_validacao_tratado["municipio_id_sus"].nunique()
+            ),
             sum(df_validacao_tratado["validacao_quantidade"]) > 0,
-            "Quantidade de validação inválida",
             len(df_validacao_tratado.columns) == 16,
-            "Falta de coluna no dataframe",
         ]
     )
 
