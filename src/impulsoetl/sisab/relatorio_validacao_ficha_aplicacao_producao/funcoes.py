@@ -1,13 +1,14 @@
 # flake8: noqa
 # type: ignore
 import json
-from datetime import datetime
+from datetime import date, datetime
 from io import StringIO
 
 import pandas as pd
 import requests
+from requests import Response
 from sqlalchemy import delete
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Query, Session
 
 from impulsoetl.bd import tabelas
 from impulsoetl.comum.geografias import id_sus_para_id_impulso
@@ -17,7 +18,10 @@ from impulsoetl.sisab.relatorio_validacao_ficha_aplicacao_producao.suporte_extra
 )
 
 
-def obter_lista_registros_inseridos(sessao: Session, tabela_destino: str):
+def obter_lista_registros_inseridos(
+    sessao: Session,
+    tabela_destino: str,
+) -> Query:
     """Obtém lista de registro da períodos que já constam na tabela
 
         Argumentos:
@@ -71,11 +75,11 @@ def obter_data_criacao(
 
 
 def requisicao_validacao_sisab_producao_ficha_aplicacao(
-    periodo_competencia,
+    periodo_competencia: date,
     ficha_codigo: str,
     aplicacao_codigo: str,
     envio_prazo: bool,
-):
+) -> Response:
 
     """Obtém os dados da API
 
@@ -88,8 +92,8 @@ def requisicao_validacao_sisab_producao_ficha_aplicacao(
     Returns:
     resposta: Resposta da requisição do sisab, com os dados obtidos ou não
     """
-    periodo_competencia = "{:%Y%m}".format(periodo_competencia)
-    print(periodo_competencia)
+    periodo_competencia_AAAAMM = "{:%Y%m}".format(periodo_competencia)
+    print(periodo_competencia_AAAAMM)
 
     if envio_prazo == True:
         envio_tipo = "&envioPrazo=on"
@@ -105,7 +109,7 @@ def requisicao_validacao_sisab_producao_ficha_aplicacao(
         "j_idt44=j_idt44&unidGeo=brasil&periodo="
         + periodo_tipo
         + "&j_idt70="
-        + periodo_competencia
+        + periodo_competencia_AAAAMM
         + "&colunas=regiao&colunas=uf&colunas=ibge&colunas=municipio&colunas=cnes&colunas=tp_unidade&colunas=ine&colunas=tp_equipe"
         + ficha_codigo
         + aplicacao_codigo
@@ -122,13 +126,13 @@ def requisicao_validacao_sisab_producao_ficha_aplicacao(
 
 def tratamento_validacao_producao_ficha_aplicacao(
     sessao: Session,
-    data_criacao,
-    resposta,
+    data_criacao: datetime,
+    resposta: Response,
     ficha_tipo: str,
     aplicacao_tipo: str,
     envio_prazo: str,
     periodo_codigo: str,
-):
+) -> pd.DataFrame:
     """Tratamento dos dados obtidos
 
     Args:
@@ -278,7 +282,7 @@ def tratamento_validacao_producao_ficha_aplicacao(
 
 def testes_pre_carga_validacao_ficha_aplicacao_producao(
     df_validacao_tratado: pd.DataFrame,
-):
+) -> None:
     """Realiza algumas validações no dataframe antes da carga ao banco.
     Argumentos:
             df_validacao_tratado [`DataFrame`][] contendo os dados a serem carregados
@@ -311,6 +315,7 @@ def testes_pre_carga_validacao_ficha_aplicacao_producao(
     )
 
     logger.info("Testes OK!")
+    return None
 
 
 def carregar_validacao_ficha_aplicacao_producao(
@@ -320,7 +325,7 @@ def carregar_validacao_ficha_aplicacao_producao(
     ficha_tipo: str,
     aplicacao_tipo: str,
     tabela_destino: str,
-):
+) -> int:
     """Carrega os dados de um arquivo validação do portal SISAB no BD da Impulso.
     Argumentos:
         sessao: objeto [`sqlalchemy.orm.session.Session`][] que permite
@@ -386,7 +391,7 @@ def carregar_validacao_ficha_aplicacao_producao(
 
 def obter_validacao_ficha_aplicacao_producao(
     sessao: Session,
-    periodo_competencia,
+    periodo_competencia: date,
     ficha_tipo: str,
     aplicacao_tipo: str,
     ficha_codigo: str,
