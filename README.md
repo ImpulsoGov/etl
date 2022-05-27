@@ -81,4 +81,4 @@ $ docker run -p 8888:8888 impulsoprevine:latest
 
 Tanto o pacote `impulsoetl` quanto o `impulsoprevine` utilizam ações do [GitHub Actions](https://docs.github.com/actions) para enviar imagens para o [DockerHub da Impulso Gov](https://hub.docker.com/orgs/impulsogov/repositories) sempre que há uma atualização da branch principal do repositório. Diariamente, essa imagem é baixada para uma máquina virtual que executa as capturas pendentes.
 
-Para executar os pacotes em produção, defina as credenciais necessárias como [segredos no repositório](https://docs.github.com/en/actions/security-guides/encrypted-secrets). Se necessário, ajuste os arquivos do diretório [.github/actions][./.github/actions] com as definições apropriadas para a execução das tarefas de implantação e de execução dos fluxos de ETL.
+Para executar os pacotes em produção, defina as credenciais necessárias como [segredos no repositório](https://docs.github.com/en/actions/security-guides/encrypted-secrets). Se necessário, ajuste os arquivos do diretório [.github/actions](./.github/actions) com as definições apropriadas para a execução das tarefas de implantação e de execução dos fluxos de ETL.
