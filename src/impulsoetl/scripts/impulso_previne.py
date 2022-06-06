@@ -367,6 +367,145 @@ def parametros_cnes_ine_equipes_validas(
         sessao.commit()
         logger.info("OK.")
 
+@logger.catch
+def indicadores_municipios_equipe_validas(
+    sessao: Session,
+    teste: bool = False,
+) -> None:
+
+    logger.info(
+        "Capturando Indicadores municipais conisderando apenas equipes válidas.",
+    )
+    # este já é o ID definitivo da operação!
+    operacao_id = "133e8b75-f801-42f5-88de-611c3a1d0aa7"
+    visao_equipe = "equipes-validas"
+    agendamentos_cadastros = (
+        sessao.query(agendamentos)
+        .filter(agendamentos.c.operacao_id == operacao_id)
+        .all()
+    )
+
+    for agendamento in agendamentos_cadastros:
+        periodo = agendamento.periodo_data_inicio
+        obter_indicadores_desempenho(
+            sessao=sessao,
+            visao_equipe=visao_equipe,
+            quadrimestre=periodo,
+            teste=teste,
+        )
+        if teste:
+            break
+
+        logger.info("Registrando captura bem-sucedida...")
+        # NOTE: necessário registrar a operação de captura em nível de UF,
+        # mesmo que o gatilho na tabela de destino no banco de dados já
+        # registre a captura em nível dos municípios automaticamente quando há
+        # a inserção de uma nova linha
+        requisicao_inserir_historico = capturas_historico.insert(
+            {
+                "operacao_id": operacao_id,
+                "periodo_id": agendamento.periodo_id,
+                "unidade_geografica_id": agendamento.unidade_geografica_id,
+            }
+        )
+        conector = sessao.connection()
+        conector.execute(requisicao_inserir_historico)
+        sessao.commit()
+        logger.info("OK.")
+
+
+@logger.catch
+def indicadores_municipios_equipes_homologadas(
+    sessao: Session,
+    teste: bool = False,
+) -> None:
+
+    logger.info(
+        "Capturando Cadastros de equipes válidas por município.",
+    )
+
+    operacao_id = "584b190b-7a4c-4577-b617-1d847655affc"
+    visao_equipe = "equipes-homologadas"
+    agendamentos_cadastros = (
+        sessao.query(agendamentos)
+        .filter(agendamentos.c.operacao_id == operacao_id)
+        .all()
+    )
+
+    for agendamento in agendamentos_cadastros:
+        periodo = agendamento.periodo_data_inicio
+        obter_indicadores_desempenho(
+            sessao=sessao,
+            visao_equipe=visao_equipe,
+            quadrimestre=periodo,
+            teste=teste,
+        )
+        if teste:
+            break
+
+        logger.info("Registrando captura bem-sucedida...")
+        # NOTE: necessário registrar a operação de captura em nível de UF,
+        # mesmo que o gatilho na tabela de destino no banco de dados já
+        # registre a captura em nível dos municípios automaticamente quando há
+        # a inserção de uma nova linha
+        requisicao_inserir_historico = capturas_historico.insert(
+            {
+                "operacao_id": operacao_id,
+                "periodo_id": agendamento.periodo_id,
+                "unidade_geografica_id": agendamento.unidade_geografica_id,
+            }
+        )
+        conector = sessao.connection()
+        conector.execute(requisicao_inserir_historico)
+        sessao.commit()
+        logger.info("OK.")
+
+
+@logger.catch
+def indicadores_municipios_equipe_todas(
+    sessao: Session,
+    teste: bool = False,
+) -> None:
+
+    logger.info(
+        "Capturando Cadastros de equipes válidas por município.",
+    )
+
+    operacao_id = "9d6b0b5d-bae7-4785-8c7b-ff55dc4386e0"
+    visao_equipe = "todas-equipes"
+    agendamentos_cadastros = (
+        sessao.query(agendamentos)
+        .filter(agendamentos.c.operacao_id == operacao_id)
+        .all()
+    )
+
+    for agendamento in agendamentos_cadastros:
+        periodo = agendamento.periodo_data_inicio
+        obter_indicadores_desempenho(
+            sessao=sessao,
+            visao_equipe=visao_equipe,
+            quadrimestre=periodo,
+            teste=teste,
+        )
+        if teste:
+            break
+
+        logger.info("Registrando captura bem-sucedida...")
+        # NOTE: necessário registrar a operação de captura em nível de UF,
+        # mesmo que o gatilho na tabela de destino no banco de dados já
+        # registre a captura em nível dos municípios automaticamente quando há
+        # a inserção de uma nova linha
+        requisicao_inserir_historico = capturas_historico.insert(
+            {
+                "operacao_id": operacao_id,
+                "periodo_id": agendamento.periodo_id,
+                "unidade_geografica_id": agendamento.unidade_geografica_id,
+            }
+        )
+        conector = sessao.connection()
+        conector.execute(requisicao_inserir_historico)
+        sessao.commit()
+        logger.info("OK.")
 
 @logger.catch
 def indicadores_municipios_equipe_validas(
