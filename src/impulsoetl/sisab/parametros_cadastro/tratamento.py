@@ -11,10 +11,10 @@ def tratamento_dados(sessao: Session,dados_sisab_cadastros:pd.DataFrame,periodo:
     tabela_consolidada = pd.DataFrame(columns=['municipio_id_sus','periodo_id','periodo_codigo','parametro'])
     periodo_cod = periodo_por_data(sessao=sessao, data=periodo)
     if nivel_agregacao == 'estabelecimentos_equipes':
-        tabela_consolidada[['municipio_id_sus', 'cnes_id', 'cnes_nome', 'ine_id', 'parametro']] = dados_sisab_cadastros.loc[:, ['IBGE', 'CNES', 'Nome UBS', 'INE', 'parametro']]
+        tabela_consolidada[['municipio_id_sus', 'cnes_id', 'cnes_nome', 'equipe_id_ine', 'parametro']] = dados_sisab_cadastros.loc[:, ['IBGE', 'CNES', 'Nome UBS', 'INE', 'parametro']]
         tabela_consolidada['cnes_id'] = tabela_consolidada['cnes_id'].astype('string')
         tabela_consolidada['cnes_nome'] = tabela_consolidada['cnes_nome'].astype('string')
-        tabela_consolidada['ine_id'] = tabela_consolidada['ine_id'].astype('string')
+        tabela_consolidada['equipe_id_ine'] = tabela_consolidada['equipe_id_ine'].astype('string')
     else:
         tabela_consolidada[['municipio_id_sus','parametro']] = dados_sisab_cadastros.loc[:, ['IBGE', 'parametro']]  
     tabela_consolidada['periodo_codigo'] = periodo_cod[3]

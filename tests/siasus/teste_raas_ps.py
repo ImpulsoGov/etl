@@ -7,6 +7,7 @@
 
 
 import re
+from datetime import date
 
 import pandas as pd
 import pytest
@@ -16,10 +17,11 @@ from impulsoetl.siasus.raas_ps import (
     COLUNAS_DATA_AAAAMMDD,
     DE_PARA_RAAS_PS,
     TIPOS_RAAS_PS,
-    carregar_raas_ps,
+    extrair_raas_ps,
     obter_raas_ps,
     transformar_raas_ps,
 )
+from impulsoetl.utilitarios.bd import carregar_dataframe
 
 
 @pytest.fixture(scope="module")
@@ -40,6 +42,28 @@ def _raas_ps_transformada():
 @pytest.fixture(scope="function")
 def raas_ps_transformada(_raas_ps_transformada):
     return _raas_ps_transformada.copy()
+
+
+@pytest.fixture(scope="function")
+def tabela_teste(sessao):
+    try:
+        # copiar estrutura da tabela original
+        sessao.execute(
+            "create table "
+            + "dados_publicos._siasus_raas_psicossocial_disseminacao ("
+            + "like dados_publicos.siasus_raas_psicossocial_disseminacao "
+            + "including all"
+            + ");",
+        )
+        sessao.commit()
+        yield "dados_publicos._siasus_raas_psicossocial_disseminacao"
+    finally:
+        sessao.rollback()
+        sessao.execute(
+            "drop table if exists "
+            + "dados_publicos._siasus_raas_psicossocial_disseminacao;",
+        )
+        sessao.commit()
 
 
 def teste_de_para(raas_ps):
@@ -66,6 +90,28 @@ def teste_tipos():
 def teste_colunas_datas():
     assert all(col in TIPOS_RAAS_PS.keys() for col in COLUNAS_DATA_AAAAMM)
     assert all(col in TIPOS_RAAS_PS.keys() for col in COLUNAS_DATA_AAAAMMDD)
+
+
+@pytest.mark.parametrize(
+    "uf_sigla,periodo_data_inicio",
+    [("SE", date(2021, 8, 1))],
+)
+def teste_extrair_raas_ps(uf_sigla, periodo_data_inicio, passo):
+    iterador_registros_procedimentos = extrair_raas_ps(
+        uf_sigla=uf_sigla,
+        periodo_data_inicio=periodo_data_inicio,
+        passo=passo,
+    )
+    lote_1 = next(iterador_registros_procedimentos)
+    assert isinstance(lote_1, pd.DataFrame)
+    assert len(lote_1) == 100
+    colunas_encontradas = [col.strip() for col in lote_1.columns]
+    colunas_previstas = [col.strip() for col in DE_PARA_RAAS_PS.keys()]
+    for coluna_prevista in colunas_previstas:
+        assert coluna_prevista in colunas_encontradas
+    lote_2 = next(iterador_registros_procedimentos)
+    assert isinstance(lote_2, pd.DataFrame)
+    assert len(lote_2) == 100
 
 
 @pytest.mark.integracao
@@ -98,49 +144,47 @@ def teste_transformar_raas_ps(sessao, raas_ps):
         )
 
 
-def teste_carregar_raas_ps(sessao, raas_ps_transformada, caplog):
-    codigo_saida = carregar_raas_ps(
+def teste_carregar_raas_ps(
+    sessao,
+    raas_ps_transformada,
+    tabela_teste,
+    passo,
+    caplog,
+):
+    codigo_saida = carregar_dataframe(
         sessao=sessao,
-        raas_ps_transformada=raas_ps_transformada.iloc[:10],
+        df=raas_ps_transformada.iloc[:10],
+        tabela_destino=tabela_teste,
+        passo=passo,
+        teste=True,
     )
 
     assert codigo_saida == 0
 
     logs = caplog.text
-    assert (
-        "Carregamento concluído para a tabela "
-        + "`dados_publicos.siasus_raas_psicossocial_disseminacao`"
-    ) in logs, "Carregamento para a tabela de destino não foi concluído."
-
-    linhas_esperadas = 10
-    assert (
-        "adicionadas {} novas linhas.".format(linhas_esperadas) in logs
-    ), "Número incorreto de linhas adicionadas à tabela."
+    assert "Carregamento concluído" in logs
 
 
 @pytest.mark.integracao
 @pytest.mark.parametrize(
-    "uf_sigla",
-    ["SE"],
+    "uf_sigla,periodo_data_inicio",
+    [("SE", date(2021, 8, 1))],
 )
-@pytest.mark.parametrize(
-    "ano,mes",
-    [(2021, 8)],
-)
-def teste_obter_raas_ps(sessao, uf_sigla, ano, mes, caplog):
+def teste_obter_raas_ps(
+    sessao,
+    uf_sigla,
+    periodo_data_inicio,
+    tabela_teste,
+    caplog,
+):
     obter_raas_ps(
         sessao=sessao,
         uf_sigla=uf_sigla,
-        ano=ano,
-        mes=mes,
+        periodo_data_inicio=periodo_data_inicio,
+        tabela_destino=tabela_teste,
         teste=True,
     )
+    sessao.commit()
 
     logs = caplog.text
-    assert "Carregamento concluído para a tabela " in logs
-    linhas_adicionadas = re.search("adicionadas ([0-9]+) novas linhas.", logs)
-    assert linhas_adicionadas
-    num_linhas_adicionadas = sum(
-        int(num) for num in linhas_adicionadas.groups()
-    )
-    assert num_linhas_adicionadas > 0
+    assert "Carregamento concluído" in logs

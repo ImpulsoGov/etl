@@ -2,9 +2,10 @@
 #
 # SPDX-License-Identifier: MIT
 
+
 import uuid
-from datetime import datetime
-from datetime import date
+from datetime import date, datetime
+
 import pandas as pd
 from sqlalchemy.orm import Session
 from impulsoetl.comum.datas import periodo_por_codigo, periodo_por_data
@@ -26,7 +27,7 @@ def tratamento_dados(
             "periodo_codigo",
             "cnes_id",
             "cnes_nome",
-            "ine_id",
+            "equipe_id_ine",
             "quantidade",
             "criterio_pontuacao",
             "criacao_data",
@@ -36,7 +37,7 @@ def tratamento_dados(
 
     periodo_cod = periodo_por_data(sessao=sessao, data=periodo)
     tabela_consolidada[
-        ["municipio_id_sus", "cnes_id", "cnes_nome", "ine_id", "quantidade"]
+        ["municipio_id_sus", "cnes_id", "cnes_nome", "equipe_id_ine", "quantidade"]
     ] = dados_sisab_cadastros.loc[
         :, ["IBGE", "CNES", "Nome UBS", "INE", "quantidade"]
     ]
@@ -53,8 +54,8 @@ def tratamento_dados(
         "%Y-%m-%d %H:%M:%S"
     )
 
-    periodo = periodo_por_codigo(sessao=sessao, codigo=periodo_cod[3])
-    tabela_consolidada["periodo_id"] = periodo.id
+    periodo_obj = periodo_por_codigo(sessao=sessao, codigo=periodo_cod[3])
+    tabela_consolidada["periodo_id"] = periodo_obj.id
     tabela_consolidada["unidade_geografica_id"] = tabela_consolidada[
         "municipio_id_sus"
     ].apply(
@@ -83,7 +84,7 @@ def tratamento_dados(
     tabela_consolidada["unidade_geografica_id"] = tabela_consolidada[
         "unidade_geografica_id"
     ].astype("string")
-    tabela_consolidada["ine_id"] = tabela_consolidada["ine_id"].astype(
+    tabela_consolidada["equipe_id_ine"] = tabela_consolidada["equipe_id_ine"].astype(
         "string"
     )
     tabela_consolidada["quantidade"] = tabela_consolidada["quantidade"].astype(

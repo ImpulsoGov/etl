@@ -1,6 +1,14 @@
+# SPDX-FileCopyrightText: 2022 ImpulsoGov <contato@impulsogov.org>
+#
+# SPDX-License-Identifier: MIT
+
+
 from __future__ import annotations
-from sqlalchemy.orm import Session
+
 from datetime import date
+
+from sqlalchemy.orm import Session
+
 from impulsoetl.sisab.cadastros_individuais.carregamento import (
     carregar_cadastros,
 )
@@ -21,6 +29,7 @@ def obter_cadastros_individuais(
     teste: bool = True,
 ) -> None:
     """Extrai, transforma e carrega dados de cadastros de equipes pelo SISAB.
+    
     Argumentos:
         sessao: objeto [`sqlalchemy.orm.session.Session`][] que permite
             acessar a base de dados da ImpulsoGov.
@@ -37,7 +46,8 @@ def obter_cadastros_individuais(
             dados (`False`, padrão). Caso seja `True`, as modificações são
             adicionadas à uma transação, e podem ser revertidas com uma chamada
             posterior ao método [`Session.rollback()`][] da sessão gerada com o
-            SQLAlchemy."""
+            SQLAlchemy.
+    """
 
     for status_ponderacao in com_ponderacao:
         df = extrair_cadastros_individuais(
@@ -57,5 +67,3 @@ def obter_cadastros_individuais(
             cadastros_transformada=df_tratado,
             visao_equipe=visao_equipe,
         )
-        if not teste:
-            sessao.commit()

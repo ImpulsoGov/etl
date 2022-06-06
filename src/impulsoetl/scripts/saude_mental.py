@@ -18,7 +18,6 @@ from impulsoetl.siasus.raas_ps import obter_raas_ps
 from impulsoetl.sihsus.aih_rd import obter_aih_rd
 from impulsoetl.sisab.producao import obter_relatorio_producao
 
-
 agendamentos = tabelas["configuracoes.capturas_agendamentos"]
 capturas_historico = tabelas["configuracoes.capturas_historico"]
 
@@ -47,7 +46,7 @@ def resolutividade_aps_por_condicao(
         + "individuais) por condição de saúde avaliada.",
     )
 
-    operacao_id = ("bdbeb1c4-bdc6-432f-a3b4-b6ca306e32c9")
+    operacao_id = "bdbeb1c4-bdc6-432f-a3b4-b6ca306e32c9"
     agendamentos_resolutividade_por_condicao = (
         sessao.query(agendamentos)
         .filter(agendamentos.c.operacao_id == operacao_id)
@@ -133,8 +132,8 @@ def raas_disseminacao(
         obter_raas_ps(
             sessao=sessao,
             uf_sigla=agendamento.uf_sigla,
-            ano=agendamento.periodo_data_inicio.year,
-            mes=agendamento.periodo_data_inicio.month,
+            periodo_data_inicio=agendamento.periodo_data_inicio,
+            tabela_destino=agendamento.tabela_destino,
             teste=teste,
         )
         if teste:
@@ -176,8 +175,8 @@ def bpa_i_disseminacao(
         obter_bpa_i(
             sessao=sessao,
             uf_sigla=agendamento.uf_sigla,
-            ano=agendamento.periodo_data_inicio.year,
-            mes=agendamento.periodo_data_inicio.month,
+            periodo_data_inicio=agendamento.periodo_data_inicio,
+            tabela_destino=agendamento.tabela_destino,
             teste=teste,
         )
         if teste:
@@ -219,8 +218,8 @@ def procedimentos_disseminacao(
         obter_pa(
             sessao=sessao,
             uf_sigla=agendamento.uf_sigla,
-            ano=agendamento.periodo_data_inicio.year,
-            mes=agendamento.periodo_data_inicio.month,
+            periodo_data_inicio=agendamento.periodo_data_inicio,
+            tabela_destino=agendamento.tabela_destino,
             teste=teste,
         )
         if teste:
@@ -262,8 +261,8 @@ def aih_reduzida_disseminacao(
         obter_aih_rd(
             sessao=sessao,
             uf_sigla=agendamento.uf_sigla,
-            ano=agendamento.periodo_data_inicio.year,
-            mes=agendamento.periodo_data_inicio.month,
+            periodo_data_inicio=agendamento.periodo_data_inicio,
+            tabela_destino=agendamento.tabela_destino,
             teste=teste,
         )
         if teste:

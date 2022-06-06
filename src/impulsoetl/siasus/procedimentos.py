@@ -8,21 +8,23 @@
 
 from __future__ import annotations
 
-import json
+import os
 import uuid
-from typing import Final
+from datetime import date
+from typing import Final, Generator
 
 import janitor  # noqa: F401  # nopycln: import
 import numpy as np
 import pandas as pd
 from frozendict import frozendict
-from pysus.online_data.SIA import download
 from sqlalchemy.orm import Session
 
 from impulsoetl.comum.datas import periodo_por_data
 from impulsoetl.comum.geografias import id_sus_para_id_impulso
 from impulsoetl.loggers import logger
-from impulsoetl.siasus.modelos import procedimentos as tabela_destino
+from impulsoetl.utilitarios.bd import carregar_dataframe
+from impulsoetl.utilitarios.datasus_ftp import extrair_dbc_lotes
+
 
 DE_PARA_PA: Final[frozendict] = frozendict(
     {
@@ -180,6 +182,40 @@ def _para_booleano(valor: str) -> bool | float:
         return np.nan
 
 
+def extrair_pa(
+    uf_sigla: str,
+    periodo_data_inicio: date,
+    passo: int = 10000,
+) -> Generator[pd.DataFrame, None, None]:
+    """Extrai registros de procedimentos ambulatoriais do FTP do DataSUS.
+
+    Argumentos:
+        uf_sigla: Sigla da Unidade Federativa cujos procedimentos se pretende
+            obter.
+        periodo_data_inicio: Dia de início da competência desejada,
+            representado como um objeto [`datetime.date`][].
+        passo: Número de registros que devem ser convertidos em DataFrame a
+            cada iteração.
+
+    Gera:
+        A cada iteração, devolve um objeto [`pandas.DataFrames`][] com um
+        trecho do arquivo de procedimentos ambulatoriais lido e convertido.
+
+    [`pandas.DataFrame`]: https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html
+    [`datetime.date`]: https://docs.python.org/3/library/datetime.html#date-objects
+    """
+
+    return extrair_dbc_lotes(
+        ftp="ftp.datasus.gov.br",
+        caminho_diretorio="/dissemin/publicos/SIASUS/200801_/Dados",
+        arquivo_nome="PA{uf_sigla}{periodo_data_inicio:%y%m}.dbc".format(
+            uf_sigla=uf_sigla,
+            periodo_data_inicio=periodo_data_inicio,
+        ),
+        passo=passo,
+    )
+
+
 def transformar_pa(
     sessao: Session,
     pa: pd.DataFrame,
@@ -244,7 +280,8 @@ def transformar_pa(
             ],
             function=lambda elemento: (
                 np.nan
-                if all(digito == "9" for digito in elemento)
+                if pd.isna(elemento)
+                or all(digito == "9" for digito in elemento)
                 else elemento
             ),
         )
@@ -328,96 +365,26 @@ def transformar_pa(
     return pa_transformada
 
 
-def carregar_pa(
-    sessao: Session,
-    pa_transformada: pd.DataFrame,
-    passo: int = 1000,
-) -> int:
-    """Carrega um arquivo de disseminação de procedimentos ambulatoriais no BD.
-
-    Argumentos:
-        sessao: objeto [`sqlalchemy.orm.session.Session`][] que permite
-            acessar a base de dados da ImpulsoGov.
-        pa_transformada: [`DataFrame`][] contendo os dados a serem
-            carregados na tabela de destino, já no formato utilizado pelo banco
-            de dados da ImpulsoGov (conforme retornado pela função
-            [`transformar_pa()`][]).
-        passo: Indica quantos registros devem ser enviados para a base de dados
-            de cada vez.
-
-    Retorna:
-        Código de saída do processo de carregamento. Se o carregamento
-        for bem sucedido, o código de saída será `0`.
-
-    [`sqlalchemy.orm.session.Session`]: https://docs.sqlalchemy.org/en/14/orm/session_api.html#sqlalchemy.orm.Session
-    [`DataFrame`]: https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html
-    [`transformar_pa()`]: impulsoetl.siasus.procedimentos.transformar_pa
-    """
-
-    tabela_nome = tabela_destino.key
-    num_registros = len(pa_transformada)
-    logger.info(
-        "Carregando {num_registros} registros de procedimentos ambulatoriais "
-        "para a tabela `{tabela_nome}`...",
-        num_registros=num_registros,
-        tabela_nome=tabela_nome,
+def validar_pa(pa_transformada: pd.DataFrame) -> pd.DataFrame:
+    assert isinstance(pa_transformada, pd.DataFrame), "Não é um DataFrame"
+    assert len(pa_transformada) > 0, "DataFrame vazio."
+    nulos_por_coluna = pa_transformada.applymap(pd.isna).sum()
+    assert nulos_por_coluna["quantidade_apresentada"] == 0, (
+        "A quantidade apresentada é um valor nulo."
     )
-
-    logger.info("Processando dados para JSON e de volta para um dicionário...")
-    registros = json.loads(
-        pa_transformada.to_json(
-            orient="records",
-            date_format="iso",
-        )
+    assert nulos_por_coluna["quantidade_aprovada"] == 0, (
+        "A quantidade aprovada é um valor nulo."
     )
-
-    conector = sessao.connection()
-
-    # Iterar por fatias do total de registro. Isso é necessário porque
-    # executar todas as inserções em uma única operação acarretaria um consumo
-    # proibitivo de memória
-    contador = 0
-    while contador < num_registros:
-        logger.info(
-            "Enviando registros para a tabela de destino "
-            "({contador} de {num_registros})...",
-            contador=contador,
-            num_registros=num_registros,
-        )
-        subconjunto_registros = registros[
-            contador : min(num_registros, contador + passo)
-        ]
-        requisicao_insercao = tabela_destino.insert().values(
-            subconjunto_registros,
-        )
-        try:
-            conector.execute(requisicao_insercao)
-        except Exception as err:
-            mensagem_erro = str(err)
-            if len(mensagem_erro) > 500:
-                mensagem_erro = mensagem_erro[:500]
-            logger.error(mensagem_erro)
-            breakpoint()
-            sessao.rollback()
-            return 1
-
-        contador += passo
-
-    logger.info(
-        "Carregamento concluído para a tabela `{tabela_nome}`: "
-        + "adicionadas {linhas_adicionadas} novas linhas.",
-        tabela_nome=tabela_nome,
-        linhas_adicionadas=num_registros,
+    assert nulos_por_coluna["realizacao_periodo_data_inicio"] == 0, (
+        "A competência de realização é um valor nulo."
     )
-
-    return 0
 
 
 def obter_pa(
     sessao: Session,
     uf_sigla: str,
-    ano: int,
-    mes: int,
+    periodo_data_inicio: date,
+    tabela_destino: str,
     teste: bool = False,
     **kwargs,
 ) -> None:
@@ -426,9 +393,12 @@ def obter_pa(
     Argumentos:
         sessao: objeto [`sqlalchemy.orm.session.Session`][] que permite
             acessar a base de dados da ImpulsoGov.
-        uf_sigla: Sigla da Unidade Federativa cujos BPA-i's se pretende obter.
-        ano: Ano dos procedimentos ambulatoriais que se pretende obter.
-        mes: Mês dos procedimentos ambulatoriais que se pretende obter.
+        uf_sigla: Sigla da Unidade Federativa cujos procedimentos se pretende
+            obter.
+        periodo_data_inicio: Dia de início da competência desejada,
+            representado como um objeto [`datetime.date`][].
+        tabela_destino: nome da tabela de destino, qualificado com o nome do
+            schema (formato `nome_do_schema.nome_da_tabela`).
         teste: Indica se as modificações devem ser de fato escritas no banco de
             dados (`False`, padrão). Caso seja `True`, as modificações são
             adicionadas à uma transação, e podem ser revertidas com uma chamada
@@ -437,38 +407,55 @@ def obter_pa(
 
     [`sqlalchemy.orm.session.Session`]: https://docs.sqlalchemy.org/en/14/orm/session_api.html#sqlalchemy.orm.Session
     [`sqlalchemy.engine.Row`]: https://docs.sqlalchemy.org/en/14/core/connections.html#sqlalchemy.engine.Row
+    [`datetime.date`]: https://docs.python.org/3/library/datetime.html#date-objects
     """
     logger.info(
         "Iniciando captura de procedimentos ambulatoriais para Unidade "
-        + "Federativa '{uf_sigla}' na competencia de {mes}/{ano}.",
-        uf_sigla=uf_sigla,
-        ano=ano,
-        mes=mes,
+        + "Federativa '{}' na competencia de {:%m/%Y}.",
+        uf_sigla,
+        periodo_data_inicio,
     )
-    logger.info("Fazendo download do FTP público do DataSUS...")
-    pa = download(uf_sigla, year=ano, month=mes, group=["PA"])
 
-    # TODO: paralelizar transformação e carregamento de fatias do DataFrame
-    # original
-    pa_transformada = transformar_pa(sessao=sessao, pa=pa)
+    # obter tamanho do lote de processamento
+    passo = int(os.getenv("IMPULSOETL_LOTE_TAMANHO", 100000))
 
-    if teste:
-        passo = 10
-        pa_transformada = pa_transformada.iloc[
-            : min(1000, len(pa_transformada)),
-        ]
-        if len(pa_transformada) == 1000:
-            logger.warning(
-                "Arquivo de procedimentos ambulatoriais truncado para 1000 "
-                + "registros para fins de teste."
-            )
-    else:
-        passo = 1000
-
-    carregar_pa(
-        sessao=sessao,
-        pa_transformada=pa_transformada,
+    pa_lotes = extrair_pa(
+        uf_sigla=uf_sigla,
+        periodo_data_inicio=periodo_data_inicio,
         passo=passo,
     )
-    if not teste:
-        sessao.commit()
+
+    contador = 0
+    for pa_lote in pa_lotes:
+        pa_transformada = transformar_pa(sessao=sessao, pa=pa_lote)
+        try:
+            validar_pa(pa_transformada)
+        except AssertionError as mensagem:
+            sessao.rollback()
+            raise RuntimeError(
+                "Dados inválidos encontrados após a transformação:"
+                + " {}".format(mensagem),
+            )
+
+        carregamento_status = carregar_dataframe(
+            sessao=sessao,
+            df=pa_transformada,
+            tabela_destino=tabela_destino,
+            passo=None,
+            teste=teste,
+        )
+        if carregamento_status != 0:
+            sessao.rollback()
+            raise RuntimeError(
+                "Execução interrompida em razão de um erro no "
+                + "carregamento."
+            )
+        contador += len(pa_lote)
+        if teste and contador > 1000:
+            logger.info("Execução interrompida para fins de teste.")
+            break
+
+    if teste:
+        logger.info("Desfazendo alterações realizadas durante o teste...")
+        sessao.rollback()
+        logger.info("Todas transações foram desfeitas com sucesso!")
