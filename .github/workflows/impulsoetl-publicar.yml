@@ -21,6 +21,7 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    timeout-minutes: 240
     if: github.event.pull_request.merged == true || github.event_name == 'push'
     steps:
     - uses: actions/checkout@v2
