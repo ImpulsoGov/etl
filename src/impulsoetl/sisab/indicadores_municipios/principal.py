@@ -44,13 +44,16 @@ def obter_indicadores_desempenho(
             quadrimestre=quadrimestre,
             indicador=indicador,
         )
+        logger.info("Extração dos dados realizada...")
         df_tratado = tratamento_dados(
             sessao=sessao,
             dados_sisab_indicadores=df,
             periodo=quadrimestre,
             indicador=indicador,
         )
+        logger.info("Transformação dos dados realizada...")
         teste_validacao(df, df_tratado, indicador)
+        logger.info("Validação dos dados realizada...")
         carregar_indicadores(
             sessao=sessao,
             indicadores_transformada=df_tratado,

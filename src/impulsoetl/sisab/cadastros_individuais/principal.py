@@ -55,13 +55,16 @@ def obter_cadastros_individuais(
             com_ponderacao=status_ponderacao,
             competencia=periodo,
         )
+        logger.info("Extração dos dados realizada...")
         df_tratado = tratamento_dados(
             sessao=sessao,
             dados_sisab_cadastros=df,
             com_ponderacao=status_ponderacao,
             periodo=periodo,
         )
+        logger.info("Transformação dos dados realizada...")
         teste_validacao(df, df_tratado)
+        logger.info("Validação dos dados realizada...")
         carregar_cadastros(
             sessao=sessao,
             cadastros_transformada=df_tratado,
