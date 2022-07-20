@@ -40,8 +40,11 @@ def obter_parametros(
             SQLAlchemy."""
             
     df = extrair_parametros(visao_equipe=visao_equipe,competencia=periodo,nivel_agregacao=nivel_agregacao)
+    logger.info("Extração dos dados realizada...")
     df_tratado = tratamento_dados(sessao=sessao,dados_sisab_cadastros=df,periodo=periodo,nivel_agregacao=nivel_agregacao)
+    logger.info("Transformação dos dados realizada...")
     teste_validacao(df, df_tratado,nivel_agregacao=nivel_agregacao)
+    logger.info("Validação dos dados realizada...")
     carregar_parametros(sessao=sessao,parametros_transformada=df_tratado,visao_equipe=visao_equipe,nivel_agregacao=nivel_agregacao)
 
 

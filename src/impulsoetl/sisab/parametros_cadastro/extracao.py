@@ -44,7 +44,7 @@ def _extrair_parametros(
         + vs
         + "&j_idt83=j_idt83"
     )
-    response = requests.request("POST", url, headers=headers, data=payload)
+    response = requests.request("POST", url, headers=headers, data=payload,timeout=120)
     return response.text
 
 def extrair_parametros(

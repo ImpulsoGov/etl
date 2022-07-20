@@ -53,7 +53,7 @@ def _extrair_indicadores(
         + "&j_idt84=j_idt84"
     )
     headers = hd[0]
-    response = requests.request("POST", url, headers=headers, data=payload)
+    response = requests.request("POST", url, headers=headers, data=payload,timeout=120)
     return response.text
 
 
