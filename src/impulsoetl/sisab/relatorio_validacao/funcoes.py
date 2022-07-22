@@ -19,7 +19,7 @@ from sqlalchemy.orm import Session
 from impulsoetl.bd import tabelas
 from impulsoetl.comum.geografias import id_sus_para_id_impulso
 from impulsoetl.loggers import logger
-from impulsoetl.sisab.relatorio_validacao.suporte_extracao import head
+from impulsoetl.sisab.parametros_requisicao import head
 
 
 def obter_lista_periodos_inseridos(

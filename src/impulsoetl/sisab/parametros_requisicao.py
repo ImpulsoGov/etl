@@ -26,7 +26,7 @@ from bs4 import BeautifulSoup as bs
 
 
 def get_cookie(url):
-    response = requests.get(url)
+    response = requests.get(url,timeout=120)
     ck = response.cookies.get_dict()
     soup = bs(response.text, "html.parser")
     vs = urllib.parse.quote(soup.findAll("input")[1].attrs["value"])
