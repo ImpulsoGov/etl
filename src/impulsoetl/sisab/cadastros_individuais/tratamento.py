@@ -3,11 +3,12 @@
 # SPDX-License-Identifier: MIT
 
 
-import uuid
 from datetime import date, datetime
 
 import pandas as pd
 from sqlalchemy.orm import Session
+from uuid6 import uuid7
+
 from impulsoetl.comum.datas import periodo_por_codigo, periodo_por_data
 from impulsoetl.comum.geografias import id_sus_para_id_impulso
 
@@ -45,7 +46,7 @@ def tratamento_dados(
     tabela_consolidada["periodo_codigo"] = periodo_cod[3]
     tabela_consolidada.reset_index(drop=True, inplace=True)
     tabela_consolidada["id"] = tabela_consolidada.apply(
-        lambda row: uuid.uuid4(), axis=1
+        lambda row: uuid7(), axis=1
     )
     tabela_consolidada["criacao_data"] = datetime.now().strftime(
         "%Y-%m-%d %H:%M:%S"

@@ -3,18 +3,20 @@
 # SPDX-License-Identifier: MIT
 
 
-import pandas as pd
-import numpy as np
-from selenium import webdriver
-from time import sleep
-from bs4 import BeautifulSoup
-from pathlib import Path
-import os
-import uuid
-import bancodedados
-import utilitario
-from datetime import datetime
 import math
+import os
+from datetime import datetime
+from pathlib import Path
+from time import sleep
+
+import bancodedados
+import numpy as np
+import pandas as pd
+import utilitario
+from bs4 import BeautifulSoup
+from selenium import webdriver
+from uuid6 import uuid7
+
 
 def captura(mes):
     return True
@@ -73,7 +75,7 @@ def tranforma(periodos):
         componente_pagamento_resultado = componente_pagamento_resultado.append(componente_pagamento_resultado_parcial)
     componente_pagamento_resultado.pagamento_desempenho_resultados_id = np.NAN
     componente_pagamento_resultado.periodo_id = periodos.id[0]
-    componente_pagamento_resultado.id = componente_pagamento_resultado.apply(lambda row : uuid.uuid4(), axis = 1)
+    componente_pagamento_resultado.id = componente_pagamento_resultado.apply(lambda row : uuid7(), axis = 1)
     componente_pagamento_resultado.criacao_data = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     componente_pagamento_resultado.atualizacao_data = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     return componente_pagamento_resultado

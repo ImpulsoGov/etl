@@ -6,7 +6,6 @@
 from __future__ import annotations
 
 import json
-import uuid
 from datetime import date, datetime
 from io import StringIO
 
@@ -15,6 +14,7 @@ import requests
 from requests.models import Response
 from sqlalchemy import delete
 from sqlalchemy.orm import Session
+from uuid6 import uuid7
 
 from impulsoetl.bd import tabelas
 from impulsoetl.comum.geografias import id_sus_para_id_impulso
@@ -224,7 +224,7 @@ def tratamento_validacao_producao(
 
     df = df.assign(periodo_id=periodo_id)
 
-    df["id"] = df.apply(lambda row: uuid.uuid4(), axis=1)
+    df["id"] = df.apply(lambda row: uuid7(), axis=1)
 
     df.insert(11, "unidade_geografica_id", value="")
 

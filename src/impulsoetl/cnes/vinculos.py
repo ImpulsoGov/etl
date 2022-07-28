@@ -10,7 +10,6 @@ from __future__ import annotations
 
 import os
 import re
-import uuid
 from datetime import date
 from typing import Final, Generator
 
@@ -20,13 +19,13 @@ import pandas as pd
 import roman
 from frozendict import frozendict
 from sqlalchemy.orm import Session
+from uuid6 import uuid7
 
 from impulsoetl.comum.datas import periodo_por_data
 from impulsoetl.comum.geografias import id_sus_para_id_impulso
 from impulsoetl.loggers import logger
 from impulsoetl.utilitarios.bd import carregar_dataframe
 from impulsoetl.utilitarios.datasus_ftp import extrair_dbc_lotes
-
 
 DE_PARA_VINCULOS: Final[frozendict] = frozendict(
     {
@@ -300,7 +299,7 @@ def transformar_vinculos(
         )
         # adicionar id
         .add_column("id", str())
-        .transform_column("id", function=lambda _: uuid.uuid4().hex)
+        .transform_column("id", function=lambda _: uuid7().hex)
         # adicionar id do periodo
         .transform_column(
             "periodo_data_inicio",

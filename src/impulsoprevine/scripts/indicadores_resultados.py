@@ -3,25 +3,25 @@
 # SPDX-License-Identifier: MIT
 
 
-import pandas as pd
+import decimal
+import math
+import os
+from datetime import datetime
+from decimal import *
+from pathlib import Path
+from time import sleep
+
+import auxiliares.bancodedados as bancodedados
+import auxiliares.logging as logging
+import auxiliares.utilitario as utilitario
 import numpy as np
+import pandas as pd
+from bs4 import BeautifulSoup
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.common.by import By
-from time import sleep
-from bs4 import BeautifulSoup
-from pathlib import Path
-import os
-import uuid
-import auxiliares.bancodedados as bancodedados
-import auxiliares.utilitario as utilitario
-from datetime import datetime
-import math
-import decimal
-from decimal import *
-import os
-import auxiliares.logging as logging
+from uuid6 import uuid7
 
 
 def captura(quadrimestre):
@@ -132,7 +132,7 @@ def tranforma(periodos):
     indicadores_resultados.isf_id = np.NAN
     indicadores_resultados.criacao_data = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     indicadores_resultados.atualizacao_data = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    indicadores_resultados.id = indicadores_resultados.apply(lambda row:uuid.uuid4(), axis=1)
+    indicadores_resultados.id = indicadores_resultados.apply(lambda row:uuid7(), axis=1)
     indicadores_resultados = indicadores_resultados.reset_index()
     return indicadores_resultados
 

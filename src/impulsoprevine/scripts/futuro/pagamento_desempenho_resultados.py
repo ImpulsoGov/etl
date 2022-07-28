@@ -3,18 +3,19 @@
 # SPDX-License-Identifier: MIT
 
 
-import pandas as pd
-import numpy as np
-from selenium import webdriver
-from time import sleep
-from bs4 import BeautifulSoup
-from pathlib import Path
-import os
-import uuid
-import bancodedados
-import utilitario
-from datetime import datetime
 import math
+import os
+from datetime import datetime
+from pathlib import Path
+from time import sleep
+
+import bancodedados
+import numpy as np
+import pandas as pd
+import utilitario
+from bs4 import BeautifulSoup
+from selenium import webdriver
+from uuid6 import uuid7
 
 
 def atualiza_retroativo(resultados, periodo_id):
@@ -83,7 +84,7 @@ def tranforma(periodos):
     pagamento_resultado.periodo_id = periodos.id[0]
     pagamento_resultado.criacao_data = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     pagamento_resultado.atualizacao_data = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    pagamento_resultado.id = pagamento_resultado.apply(lambda row : uuid.uuid4(), axis = 1)
+    pagamento_resultado.id = pagamento_resultado.apply(lambda row : uuid7(), axis = 1)
     pagamento_resultado = pagamento_resultado.reset_index()
     return pagamento_resultado
 

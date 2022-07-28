@@ -3,22 +3,21 @@
 # SPDX-License-Identifier: MIT
 
 
-import pandas as pd
-import numpy as np
-from selenium import webdriver
-from time import sleep
-from bs4 import BeautifulSoup
-from pathlib import Path
 import os
-import uuid
+from datetime import datetime
+from pathlib import Path
+from time import sleep
+
 import auxiliares.bancodedados as bancodedados
 import auxiliares.utilitario as utilitario
-from datetime import datetime
-
+import numpy as np
+import pandas as pd
+from bs4 import BeautifulSoup
+from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.common.by import By
-
+from uuid6 import uuid7
 
 
 def calcula_isf(row, id, indicadores_resultados):
@@ -83,7 +82,7 @@ def tranforma(periodos):
     indicadores_resultados = bancodedados.readQuery(query,'impulsogov-analitico')
     isf_resultados.isf_calculado = isf_resultados.apply(lambda x: calcula_isf(x, periodos.id[0], indicadores_resultados), axis=1)
     isf_resultados.isf_regras_id = (isf_regras.id)[0]
-    isf_resultados.id = isf_resultados.apply(lambda row : uuid.uuid4(), axis = 1)
+    isf_resultados.id = isf_resultados.apply(lambda row : uuid7(), axis = 1)
     isf_resultados.periodo_id = periodos.id[0]
     isf_resultados.criacao_data = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     isf_resultados.atualizacao_data = datetime.now().strftime("%Y-%m-%d %H:%M:%S")

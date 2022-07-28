@@ -153,7 +153,7 @@ impulsoprevine = [
     "soupsieve",
     "tomlkit",
     "urllib3",
-    "uuid",
+    "uuid6",
     "virtualenv",
     "webencodings"
 ]

@@ -3,16 +3,18 @@
 # SPDX-License-Identifier: MIT
 
 
-import pandas as pd
-import numpy as np
+import math
 import os
-import uuid
+import unicodedata
+from datetime import datetime
+
 import auxiliares.bancodedados as bancodedados
 import auxiliares.utilitario as utilitario
-from datetime import datetime
-import math
+import numpy as np
+import pandas as pd
 import unidecode
-import unicodedata
+from uuid6 import uuid7
+
 
 def diff_numerador_para_meta(row):
     if row.indicadores_resultados_porcentagem>row.indicadores_parametros_meta:
@@ -122,7 +124,7 @@ def tranforma(periodos):
     indicadores_score.var_classificacao = indicadores_score.apply(lambda x: var_classificacao(x), axis=1)
     indicadores_score.classificacao = indicadores_score.apply(lambda x: classificacao(x), axis=1)
     indicadores_score.score = indicadores_score.groupby("municipio_id_sus")["classificacao"].rank("dense", ascending=False)
-    indicadores_score.id = indicadores_score.apply(lambda row:uuid.uuid4(), axis=1)
+    indicadores_score.id = indicadores_score.apply(lambda row:uuid7(), axis=1)
     indicadores_score.criacao_data = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     indicadores_score.atualizacao_data = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     return indicadores_score
