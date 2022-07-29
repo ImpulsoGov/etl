@@ -18,7 +18,7 @@ from frozendict import frozendict
 from sqlalchemy.orm import Session
 from uuid6 import uuid7
 
-from impulsoetl.comum.datas import periodo_por_data
+from impulsoetl.comum.datas import agora_gmt_menos3, periodo_por_data
 from impulsoetl.comum.geografias import id_sus_para_id_impulso
 from impulsoetl.loggers import logger
 from impulsoetl.utilitarios.bd import carregar_dataframe
@@ -130,6 +130,8 @@ TIPOS_RAAS_PS: Final[frozendict] = frozendict(
         "id": str,
         "periodo_id": str,
         "unidade_geografica_id": str,
+        "criacao_data": "datetime64[ns]",
+        "atualizacao_data": "datetime64[ns]",
     },
 )
 
@@ -270,6 +272,9 @@ def transformar_raas_ps(
             ),
             dest_column_name="unidade_geografica_id",
         )
+        # adicionar datas de inserção e atualização
+        .add_column("criacao_data", agora_gmt_menos3())
+        .add_column("atualizacao_data", agora_gmt_menos3())
         # garantir tipos
         .change_type(
             # HACK: ver https://github.com/pandas-dev/pandas/issues/25472
