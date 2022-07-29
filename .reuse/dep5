@@ -11,11 +11,11 @@ Files: tests/sisab/RelatorioSaudeProducao*.csv tests/sisab/**/ponderacao*.csv
 Copyright: 2021, 2022 Coordenação Geral de Informação da Atenção Primária - CGIAP/DESF <sisab@saude.gov.br>
 License: LicenseRef-LEI-12527-2011-11-18
 
-Files: tests/siasus/SIA_*.parquet tests/sihsus/SIH_*.parquet tests/cnes/CNES_*.parquet
+Files: tests/siasus/SIA_*.parquet tests/sihsus/SIH_*.parquet tests/scnes/CNES_*.parquet
 Copyright: 2008-2022 Coordenação de Disseminação de Dados em Saúde - CODDS <dissemina.sus@saude.gov.br>
 License: LicenseRef-LEI-12527-2011-11-18
 
-Files: tests/siasus/*_transformad?.parquet tests/sihsus/*_transformad?.parquet tests/cnes/*_transformad?.parquet
+Files: tests/siasus/*_transformad?.parquet tests/sihsus/*_transformad?.parquet tests/scnes/*_transformad?.parquet
 Copyright: 2008-2022 Coordenação de Disseminação de Dados em Saúde - CODDS <dissemina.sus@saude.gov.br>
 Copyright: 2021, 2022 ImpulsoGov <contato@impulsogov.org>
 License: ODC-By-1.0

@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: MIT
 
 
-"""Ferramentas para obter dados de vínculos profissionais registrados no CNES."""
+"""Ferramentas para obter dados de vínculos profissionais a partir do SCNES."""
 
 
 from __future__ import annotations
@@ -190,7 +190,7 @@ def transformar_vinculos(
     sessao: Session,
     vinculos: pd.DataFrame,
 ) -> pd.DataFrame:
-    """Transforma um `DataFrame` de vínculos do CNES.
+    """Transforma um `DataFrame` de vínculos do SCNES.
 
     Argumentos:
         sessao: objeto [`sqlalchemy.orm.session.Session`][] que permite
@@ -210,7 +210,7 @@ def transformar_vinculos(
     """
     logger.info(
         "Transformando DataFrame com {num_registros} vínculos "
-        + "profissionais do CNES.",
+        + "profissionais do SCNES.",
         num_registros=len(vinculos),
     )
     logger.debug(

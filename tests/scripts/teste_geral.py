@@ -13,7 +13,7 @@ from impulsoetl.scripts.geral import ceps, vinculos_disseminacao
 
 @pytest.mark.integracao
 def teste_vinculos_disseminacao(sessao):
-    """Testa obter vínculos profissionais do CNES."""
+    """Testa obter vínculos profissionais do SCNES."""
     vinculos_disseminacao(sessao=sessao, teste=True)
 
 

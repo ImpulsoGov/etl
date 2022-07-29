@@ -8,4 +8,4 @@
 
 from impulsoetl.bd import tabelas
 
-vinculos = tabelas["dados_publicos.cnes_vinculos_disseminacao"]
+vinculos = tabelas["dados_publicos.scnes_vinculos_disseminacao"]

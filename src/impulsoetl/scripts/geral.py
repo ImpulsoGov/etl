@@ -12,7 +12,7 @@ from sqlalchemy.orm import Session
 
 from impulsoetl.bd import Sessao, tabelas
 from impulsoetl.brasilapi.cep import obter_cep
-from impulsoetl.cnes.vinculos import obter_vinculos
+from impulsoetl.scnes.vinculos import obter_vinculos
 from impulsoetl.loggers import logger
 
 agendamentos = tabelas["configuracoes.capturas_agendamentos"]
@@ -25,7 +25,7 @@ def vinculos_disseminacao(
     teste: bool = False,
 ) -> None:
     logger.info(
-        "Capturando vínculos profissionais do CNES.",
+        "Capturando vínculos profissionais do SCNES.",
     )
     operacao_id = "f8d49ce7-7e11-44ff-9308-885d1b181f6d"
     agendamentos_vinculos = (
