@@ -50,18 +50,18 @@ def tabela_teste(sessao):
         # copiar estrutura da tabela original
         sessao.execute(
             "create table "
-            + "dados_publicos._scnes_vinculos_disseminacao ("
+            + "dados_publicos.__scnes_vinculos_disseminacao ("
             + "like dados_publicos.scnes_vinculos_disseminacao "
             + "including all"
             + ");",
         )
         sessao.commit()
-        yield "dados_publicos._scnes_vinculos_disseminacao"
+        yield "dados_publicos.__scnes_vinculos_disseminacao"
     finally:
         sessao.rollback()
         sessao.execute(
             "drop table if exists "
-            + "dados_publicos._scnes_vinculos_disseminacao;",
+            + "dados_publicos.__scnes_vinculos_disseminacao;",
         )
         sessao.commit()
 

@@ -49,18 +49,18 @@ def tabela_teste(sessao):
         # copiar estrutura da tabela original
         sessao.execute(
             "create table "
-            + "dados_publicos._sihsus_aih_reduzida_disseminacao ("
-            + "like dados_publicos.sihsus_aih_reduzida_disseminacao "
+            + "dados_publicos.__sihsus_aih_reduzida_disseminacao ("
+            + "like dados_publicos._sihsus_aih_reduzida_disseminacao "
             + "including all"
             + ");",
         )
         sessao.commit()
-        yield "dados_publicos._sihsus_aih_reduzida_disseminacao"
+        yield "dados_publicos.__sihsus_aih_reduzida_disseminacao"
     finally:
         sessao.rollback()
         sessao.execute(
             "drop table if exists "
-            + "dados_publicos._sihsus_aih_reduzida_disseminacao;",
+            + "dados_publicos.__sihsus_aih_reduzida_disseminacao;",
         )
         sessao.commit()
 
@@ -77,7 +77,9 @@ def teste_de_para(aih_rd):
 
 
 def teste_tipos(aih_rd):
-    tabela_destino = tabelas["dados_publicos.sihsus_aih_reduzida_disseminacao"]
+    tabela_destino = tabelas[
+        "dados_publicos._sihsus_aih_reduzida_disseminacao"
+    ]
     colunas_destino = tabela_destino.columns
 
     for col in TIPOS_AIH_RD.keys():

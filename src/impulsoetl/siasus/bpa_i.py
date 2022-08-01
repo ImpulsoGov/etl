@@ -114,7 +114,7 @@ TIPOS_BPA_I: Final[frozendict] = frozendict(
 )
 
 COLUNAS_DATA_AAAAMMDD: Final[list[str]] = [
-    "usuario_data_nascimento",
+    "usuario_nascimento_data",
 ]
 
 COLUNAS_DATA_AAAAMM: Final[list[str]] = [
@@ -219,8 +219,8 @@ def transformar_bpa_i(
         .replace("", np.nan)
         .transform_columns(
             [
-                "mantenedora_cnpj",
-                "receptor_credito_cnpj",
+                "mantenedora_id_cnpj",
+                "receptor_credito_id_cnpj",
                 "financiamento_subtipo_id_sigtap",
                 "condicao_principal_id_cid10",
                 "autorizacao_id_siasus",
