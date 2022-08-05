@@ -3,6 +3,7 @@ from typing import Final
 from sqlalchemy.orm import Session
 from datetime import date
 from bd import Sessao
+import sys
 from impulsoetl.sisab.indicadores_municipios.log import logger
 from impulsoetl.sisab.indicadores_municipios.extracao import (extrair_dados)
 from impulsoetl.sisab.indicadores_municipios.tratamento import (tratamento_dados)
@@ -32,8 +33,12 @@ def obter_indicadores_desempenho(
                 quadrimestre: Data do quadrimestre da competência em referência.
         """
         for indicador in INDICADORES_CODIGOS:
+            try:
                 df_extraido = extrair_dados(visao_equipe=visao_equipe,quadrimestre=quadrimestre,indicador=indicador)
                 df_tratado = tratamento_dados(sessao=sessao,df_extraido=df_extraido,periodo=quadrimestre,indicador=indicador)
                 teste_validacao(df_extraido,df_tratado,indicador)
                 carregar_indicadores(sessao=sessao,indicadores_transformada=df_tratado,visao_equipe=visao_equipe)
-      
+            except:
+                logger.error(sys.exc_info())
+                result = dict()
+                result['Error'] = sys.exc_info()
