@@ -1,31 +1,23 @@
-# SPDX-FileCopyrightText: 2021, 2022 ImpulsoGov <contato@impulsogov.org>
-#
-# SPDX-License-Identifier: MIT
-
-
-"""Extrai dados de indicadores de desempenho a partir do SISAB."""
-
-
 from __future__ import annotations
-
+from typing import Final
 from datetime import date
 from io import StringIO
-from typing import Final
-
 import pandas as pd
 import requests
-
 from impulsoetl.sisab.parametros_requisicao import head
+from impulsoetl.loggers import logger
 
-INDICADORES_CODIGOS: Final[dict[str, str]] = {
-    "Pré-Natal (6 consultas)": "1",
-    "Pré-Natal (Sífilis e HIV)": "2",
-    "Gestantes Saúde Bucal": "3",
-    "Cobertura Citopatológico": "4",
-    "Cobertura Polio e Penta": "5",
-    "Hipertensão (PA Aferida)": "6",
-    "Diabetes (Hemoglobina Glicada)": "7",
-}
+
+
+INDICADORES_CODIGOS : Final[dict[str, str]] = {
+    "Pré-Natal (6 consultas)":"10",
+    "Pré-Natal (Sífilis e HIV)":"20",
+    "Gestantes Saúde Bucal":"30",
+    "Cobertura Citopatológico":"40",
+    "Cobertura Polio e Penta":"50",
+    "Hipertensão (PA Aferida)":"60",
+    "Diabetes (Hemoglobina Glicada)":"70"
+    }
 
 VISOES_EQUIPE_CODIGOS: Final[dict[str, str]] = {
     "todas-equipes": "",
@@ -33,54 +25,55 @@ VISOES_EQUIPE_CODIGOS: Final[dict[str, str]] = {
     "equipes-validas": "|HM|NC|",
 }
 
+def verifica_colunas (df_extraido:pd.DataFrame) -> int:
+	""" Verifica se 'Dataframe' possui 13 colunas como esperado"""
+	return df_extraido.shape[1] 
 
-def _extrair_indicadores(
-    indicador: str, visao_equipe: str, quadrimestre: date
-) -> str:
+def verifica_linhas (df_extraido:pd.DataFrame) -> int:
+	""" Verifica se 'Dataframe' possui mais do que 5000 registros como esperado"""
+	return df_extraido.shape[0] 
+
+def extrair_dados(
+    indicador:str,
+    visao_equipe:str,
+    quadrimestre:date,
     url = "https://sisab.saude.gov.br/paginas/acessoRestrito/relatorio/federal/indicadores/indicadorPainel.xhtml"
+    ) -> str:
+    """ Extrai relatório de indicadores do SISAB, capturado por requisição, em um 'Dataframe':
+     Argumentos:
+        indicador: Nome do indicador.
+        visao_equipe: Status da equipe de saúde .
+        quadrimestre: Data do quadrimestre da competência de referência
+
+    Retorna:
+        'Dataframe' com dados capturados pela requisição
+        for bem sucedido, o código de saída será `0`.
+    
+    Obs : 
+        Head : função que captura cookies da página web do relatório chamada pelo arquivo sisab\parametros_requisicao.py
+    
+    """
     hd = head(url)
-    vs = hd[1]
-    payload = (
-        "j_idt50=j_idt50"
-        "&coIndicador="
-        + INDICADORES_CODIGOS[indicador]
-        + "&selectLinha=ibge"
-        + "&quadrimestre={:%Y%m}".format(quadrimestre)
-        + "&visaoEquipe="
-        + VISOES_EQUIPE_CODIGOS[visao_equipe]
-        + "&javax.faces.ViewState="
-        + vs
-        + "&j_idt84=j_idt84"
+    vs=hd[1]
+    payload=(
+        "j_idt51=j_idt51"
+        "&coIndicador="+INDICADORES_CODIGOS[indicador]
+        +"&selectLinha=ibge"
+        +"&estadoMunicipio="
+        +"&quadrimestre={:%Y%m}".format(quadrimestre)
+        +"&visaoEquipe="+VISOES_EQUIPE_CODIGOS[visao_equipe]
+        +"&javax.faces.ViewState="+vs+
+        "&j_idt87=j_idt87"
     )
     headers = hd[0]
+    logger.info("Iniciando extração do relatório...")
     response = requests.request("POST", url, headers=headers, data=payload,timeout=120)
-    return response.text
+    df_extraido = (pd.read_csv(StringIO(response.text),delimiter=';',header=10, encoding='ISO-8859-1'))
+    df_extraido = df_extraido.drop(["UF","Munícipio","Unnamed: 12"], axis=1).dropna()
+    assert verifica_colunas(df_extraido=df_extraido) == 10
+    assert verifica_linhas(df_extraido=df_extraido) > 5000
+    logger.info(f"Extração dos relatório realizada | Total de registros : {df_extraido.shape[0]}")
+
+    return df_extraido
 
 
-def extrair_indicadores(
-    visao_equipe: str, quadrimestre: date, indicador: str
-) -> pd.DataFrame:
-
-    resposta = _extrair_indicadores(
-        visao_equipe=visao_equipe,
-        quadrimestre=quadrimestre,
-        indicador=indicador,
-    )
-
-    df = pd.read_csv(
-        StringIO(resposta), delimiter="\t", header=None, engine="python"
-    )
-    dados = df.iloc[11:-4]
-    df = pd.DataFrame(data=dados)
-    df = df[0].str.split(";", expand=True)
-    df.columns = [
-        "uf",
-        "ibge",
-        "municipio",
-        "numerador",
-        "denominador_informado",
-        "denominador_estimado",
-        "nota",
-        "coluna",
-    ]
-    return df
