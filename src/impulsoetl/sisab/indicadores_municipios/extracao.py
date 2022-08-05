@@ -1,3 +1,10 @@
+# SPDX-FileCopyrightText: 2021, 2022 ImpulsoGov <contato@impulsogov.org>
+#
+# SPDX-License-Identifier: MIT
+
+
+"""Extrai dados de indicadores de desempenho a partir do SISAB."""
+
 from __future__ import annotations
 from typing import Final
 from datetime import date
