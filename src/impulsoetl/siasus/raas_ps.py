@@ -8,7 +8,6 @@
 from __future__ import annotations
 
 import os
-import uuid
 from datetime import date
 from typing import Final, Generator
 
@@ -17,29 +16,29 @@ import numpy as np
 import pandas as pd
 from frozendict import frozendict
 from sqlalchemy.orm import Session
+from uuid6 import uuid7
 
-from impulsoetl.comum.datas import periodo_por_data
+from impulsoetl.comum.datas import agora_gmt_menos3, periodo_por_data
 from impulsoetl.comum.geografias import id_sus_para_id_impulso
 from impulsoetl.loggers import logger
 from impulsoetl.utilitarios.bd import carregar_dataframe
 from impulsoetl.utilitarios.datasus_ftp import extrair_dbc_lotes
 
-
 DE_PARA_RAAS_PS: Final[frozendict] = frozendict(
     {
-        "CNES_EXEC": "estabelecimento_id_cnes",
-        "GESTAO": "gestao_unidade_geografica_id",
+        "CNES_EXEC": "estabelecimento_id_scnes",
+        "GESTAO": "gestao_unidade_geografica_id_sus",
         "CONDIC": "gestao_condicao_id_siasus",
         "UFMUN": "unidade_geografica_id_sus",
         "TPUPS": "estabelecimento_tipo_id_sigtap",
         "TIPPRE": "prestador_tipo_id_sigtap",
         "MN_IND": "estabelecimento_mantido",
-        "CNPJCPF": "estabelecimento_cnpj",
-        "CNPJMNT": "mantenedora_cnpj",
+        "CNPJCPF": "estabelecimento_id_cnpj",
+        "CNPJMNT": "mantenedora_id_cnpj",
         "DT_PROCESS": "processamento_periodo_data_inicio",
         "DT_ATEND": "realizacao_periodo_data_inicio",
-        "CNS_PAC": "usuario_cns_criptografado",
-        "DTNASC": "usuario_data_nascimento",
+        "CNS_PAC": "usuario_id_cns_criptografado",
+        "DTNASC": "usuario_nascimento_data",
         "TPIDADEPAC": "usuario_idade_tipo_id_sigtap",
         "IDADEPAC": "usuario_idade",
         "NACION_PAC": "usuario_nacionalidade_id_sus",
@@ -56,7 +55,7 @@ DE_PARA_RAAS_PS: Final[frozendict] = frozendict(
         "DT_INICIO": "raas_data_inicio",
         "DT_FIM": "raas_data_fim",
         "COB_ESF": "esf_cobertura",
-        "CNES_ESF": "esf_estabelecimento_id_cnes",
+        "CNES_ESF": "esf_estabelecimento_id_scnes",
         "DESTINOPAC": "desfecho_destino_id_siasus",
         "PA_PROC_ID": "procedimento_id_sigtap",
         "PA_QTDPRO": "quantidade_apresentada",
@@ -71,25 +70,25 @@ DE_PARA_RAAS_PS: Final[frozendict] = frozendict(
         "PERMANEN": "permanencia_duracao",
         "QTDATE": "quantidade_atendimentos",
         "QTDPCN": "quantidade_usuarios",
-        "NAT_JUR": "estabelecimento_natureza_juridica_id_cnes",
+        "NAT_JUR": "estabelecimento_natureza_juridica_id_scnes",
     },
 )
 
 TIPOS_RAAS_PS: Final[frozendict] = frozendict(
     {
-        "estabelecimento_id_cnes": "object",
-        "gestao_unidade_geografica_id": "object",
+        "estabelecimento_id_scnes": "object",
+        "gestao_unidade_geografica_id_sus": "object",
         "gestao_condicao_id_siasus": "object",
         "unidade_geografica_id_sus": "object",
         "estabelecimento_tipo_id_sigtap": "object",
         "prestador_tipo_id_sigtap": "object",
         "estabelecimento_mantido": "bool",
-        "estabelecimento_cnpj": "object",
-        "mantenedora_cnpj": "object",
+        "estabelecimento_id_cnpj": "object",
+        "mantenedora_id_cnpj": "object",
         "processamento_periodo_data_inicio": "datetime64[ns]",
         "realizacao_periodo_data_inicio": "datetime64[ns]",
-        "usuario_cns_criptografado": "object",
-        "usuario_data_nascimento": "datetime64[ns]",
+        "usuario_id_cns_criptografado": "object",
+        "usuario_nascimento_data": "datetime64[ns]",
         "usuario_idade_tipo_id_sigtap": "object",
         "usuario_idade": "Int64",
         "usuario_nacionalidade_id_sus": "object",
@@ -106,7 +105,7 @@ TIPOS_RAAS_PS: Final[frozendict] = frozendict(
         "raas_data_inicio": "datetime64[ns]",
         "raas_data_fim": "datetime64[ns]",
         "esf_cobertura": "bool",
-        "esf_estabelecimento_id_cnes": "object",
+        "esf_estabelecimento_id_scnes": "object",
         "desfecho_destino_id_siasus": "object",
         "procedimento_id_sigtap": "object",
         "quantidade_apresentada": "Int64",
@@ -127,15 +126,17 @@ TIPOS_RAAS_PS: Final[frozendict] = frozendict(
         "permanencia_duracao": "object",
         "quantidade_atendimentos": "Int64",
         "quantidade_usuarios": "Int64",
-        "estabelecimento_natureza_juridica_id_cnes": "object",
+        "estabelecimento_natureza_juridica_id_scnes": "object",
         "id": str,
         "periodo_id": str,
         "unidade_geografica_id": str,
+        "criacao_data": "datetime64[ns]",
+        "atualizacao_data": "datetime64[ns]",
     },
 )
 
 COLUNAS_DATA_AAAAMMDD: Final[list[str]] = [
-    "usuario_data_nascimento",
+    "usuario_nascimento_data",
     "raas_data_inicio",
     "raas_data_fim",
     "data_inicio",
@@ -255,7 +256,7 @@ def transformar_raas_ps(
         .replace("", np.nan)
         # adicionar id
         .add_column("id", str())
-        .transform_column("id", function=lambda _: uuid.uuid4().hex)
+        .transform_column("id", function=lambda _: uuid7().hex)
         # adicionar id do periodo
         .transform_column(
             "realizacao_periodo_data_inicio",
@@ -271,6 +272,9 @@ def transformar_raas_ps(
             ),
             dest_column_name="unidade_geografica_id",
         )
+        # adicionar datas de inserção e atualização
+        .add_column("criacao_data", agora_gmt_menos3())
+        .add_column("atualizacao_data", agora_gmt_menos3())
         # garantir tipos
         .change_type(
             # HACK: ver https://github.com/pandas-dev/pandas/issues/25472
@@ -279,6 +283,7 @@ def transformar_raas_ps(
         )
         .astype(TIPOS_RAAS_PS)
     )
+    breakpoint()
 
 
 def obter_raas_ps(

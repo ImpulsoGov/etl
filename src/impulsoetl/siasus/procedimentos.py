@@ -9,7 +9,6 @@
 from __future__ import annotations
 
 import os
-import uuid
 from datetime import date
 from typing import Final, Generator
 
@@ -18,29 +17,29 @@ import numpy as np
 import pandas as pd
 from frozendict import frozendict
 from sqlalchemy.orm import Session
+from uuid6 import uuid7
 
-from impulsoetl.comum.datas import periodo_por_data
+from impulsoetl.comum.datas import agora_gmt_menos3, periodo_por_data
 from impulsoetl.comum.geografias import id_sus_para_id_impulso
 from impulsoetl.loggers import logger
 from impulsoetl.utilitarios.bd import carregar_dataframe
 from impulsoetl.utilitarios.datasus_ftp import extrair_dbc_lotes
 
-
 DE_PARA_PA: Final[frozendict] = frozendict(
     {
-        "PA_CODUNI": "estabelecimento_id_cnes",
-        "PA_GESTAO": "gestao_unidade_geografica_id",
+        "PA_CODUNI": "estabelecimento_id_scnes",
+        "PA_GESTAO": "gestao_unidade_geografica_id_sus",
         "PA_CONDIC": "gestao_condicao_id_siasus",
         "PA_UFMUN": "unidade_geografica_id_sus",
-        "PA_REGCT": "regra_contratual_id_cnes",
+        "PA_REGCT": "regra_contratual_id_scnes",
         "PA_INCOUT": "incremento_outros_id_sigtap",
         "PA_INCURG": "incremento_urgencia_id_sigtap",
         "PA_TPUPS": "estabelecimento_tipo_id_sigtap",
         "PA_TIPPRE": "prestador_tipo_id_sigtap",
         "PA_MN_IND": "estabelecimento_mantido",
-        "PA_CNPJCPF": "estabelecimento_cnpj",
-        "PA_CNPJMNT": "mantenedora_cnpj",
-        "PA_CNPJ_CC": "receptor_credito_cnpj",
+        "PA_CNPJCPF": "estabelecimento_id_cnpj",
+        "PA_CNPJMNT": "mantenedora_id_cnpj",
+        "PA_CNPJ_CC": "receptor_credito_id_cnpj",
         "PA_MVM": "processamento_periodo_data_inicio",
         "PA_CMP": "realizacao_periodo_data_inicio",
         "PA_PROC_ID": "procedimento_id_sigtap",
@@ -49,8 +48,8 @@ DE_PARA_PA: Final[frozendict] = frozendict(
         "PA_NIVCPL": "complexidade_id_siasus",
         "PA_DOCORIG": "instrumento_registro_id_siasus",
         "PA_AUTORIZ": "autorizacao_id_siasus",
-        "PA_CNSMED": "profissional_cns",
-        "PA_CBOCOD": "profissional_ocupacao_id_cbo",
+        "PA_CNSMED": "profissional_id_cns",
+        "PA_CBOCOD": "profissional_vinculo_ocupacao_id_cbo2002",
         "PA_MOTSAI": "desfecho_motivo_id_siasus",
         "PA_OBITO": "obito",
         "PA_ENCERR": "encerramento",
@@ -85,27 +84,27 @@ DE_PARA_PA: Final[frozendict] = frozendict(
         "PA_VL_CF": "complemento_valor_federal",
         "PA_VL_CL": "complemento_valor_local",
         "PA_VL_INC": "incremento_valor",
-        "PA_SRV_C": "servico_especializado_id_cnes",
+        "PA_SRV_C": "servico_especializado_id_scnes",
         "PA_INE": "equipe_id_ine",
-        "PA_NAT_JUR": "estabelecimento_natureza_juridica_id_cnes",
+        "PA_NAT_JUR": "estabelecimento_natureza_juridica_id_scnes",
     },
 )
 
 TIPOS_PA: Final[frozendict] = frozendict(
     {
-        "estabelecimento_id_cnes": "object",
-        "gestao_unidade_geografica_id": "object",
+        "estabelecimento_id_scnes": "object",
+        "gestao_unidade_geografica_id_sus": "object",
         "gestao_condicao_id_siasus": "object",
         "unidade_geografica_id_sus": "object",
-        "regra_contratual_id_cnes": "object",
+        "regra_contratual_id_scnes": "object",
         "incremento_outros_id_sigtap": "object",
         "incremento_urgencia_id_sigtap": "object",
         "estabelecimento_tipo_id_sigtap": "object",
         "prestador_tipo_id_sigtap": "object",
         "estabelecimento_mantido": "bool",
-        "estabelecimento_cnpj": "object",
-        "mantenedora_cnpj": "object",
-        "receptor_credito_cnpj": "object",
+        "estabelecimento_id_cnpj": "object",
+        "mantenedora_id_cnpj": "object",
+        "receptor_credito_id_cnpj": "object",
         "processamento_periodo_data_inicio": "datetime64[ns]",
         "realizacao_periodo_data_inicio": "datetime64[ns]",
         "procedimento_id_sigtap": "object",
@@ -114,8 +113,8 @@ TIPOS_PA: Final[frozendict] = frozendict(
         "complexidade_id_siasus": "object",
         "instrumento_registro_id_siasus": "object",
         "autorizacao_id_siasus": "object",
-        "profissional_cns": "object",
-        "profissional_ocupacao_id_cbo": "object",
+        "profissional_id_cns": "object",
+        "profissional_vinculo_ocupacao_id_cbo2002": "object",
         "desfecho_motivo_id_siasus": "object",
         "obito": "bool",
         "encerramento": "bool",
@@ -153,10 +152,12 @@ TIPOS_PA: Final[frozendict] = frozendict(
         "servico_id_sigtap": "object",
         "servico_classificacao_id_sigtap": "object",
         "equipe_id_ine": "object",
-        "estabelecimento_natureza_juridica_id_cnes": "object",
+        "estabelecimento_natureza_juridica_id_scnes": "object",
         "id": "object",
         "periodo_id": "object",
         "unidade_geografica_id": "object",
+        "criacao_data": "datetime64[ns]",
+        "atualizacao_data": "datetime64[ns]",
     },
 )
 
@@ -248,15 +249,15 @@ def transformar_pa(
         .replace("", np.nan)
         .transform_columns(
             [
-                "regra_contratual_id_cnes",
+                "regra_contratual_id_scnes",
                 "incremento_outros_id_sigtap",
                 "incremento_urgencia_id_sigtap",
-                "mantenedora_cnpj",
-                "receptor_credito_cnpj",
+                "mantenedora_id_cnpj",
+                "receptor_credito_id_cnpj",
                 "financiamento_subtipo_id_sigtap",
                 "condicao_principal_id_cid10",
                 "autorizacao_id_siasus",
-                "profissional_cns",
+                "profissional_id_cns",
                 "condicao_principal_id_cid10",
                 "condicao_secundaria_id_cid10",
                 "condicao_associada_id_cid10",
@@ -320,19 +321,19 @@ def transformar_pa(
         )
         # separar código do serviço e código da classificação do serviço
         .transform_column(
-            "servico_especializado_id_cnes",
+            "servico_especializado_id_scnes",
             function=lambda cod: cod[:3] if pd.notna(cod) else np.nan,
             dest_column_name="servico_id_sigtap",
         )
         .transform_column(
-            "servico_especializado_id_cnes",
+            "servico_especializado_id_scnes",
             function=lambda cod: cod[3:] if pd.notna(cod) else np.nan,
             dest_column_name="servico_classificacao_id_sigtap",
         )
-        .remove_columns("servico_especializado_id_cnes")
+        .remove_columns("servico_especializado_id_scnes")
         # adicionar id
         .add_column("id", str())
-        .transform_column("id", function=lambda _: uuid.uuid4().hex)
+        .transform_column("id", function=lambda _: uuid7().hex)
         # adicionar id do periodo
         .transform_column(
             "realizacao_periodo_data_inicio",
@@ -348,6 +349,9 @@ def transformar_pa(
             ),
             dest_column_name="unidade_geografica_id",
         )
+        # adicionar datas de inserção e atualização
+        .add_column("criacao_data", agora_gmt_menos3())
+        .add_column("atualizacao_data", agora_gmt_menos3())
         # garantir tipos
         .change_type(
             # HACK: ver https://github.com/pandas-dev/pandas/issues/25472

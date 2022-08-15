@@ -47,15 +47,16 @@ def bpa_i_transformada(_bpa_i_transformada):
 def tabela_teste(sessao):
     try:
         sessao.execute(
-            "create table dados_publicos._siasus_bpa_i_disseminacao "
-            + "(like dados_publicos.siasus_bpa_i_disseminacao including all);",
+            "create table dados_publicos.__siasus_bpa_i_disseminacao ("
+            + "like dados_publicos._siasus_bpa_i_disseminacao including all"
+            + ");",
         )
         sessao.commit()
-        yield "dados_publicos._siasus_bpa_i_disseminacao"
+        yield "dados_publicos.__siasus_bpa_i_disseminacao"
     finally:
         sessao.rollback()
         sessao.execute(
-            "drop table if exists dados_publicos._siasus_bpa_i_disseminacao;",
+            "drop table if exists dados_publicos.__siasus_bpa_i_disseminacao;",
         )
         sessao.commit()
 

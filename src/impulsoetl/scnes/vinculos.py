@@ -3,14 +3,13 @@
 # SPDX-License-Identifier: MIT
 
 
-"""Ferramentas para obter dados de vínculos profissionais registrados no CNES."""
+"""Ferramentas para obter dados de vínculos profissionais a partir do SCNES."""
 
 
 from __future__ import annotations
 
 import os
 import re
-import uuid
 from datetime import date
 from typing import Final, Generator
 
@@ -20,45 +19,45 @@ import pandas as pd
 import roman
 from frozendict import frozendict
 from sqlalchemy.orm import Session
+from uuid6 import uuid7
 
-from impulsoetl.comum.datas import periodo_por_data
+from impulsoetl.comum.datas import agora_gmt_menos3, periodo_por_data
 from impulsoetl.comum.geografias import id_sus_para_id_impulso
 from impulsoetl.loggers import logger
 from impulsoetl.utilitarios.bd import carregar_dataframe
 from impulsoetl.utilitarios.datasus_ftp import extrair_dbc_lotes
 
-
 DE_PARA_VINCULOS: Final[frozendict] = frozendict(
     {
-        "CNES": "estabelecimento_id_cnes",
+        "CNES": "estabelecimento_id_scnes",
         "CODUFMUN": "estabelecimento_municipio_id_sus",
         "REGSAUDE": "estabelecimento_regiao_saude_id_sus",
         "MICR_REG": "estabelecimento_microrregiao_saude_id_sus",
         "DISTRSAN": "estabelecimento_distrito_sanitario_id_sus",
         "DISTRADM": "estabelecimento_distrito_administrativo_id_sus",
-        "TPGESTAO": "estabelecimento_gestao_condicao_id_cnes",
-        "PF_PJ": "estabelecimento_personalidade_juridica_id_cnes",
-        "CPF_CNPJ": "estabelecimento_cpf_cnpj",
+        "TPGESTAO": "estabelecimento_gestao_condicao_id_scnes",
+        "PF_PJ": "estabelecimento_personalidade_juridica_id_scnes",
+        "CPF_CNPJ": "estabelecimento_id_cpf_cnpj",
         "NIV_DEP": "estabelecimento_mantido",
-        "CNPJ_MAN": "estabelecimento_mantenedora_cnpj",
-        "ESFERA_A": "estabelecimento_esfera_administrativa_id_cnes",
-        "ATIVIDAD": "estabelecimento_atividade_ensino_id_cnes",
-        "RETENCAO": "estabelecimento_tributos_retencao_id_cnes",
-        "NATUREZA": "estabelecimento_natureza_id_cnes",
-        "CLIENTEL": "estabelecimento_tipo_id_cnes",
-        "TP_UNID": "estabelecimento_fluxo_id_cnes",
-        "TURNO_AT": "estabelecimento_turno_id_cnes",
-        "NIV_HIER": "estabelecimento_hierarquia_id_cnes",
+        "CNPJ_MAN": "estabelecimento_mantenedora_id_cnpj",
+        "ESFERA_A": "estabelecimento_esfera_id_scnes",
+        "ATIVIDAD": "estabelecimento_atividade_ensino_id_scnes",
+        "RETENCAO": "estabelecimento_tributos_retencao_id_scnes",
+        "NATUREZA": "estabelecimento_natureza_id_scnes",
+        "CLIENTEL": "estabelecimento_tipo_id_scnes",
+        "TP_UNID": "estabelecimento_fluxo_id_scnes",
+        "TURNO_AT": "estabelecimento_turno_id_scnes",
+        "NIV_HIER": "estabelecimento_hierarquia_id_scnes",
         "TERCEIRO": "estabelecimento_terceiro",
         "CPF_PROF": "profissional_id_cpf_criptografado",
         "CPFUNICO": "profissional_cpf_unico",
-        "CBO": "ocupacao_id_cbo",
+        "CBO": "ocupacao_id_cbo2002",
         "CBOUNICO": "ocupacao_cbo_unico",
         "NOMEPROF": "profissional_nome",
         "CNS_PROF": "profissional_id_cns",
-        "CONSELHO": "profissional_conselho_tipo_id_cnes",
+        "CONSELHO": "profissional_conselho_tipo_id_scnes",
         "REGISTRO": "profissional_id_conselho",
-        "VINCULAC": "tipo_id_cnes",
+        "VINCULAC": "tipo_id_scnes",
         "VINCUL_C": "contratado",
         "VINCUL_A": "autonomo",
         "VINCUL_N": "sem_vinculo_definido",
@@ -69,7 +68,7 @@ DE_PARA_VINCULOS: Final[frozendict] = frozendict(
         "HORA_AMB": "atendimento_carga_ambulatorial",
         "COMPETEN": "periodo_data_inicio",
         "UFMUNRES": "profissional_residencia_municipio_id_sus",
-        "NAT_JUR": "estabelecimento_natureza_juridica_id_cnes",
+        "NAT_JUR": "estabelecimento_natureza_juridica_id_scnes",
     },
 )
 
@@ -78,35 +77,35 @@ TIPOS_VINCULOS: Final[frozendict] = frozendict(
         "id": "object",
         "unidade_geografica_id": "object",
         "periodo_id": "object",
-        "estabelecimento_id_cnes": "object",
+        "estabelecimento_id_scnes": "object",
         "estabelecimento_municipio_id_sus": "object",
         "estabelecimento_regiao_saude_id_sus": "object",
         "estabelecimento_microrregiao_saude_id_sus": "object",
         "estabelecimento_distrito_sanitario_id_sus": "object",
         "estabelecimento_distrito_administrativo_id_sus": "object",
-        "estabelecimento_gestao_condicao_id_cnes": "object",
-        "estabelecimento_personalidade_juridica_id_cnes": "object",
-        "estabelecimento_cpf_cnpj": "object",
+        "estabelecimento_gestao_condicao_id_scnes": "object",
+        "estabelecimento_personalidade_juridica_id_scnes": "object",
+        "estabelecimento_id_cpf_cnpj": "object",
         "estabelecimento_mantido": "boolean",
-        "estabelecimento_mantenedora_cnpj": "object",
-        "estabelecimento_esfera_administrativa_id_cnes": "object",
-        "estabelecimento_atividade_ensino_id_cnes": "object",
-        "estabelecimento_tributos_retencao_id_cnes": "object",
-        "estabelecimento_natureza_id_cnes": "object",
-        "estabelecimento_tipo_id_cnes": "object",
-        "estabelecimento_fluxo_id_cnes": "object",
-        "estabelecimento_turno_id_cnes": "object",
-        "estabelecimento_hierarquia_id_cnes": "object",
+        "estabelecimento_mantenedora_id_cnpj": "object",
+        "estabelecimento_esfera_id_scnes": "object",
+        "estabelecimento_atividade_ensino_id_scnes": "object",
+        "estabelecimento_tributos_retencao_id_scnes": "object",
+        "estabelecimento_natureza_id_scnes": "object",
+        "estabelecimento_tipo_id_scnes": "object",
+        "estabelecimento_fluxo_id_scnes": "object",
+        "estabelecimento_turno_id_scnes": "object",
+        "estabelecimento_hierarquia_id_scnes": "object",
         "estabelecimento_terceiro": "boolean",
         "profissional_id_cpf_criptografado": "object",
         "profissional_cpf_unico": "object",
-        "ocupacao_id_cbo": "object",
+        "ocupacao_id_cbo2002": "object",
         "ocupacao_cbo_unico": "object",
         "profissional_nome": "object",
         "profissional_id_cns": "object",
-        "profissional_conselho_tipo_id_cnes": "object",
+        "profissional_conselho_tipo_id_scnes": "object",
         "profissional_id_conselho": "object",
-        "tipo_id_cnes": "object",
+        "tipo_id_scnes": "object",
         "contratado": "boolean",
         "autonomo": "boolean",
         "sem_vinculo_definido": "boolean",
@@ -117,7 +116,9 @@ TIPOS_VINCULOS: Final[frozendict] = frozendict(
         "atendimento_carga_ambulatorial": "int64",
         "periodo_data_inicio": "datetime64[ns]",
         "profissional_residencia_municipio_id_sus": "object",
-        "estabelecimento_natureza_juridica_id_cnes": "object",
+        "estabelecimento_natureza_juridica_id_scnes": "object",
+        "criacao_data": "datetime64[ns]",
+        "atualizacao_data": "datetime64[ns]",
     },
 )
 
@@ -189,7 +190,7 @@ def transformar_vinculos(
     sessao: Session,
     vinculos: pd.DataFrame,
 ) -> pd.DataFrame:
-    """Transforma um `DataFrame` de vínculos do CNES.
+    """Transforma um `DataFrame` de vínculos do SCNES.
 
     Argumentos:
         sessao: objeto [`sqlalchemy.orm.session.Session`][] que permite
@@ -209,7 +210,7 @@ def transformar_vinculos(
     """
     logger.info(
         "Transformando DataFrame com {num_registros} vínculos "
-        + "profissionais do CNES.",
+        + "profissionais do SCNES.",
         num_registros=len(vinculos),
     )
     logger.debug(
@@ -270,8 +271,8 @@ def transformar_vinculos(
                 "estabelecimento_microrregiao_saude_id_sus",
                 "estabelecimento_distrito_sanitario_id_sus",
                 "estabelecimento_distrito_administrativo_id_sus",
-                "estabelecimento_cpf_cnpj",
-                "estabelecimento_mantenedora_cnpj",
+                "estabelecimento_id_cpf_cnpj",
+                "estabelecimento_mantenedora_id_cnpj",
                 "profissional_id_conselho",
                 "profissional_residencia_municipio_id_sus",
             ],
@@ -300,7 +301,7 @@ def transformar_vinculos(
         )
         # adicionar id
         .add_column("id", str())
-        .transform_column("id", function=lambda _: uuid.uuid4().hex)
+        .transform_column("id", function=lambda _: uuid7().hex)
         # adicionar id do periodo
         .transform_column(
             "periodo_data_inicio",
@@ -316,6 +317,9 @@ def transformar_vinculos(
             ),
             dest_column_name="unidade_geografica_id",
         )
+        # adicionar datas de inserção e atualização
+        .add_column("criacao_data", agora_gmt_menos3())
+        .add_column("atualizacao_data", agora_gmt_menos3())
         # garantir tipos
         .change_type(
             # HACK: ver https://github.com/pandas-dev/pandas/issues/25472

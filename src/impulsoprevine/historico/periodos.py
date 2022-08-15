@@ -4,10 +4,11 @@
 
 
 from datetime import datetime
-from dateutil.relativedelta import relativedelta
+
 import bancodedados
 import pandas as pd
-import uuid
+from dateutil.relativedelta import relativedelta
+from uuid6 import uuid7
 
 resultados = pd.DataFrame(columns=['id', 'data_inicio', 'data_fim', 'codigo', 'tipo'])
 data_inicio = datetime.strptime('1990-01-01', '%Y-%m-%d')
@@ -16,7 +17,7 @@ for i in range(183):
     fim = data_fim-relativedelta(days=1)
     resultados = resultados.append({'data_inicio':data_inicio.strftime('%Y-%m-%d'),'data_fim':fim.strftime('%Y-%m-%d'),'codigo':str(fim.year) + '.Q' + str(int(fim.month/4))}, ignore_index=True)
     data_inicio = data_fim
-resultados.id = resultados.apply(lambda row : uuid.uuid4(), axis=1)
+resultados.id = resultados.apply(lambda row : uuid7(), axis=1)
 resultados.tipo = 'Quadrimestral'
 tuple_list = [tuple(x) for x in resultados.to_records(index=False)]
 chunks = [tuple_list[x:x+800000] for x in range(0, len(tuple_list), 800000)]
@@ -36,7 +37,7 @@ for i in range(732):
     fim = data_fim-relativedelta(days=1)
     resultados = resultados.append({'data_inicio':data_inicio.strftime('%Y-%m-%d'),'data_fim':fim.strftime('%Y-%m-%d'),'codigo':str(fim.year) + '.M' + str(int(fim.month))}, ignore_index=True)
     data_inicio = data_fim
-resultados.id = resultados.apply(lambda row : uuid.uuid4(), axis=1)
+resultados.id = resultados.apply(lambda row : uuid7(), axis=1)
 resultados.tipo = 'Mensal'
 tuple_list = [tuple(x) for x in resultados.to_records(index=False)]
 chunks = [tuple_list[x:x+800000] for x in range(0, len(tuple_list), 800000)]
@@ -56,7 +57,7 @@ for i in range(244):
     fim = data_fim-relativedelta(days=1)
     resultados = resultados.append({'data_inicio':data_inicio.strftime('%Y-%m-%d'),'data_fim':fim.strftime('%Y-%m-%d'),'codigo':str(fim.year) + '.T' + str(int(fim.month/3))}, ignore_index=True)
     data_inicio = data_fim
-resultados.id = resultados.apply(lambda row : uuid.uuid4(), axis=1)
+resultados.id = resultados.apply(lambda row : uuid7(), axis=1)
 resultados.tipo = 'Trimestral'
 tuple_list = [tuple(x) for x in resultados.to_records(index=False)]
 chunks = [tuple_list[x:x+800000] for x in range(0, len(tuple_list), 800000)]
@@ -76,7 +77,7 @@ for i in range(122):
     fim = data_fim-relativedelta(days=1)
     resultados = resultados.append({'data_inicio':data_inicio.strftime('%Y-%m-%d'),'data_fim':fim.strftime('%Y-%m-%d'),'codigo':str(fim.year) + '.S' + str(int(fim.month/6))}, ignore_index=True)
     data_inicio = data_fim
-resultados.id = resultados.apply(lambda row : uuid.uuid4(), axis=1)
+resultados.id = resultados.apply(lambda row : uuid7(), axis=1)
 resultados.tipo = 'Semestral'
 tuple_list = [tuple(x) for x in resultados.to_records(index=False)]
 chunks = [tuple_list[x:x+800000] for x in range(0, len(tuple_list), 800000)]

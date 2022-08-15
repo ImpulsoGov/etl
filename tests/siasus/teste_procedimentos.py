@@ -48,18 +48,18 @@ def tabela_teste(sessao):
     try:
         # copiar estrutura da tabela original
         sessao.execute(
-            "create table dados_publicos._siasus_procedimentos_ambulatoriais ("
-            + "like dados_publicos.siasus_procedimentos_ambulatoriais "
+            "create table dados_publicos.__siasus_procedimentos_ambulatoriais ("
+            + "like dados_publicos._siasus_procedimentos_ambulatoriais "
             + "including all"
             + ");",
         )
         sessao.commit()
-        yield "dados_publicos._siasus_procedimentos_ambulatoriais"
+        yield "dados_publicos.__siasus_procedimentos_ambulatoriais"
     finally:
         sessao.rollback()
         sessao.execute(
             "drop table if exists "
-            + "dados_publicos._siasus_procedimentos_ambulatoriais;",
+            + "dados_publicos.__siasus_procedimentos_ambulatoriais;",
         )
         sessao.commit()
 
@@ -82,7 +82,7 @@ def teste_de_para(pa):
 
 def teste_tipos(pa):
     tabela_destino = tabelas[
-        "dados_publicos.siasus_procedimentos_ambulatoriais"
+        "dados_publicos._siasus_procedimentos_ambulatoriais"
     ]
     colunas_destino = tabela_destino.columns
 

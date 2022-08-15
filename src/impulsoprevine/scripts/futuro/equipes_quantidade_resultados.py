@@ -3,17 +3,18 @@
 # SPDX-License-Identifier: MIT
 
 
-import pandas as pd
-import numpy as np
-from selenium import webdriver
-from time import sleep
-from bs4 import BeautifulSoup
-from pathlib import Path
 import os
-import uuid
-import bancodedados
-import utilitario
 from datetime import datetime
+from pathlib import Path
+from time import sleep
+
+import bancodedados
+import numpy as np
+import pandas as pd
+import utilitario
+from bs4 import BeautifulSoup
+from selenium import webdriver
+from uuid6 import uuid7
 
 
 def captura(anomes):
@@ -57,7 +58,7 @@ def tranforma(periodos):
         equipes_parcial.municipio_id_sus = df.municipio_id_sus
         equipes_resultados = equipes_resultados.append(equipes_parcial)
     equipes_resultados = equipes_resultados.reset_index()
-    equipes_resultados.id = equipes_resultados.apply(lambda row : uuid.uuid4(), axis = 1)
+    equipes_resultados.id = equipes_resultados.apply(lambda row : uuid7(), axis = 1)
     equipes_resultados.periodo_id = periodos.id[0]
     equipes_resultados.criacao_data = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     equipes_resultados.atualizacao_data = datetime.now().strftime("%Y-%m-%d %H:%M:%S")

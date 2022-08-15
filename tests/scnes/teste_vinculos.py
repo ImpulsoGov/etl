@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: MIT
 
 
-"""Casos de teste para o ETL de dados de vínculos profissionais do CNES."""
+"""Casos de teste para o ETL de dados de vínculos profissionais do SCNES."""
 
 
 import re
@@ -13,7 +13,7 @@ import pandas as pd
 import pytest
 
 from impulsoetl.bd import tabelas
-from impulsoetl.cnes.vinculos import (
+from impulsoetl.scnes.vinculos import (
     COLUNAS_DATA_AAAAMM,
     DE_PARA_VINCULOS,
     TIPOS_VINCULOS,
@@ -26,7 +26,7 @@ from impulsoetl.utilitarios.bd import carregar_dataframe
 
 @pytest.fixture(scope="module")
 def _vinculos():
-    return pd.read_parquet("tests/cnes/CNES_PFSE2111_.parquet")
+    return pd.read_parquet("tests/scnes/CNES_PFSE2111_.parquet")
 
 
 @pytest.fixture(scope="function")
@@ -36,7 +36,7 @@ def vinculos(_vinculos):
 
 @pytest.fixture(scope="module")
 def _vinculos_transformado():
-    return pd.read_parquet("tests/cnes/vinculos_transformado.parquet")
+    return pd.read_parquet("tests/scnes/vinculos_transformado.parquet")
 
 
 @pytest.fixture(scope="function")
@@ -50,18 +50,18 @@ def tabela_teste(sessao):
         # copiar estrutura da tabela original
         sessao.execute(
             "create table "
-            + "dados_publicos._cnes_vinculos_disseminacao ("
-            + "like dados_publicos.cnes_vinculos_disseminacao "
+            + "dados_publicos.__scnes_vinculos_disseminacao ("
+            + "like dados_publicos.scnes_vinculos_disseminacao "
             + "including all"
             + ");",
         )
         sessao.commit()
-        yield "dados_publicos._cnes_vinculos_disseminacao"
+        yield "dados_publicos.__scnes_vinculos_disseminacao"
     finally:
         sessao.rollback()
         sessao.execute(
             "drop table if exists "
-            + "dados_publicos._cnes_vinculos_disseminacao;",
+            + "dados_publicos.__scnes_vinculos_disseminacao;",
         )
         sessao.commit()
 
@@ -83,7 +83,7 @@ def teste_de_para(vinculos):
 
 
 def teste_tipos(vinculos):
-    tabela_destino = tabelas["dados_publicos.cnes_vinculos_disseminacao"]
+    tabela_destino = tabelas["dados_publicos.scnes_vinculos_disseminacao"]
     colunas_destino = tabela_destino.columns
 
     for col in TIPOS_VINCULOS.keys():

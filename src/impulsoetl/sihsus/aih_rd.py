@@ -9,7 +9,6 @@
 from __future__ import annotations
 
 import os
-import uuid
 from datetime import date
 from typing import Final, Generator
 
@@ -18,13 +17,13 @@ import numpy as np
 import pandas as pd
 from frozendict import frozendict
 from sqlalchemy.orm import Session
+from uuid6 import uuid7
 
-from impulsoetl.comum.datas import periodo_por_data
+from impulsoetl.comum.datas import agora_gmt_menos3, periodo_por_data
 from impulsoetl.comum.geografias import id_sus_para_id_impulso
 from impulsoetl.loggers import logger
 from impulsoetl.utilitarios.bd import carregar_dataframe
 from impulsoetl.utilitarios.datasus_ftp import extrair_dbc_lotes
-
 
 DE_PARA_AIH_RD: Final[frozendict] = frozendict(
     {
@@ -32,12 +31,12 @@ DE_PARA_AIH_RD: Final[frozendict] = frozendict(
         "ANO_CMPT": "processamento_periodo_ano_inicio",
         "MES_CMPT": "processamento_periodo_mes_inicio",
         "ESPEC": "leito_especialidade_id_sigtap",
-        "CGC_HOSP": "estabelecimento_cnpj",
+        "CGC_HOSP": "estabelecimento_id_cnpj",
         "N_AIH": "aih_id_sihsus",
         "IDENT": "aih_tipo_id_sihsus",
         "CEP": "usuario_residencia_cep",
         "MUNIC_RES": "usuario_residencia_municipio_id_sus",
-        "NASC": "usuario_data_nascimento",
+        "NASC": "usuario_nascimento_data",
         "SEXO": "usuario_sexo_id_sigtap",
         "UTI_MES_TO": "uti_diarias",
         "MARCA_UTI": "uti_tipo_id_sihsus",
@@ -56,8 +55,8 @@ DE_PARA_AIH_RD: Final[frozendict] = frozendict(
         "DIAG_PRINC": "condicao_principal_id_cid10",
         "DIAG_SECUN": "condicao_secundaria_id_cid10",
         "COBRANCA": "desfecho_motivo_id_sihsus",
-        "NATUREZA": "estabelecimento_natureza_id_cnes",
-        "NAT_JUR": "estabelecimento_natureza_juridica_id_cnes",
+        "NATUREZA": "estabelecimento_natureza_id_scnes",
+        "NAT_JUR": "estabelecimento_natureza_juridica_id_scnes",
         "GESTAO": "gestao_condicao_id_sihsus",
         "IND_VDRL": "exame_vdrl",
         "MUNIC_MOV": "unidade_geografica_id_sus",
@@ -75,26 +74,26 @@ DE_PARA_AIH_RD: Final[frozendict] = frozendict(
         "CONTRACEP2": "usuario_contraceptivo_secundario_id_sihsus",
         "GESTRISCO": "gestacao_risco",
         "INSC_PN": "usuario_id_pre_natal",
-        "SEQ_AIH5": "remessa_sequencial_aih5_id_sihsus",
-        "CBOR": "usuario_ocupacao_id_cbo",
+        "SEQ_AIH5": "remessa_aih_id_sequencial_longa_permanencia",
+        "CBOR": "usuario_ocupacao_id_cbo2002",
         "CNAER": "usuario_atividade_id_cnae",
         "VINCPREV": "usuario_vinculo_previdencia_id_sihsus",
         "GESTOR_COD": "autorizacao_gestor_motivo_id_sihsus",
         "GESTOR_TP": "autorizacao_gestor_tipo_id_sihsus",
         "GESTOR_CPF": "autorizacao_gestor_id_cpf",
         "GESTOR_DT": "autorizacao_gestor_data",
-        "CNES": "estabelecimento_id_cnes",
-        "CNPJ_MANT": "mantenedora_cnpj",
+        "CNES": "estabelecimento_id_scnes",
+        "CNPJ_MANT": "mantenedora_id_cnpj",
         "INFEHOSP": "infeccao_hospitalar",
         "CID_ASSO": "condicao_associada_id_cid10",
         "CID_MORTE": "condicao_obito_id_cid10",
         "COMPLEX": "complexidade_id_sihsus",
         "FINANC": "financiamento_tipo_id_sigtap",
         "FAEC_TP": "financiamento_subtipo_id_sigtap",
-        "REGCT": "regra_contratual_id_cnes",
+        "REGCT": "regra_contratual_id_scnes",
         "RACA_COR": "usuario_raca_cor_id_sihsus",
         "ETNIA": "usuario_etnia_id_sus",
-        "SEQUENCIA": "remessa_sequencial_id_sihsus",
+        "SEQUENCIA": "remessa_aih_id_sequencial",
         "REMESSA": "remessa_id_sihsus",
         "AUD_JUST": "cns_ausente_justificativa_auditor",
         "SIS_JUST": "cns_ausente_justificativa_estabelecimento",
@@ -130,12 +129,12 @@ TIPOS_AIH_RD: Final[frozendict] = frozendict(
         "gestao_unidade_geografica_id_sus": "object",
         "periodo_data_inicio": "datetime64[ns]",
         "leito_especialidade_id_sigtap": "object",
-        "estabelecimento_cnpj": "object",
+        "estabelecimento_id_cnpj": "object",
         "aih_id_sihsus": "object",
         "aih_tipo_id_sihsus": "object",
         "usuario_residencia_cep": "object",
         "usuario_residencia_municipio_id_sus": "object",
-        "usuario_data_nascimento": "datetime64[ns]",
+        "usuario_nascimento_data": "datetime64[ns]",
         "usuario_sexo_id_sigtap": "object",
         "uti_diarias": "int64",
         "uti_tipo_id_sihsus": "object",
@@ -154,8 +153,8 @@ TIPOS_AIH_RD: Final[frozendict] = frozendict(
         "condicao_principal_id_cid10": "object",
         "condicao_secundaria_id_cid10": "object",
         "desfecho_motivo_id_sihsus": "object",
-        "estabelecimento_natureza_id_cnes": "object",
-        "estabelecimento_natureza_juridica_id_cnes": "object",
+        "estabelecimento_natureza_id_scnes": "object",
+        "estabelecimento_natureza_juridica_id_scnes": "object",
         "gestao_condicao_id_sihsus": "object",
         "exame_vdrl": "bool",
         "unidade_geografica_id_sus": "object",
@@ -173,26 +172,26 @@ TIPOS_AIH_RD: Final[frozendict] = frozendict(
         "usuario_contraceptivo_secundario_id_sihsus": "object",
         "gestacao_risco": "bool",
         "usuario_id_pre_natal": "object",
-        "remessa_sequencial_aih5_id_sihsus": "object",
-        "usuario_ocupacao_id_cbo": "object",
+        "remessa_aih_id_sequencial_longa_permanencia": "object",
+        "usuario_ocupacao_id_cbo2002": "object",
         "usuario_atividade_id_cnae": "object",
         "usuario_vinculo_previdencia_id_sihsus": "object",
         "autorizacao_gestor_motivo_id_sihsus": "object",
         "autorizacao_gestor_tipo_id_sihsus": "object",
         "autorizacao_gestor_id_cpf": "object",
         "autorizacao_gestor_data": "datetime64[ns]",
-        "estabelecimento_id_cnes": "object",
-        "mantenedora_cnpj": "object",
+        "estabelecimento_id_scnes": "object",
+        "mantenedora_id_cnpj": "object",
         "infeccao_hospitalar": "bool",
         "condicao_associada_id_cid10": "object",
         "condicao_obito_id_cid10": "object",
         "complexidade_id_sihsus": "object",
         "financiamento_tipo_id_sigtap": "object",
         "financiamento_subtipo_id_sigtap": "object",
-        "regra_contratual_id_cnes": "object",
+        "regra_contratual_id_scnes": "object",
         "usuario_raca_cor_id_sihsus": "object",
         "usuario_etnia_id_sus": "object",
-        "remessa_sequencial_id_sihsus": "object",
+        "remessa_aih_id_sequencial": "object",
         "remessa_id_sihsus": "object",
         "cns_ausente_justificativa_auditor": "object",
         "cns_ausente_justificativa_estabelecimento": "object",
@@ -223,11 +222,13 @@ TIPOS_AIH_RD: Final[frozendict] = frozendict(
         "id": "object",
         "periodo_id": "object",
         "unidade_geografica_id": "object",
+        "criacao_data": "datetime64[ns]",
+        "atualizacao_data": "datetime64[ns]",
     },
 )
 
 COLUNAS_DATA_AAAAMMDD: Final[list[str]] = [
-    "usuario_data_nascimento",
+    "usuario_nascimento_data",
     "aih_data_inicio",
     "aih_data_fim",
     "autorizacao_gestor_data",
@@ -335,15 +336,15 @@ def transformar_aih_rd(
             [
                 "uti_tipo_id_sihsus",
                 "condicao_secundaria_id_cid10",
-                "estabelecimento_natureza_id_cnes",
-                "estabelecimento_natureza_juridica_id_cnes",
+                "estabelecimento_natureza_id_scnes",
+                "estabelecimento_natureza_juridica_id_scnes",
                 "usuario_instrucao_id_sihsus",
                 "condicao_notificacao_id_cid10",
                 "usuario_contraceptivo_principal_id_sihsus",
                 "usuario_contraceptivo_secundario_id_sihsus",
                 "usuario_filhos_quantidade",
                 "usuario_id_pre_natal",
-                "usuario_ocupacao_id_cbo",
+                "usuario_ocupacao_id_cbo2002",
                 "usuario_atividade_id_cnae",
                 "usuario_vinculo_previdencia_id_sihsus",
                 "autorizacao_gestor_motivo_id_sihsus",
@@ -351,7 +352,7 @@ def transformar_aih_rd(
                 "autorizacao_gestor_id_cpf",
                 "condicao_associada_id_cid10",
                 "condicao_obito_id_cid10",
-                "regra_contratual_id_cnes",
+                "regra_contratual_id_scnes",
                 "usuario_etnia_id_sus",
                 "condicao_secundaria_1_tipo_id_sihsus",
                 "condicao_secundaria_2_tipo_id_sihsus",
@@ -382,7 +383,7 @@ def transformar_aih_rd(
         )
         # adicionar id
         .add_column("id", str())
-        .transform_column("id", function=lambda _: uuid.uuid4().hex)
+        .transform_column("id", function=lambda _: uuid7().hex)
         # adicionar id do periodo
         .transform_column(
             "periodo_data_inicio",
@@ -398,6 +399,9 @@ def transformar_aih_rd(
             ),
             dest_column_name="unidade_geografica_id",
         )
+        # adicionar datas de inserção e atualização
+        .add_column("criacao_data", agora_gmt_menos3())
+        .add_column("atualizacao_data", agora_gmt_menos3())
         # garantir tipos
         # HACK: ver https://github.com/pandas-dev/pandas/issues/25472
         .astype({col: "float" for col in COLUNAS_NUMERICAS})

@@ -3,13 +3,15 @@
 # SPDX-License-Identifier: MIT
 
 
-import pandas as pd
-import numpy as np
 import os
-import uuid
+from datetime import datetime
+
 import auxiliares.bancodedados as bancodedados
 import auxiliares.utilitario as utilitario
-from datetime import datetime
+import numpy as np
+import pandas as pd
+from uuid6 import uuid7
+
 
 def main():
     query = """
@@ -42,7 +44,7 @@ def main():
     df = bancodedados.readQuery(query,'impulsogov-analitico')
 
     visualizacao_indicadores = visualizacao_indicadores.append(df)
-    visualizacao_indicadores.id = visualizacao_indicadores.apply(lambda row:uuid.uuid4(), axis=1)
+    visualizacao_indicadores.id = visualizacao_indicadores.apply(lambda row:uuid7(), axis=1)
     visualizacao_indicadores.criacao_data = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     visualizacao_indicadores.atualizacao_data = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     visualizacao_indicadores = visualizacao_indicadores[['id', 'municipio_id_sus', 'municipio_nome', 
