@@ -8,13 +8,13 @@ from __future__ import annotations
 import json
 
 import pandas as pd
-from sqlalchemy.orm import Session
-
-from impulsoetl.sisab.cadastros_individuais.modelos import (
+from modelos import (
     cadastros_equipe_homologadas,
     cadastros_equipe_validas,
     cadastros_todas_equipes,
 )
+from sqlalchemy.orm import Session
+
 from impulsoetl.loggers import logger
 
 
@@ -29,15 +29,21 @@ def carregar_cadastros(
         )
     )
 
-    if visao_equipe == 'equipes-validas':
-        requisicao_insercao = cadastros_equipe_validas.insert().values(registros)
-        sufixo_tabela = 'equipe_validas'
-    elif visao_equipe == 'equipes-homologadas':
-        requisicao_insercao = cadastros_equipe_homologadas.insert().values(registros)
-        sufixo_tabela = 'equipe_homologadas'
+    if visao_equipe == "equipes-validas":
+        requisicao_insercao = cadastros_equipe_validas.insert().values(
+            registros
+        )
+        sufixo_tabela = "equipe_validas"
+    elif visao_equipe == "equipes-homologadas":
+        requisicao_insercao = cadastros_equipe_homologadas.insert().values(
+            registros
+        )
+        sufixo_tabela = "equipe_homologadas"
     else:
-        requisicao_insercao = cadastros_todas_equipes.insert().values(registros)
-        sufixo_tabela = 'equipe_todas'
+        requisicao_insercao = cadastros_todas_equipes.insert().values(
+            registros
+        )
+        sufixo_tabela = "equipe_todas"
 
     conector = sessao.connection()
     conector.execute(requisicao_insercao)
