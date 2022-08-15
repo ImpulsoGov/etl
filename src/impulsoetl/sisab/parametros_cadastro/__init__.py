@@ -2,7 +2,5 @@
 #
 # SPDX-License-Identifier: MIT
 
-<<<<<<< HEAD
-=======
 
 from impulsoetl.sisab.parametros_cadastro.principal import obter_parametros
