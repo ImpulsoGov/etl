@@ -21,48 +21,6 @@ selenium = "4.1.0"
 "psycopg2-binary" = "^2.9.3"
 scipy = "~1.8.1"
 
-
-# dependencias impulsoprevine
-"backports.entry-points-selectable" = { version = "1.1.0", optional = true }
-beautifulsoup4 = { version = "4.10.0", optional = true }
-bs4 = { version = "0.0.1", optional = true }
-CacheControl = { version = "0.12.6", optional = true }
-cachy = { version = "0.3.0", optional = true }
-certifi = { version = "2021.5.30", optional = true }
-charset-normalizer = { version = "2.0.6", optional = true }
-cleo = { version = "0.8.1", optional = true }
-clikit = { version = "0.6.2", optional = true }
-crashtest = { version = "0.3.1", optional = true }
-distlib = { version = "0.3.3", optional = true }
-filelock = { version = "3.0.12", optional = true }
-html5lib = { version = "1.1", optional = true }
-idna = { version = "3.2", optional = true }
-keyring = { version = "21.8.0", optional = true }
-lockfile = { version = "0.12.2", optional = true }
-msgpack = { version = "1.0.2", optional = true }
-numpy = { version = "1.21.2", optional = true }
-packaging = { version = "20.9", optional = true }
-pastel = { version = "0.2.1", optional = true }
-pathlib = { version = "1.0.1", optional = true }
-pexpect = { version = "4.8.0", optional = true }
-pkginfo = { version = "1.7.1", optional = true }
-platformdirs = { version = "2.3.0", optional = true }
-ptyprocess = { version = "0.7.0", optional = true }
-pylev = { version = "1.4.0", optional = true }
-pyparsing = { version = "2.4.7", optional = true }
-python-dateutil = { version = "2.8.2", optional = true }
-pytz = { version = "2021.1", optional = true }
-pywin32-ctypes = { version = "0.2.0", optional = true }
-requests = { version = "2.26.0", optional = true }
-requests-toolbelt = { version = "0.9.1", optional = true }
-shellingham = { version = "1.4.0", optional = true }
-six = { version = "1.16.0", optional = true }
-soupsieve = { version = "2.2.1", optional = true }
-tomlkit = { version = "0.7.2", optional = true }
-urllib3 = { version = "1.26.7", optional = true }
-virtualenv = { version = "20.8.0", optional = true }
-webencodings = { version = "0.5.1", optional = true }
-
 # dependencias impulsoetl
 frozendict = { version = "2.1.1", optional = true }
 frozenlist = { version = "1.2.0", optional = true }
@@ -112,48 +70,6 @@ pytest-testmon = "^1.2.3"
 
 
 [tool.poetry.extras]
-
-impulsoprevine = [
-    "backports.entry-points-selectable",
-    "beautifulsoup4",
-    "bs4",
-    "CacheControl",
-    "cachy",
-    "certifi",
-    "charset-normalizer",
-    "cleo",
-    "clikit",
-    "crashtest",
-    "distlib",
-    "filelock",
-    "html5lib",
-    "idna",
-    "keyring",
-    "lockfile",
-    "msgpack",
-    "numpy",
-    "packaging",
-    "pastel",
-    "pathlib",
-    "pexpect",
-    "pkginfo",
-    "platformdirs",
-    "ptyprocess",
-    "pylev",
-    "pyparsing",
-    "python-dateutil",
-    "pytz",
-    "pywin32-ctypes",
-    "requests",
-    "requests-toolbelt",
-    "shellingham",
-    "six",
-    "soupsieve",
-    "tomlkit",
-    "urllib3",
-    "virtualenv",
-    "webencodings"
-]
 
 impulsoetl = [
     "frozendict",
