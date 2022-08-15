@@ -26,7 +26,8 @@ def obter_parametros(
     nivel_agregacao: str,
     teste: bool = True,
 ) -> None:
-    """Extrai, transforma e carrega dados de parâmetros cadastros de equipes pelo SISAB.
+    """Extrai, transforma e carrega dados de parâmetros cadastros de equipes.
+
     Argumentos:
         sessao: objeto [`sqlalchemy.orm.session.Session`][] que permite
             acessar a base de dados da ImpulsoGov.
@@ -43,7 +44,8 @@ def obter_parametros(
             dados (`False`, padrão). Caso seja `True`, as modificações são
             adicionadas à uma transação, e podem ser revertidas com uma chamada
             posterior ao método [`Session.rollback()`][] da sessão gerada com o
-            SQLAlchemy."""
+            SQLAlchemy.
+    """
 
     df = extrair_parametros(
         visao_equipe=visao_equipe,

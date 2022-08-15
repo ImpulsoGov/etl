@@ -56,8 +56,8 @@ def tratamento_dados(
         "%Y-%m-%d %H:%M:%S"
     )
 
-    periodo = periodo_por_codigo(sessao=sessao, codigo=periodo_cod[3])
-    tabela_consolidada["periodo_id"] = periodo.id
+    periodo_obj = periodo_por_codigo(sessao=sessao, codigo=periodo_cod[3])
+    tabela_consolidada["periodo_id"] = periodo_obj.id
     tabela_consolidada["unidade_geografica_id"] = tabela_consolidada[
         "municipio_id_sus"
     ].apply(

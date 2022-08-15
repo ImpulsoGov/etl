@@ -54,7 +54,7 @@ def _extrair_cadastros_individuais(
 def extrair_cadastros_individuais(
     visao_equipe: str,
     com_ponderacao: bool,
-    competencia: DatetimeLike,
+    competencia: date,
 ) -> pd.DataFrame:
 
     resposta = _extrair_cadastros_individuais(

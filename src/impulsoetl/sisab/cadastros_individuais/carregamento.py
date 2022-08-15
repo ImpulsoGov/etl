@@ -15,7 +15,6 @@ from modelos import (
 )
 from sqlalchemy.orm import Session
 
-from impulsoetl.bd import logger
 from impulsoetl.loggers import logger
 
 
