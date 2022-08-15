@@ -4,12 +4,15 @@
 
 
 from __future__ import annotations
-from typing import Final
-import requests
+
 import urllib
-import pandas as pd
-from io import StringIO
 from datetime import date
+from io import StringIO
+from typing import Final
+
+import pandas as pd
+import requests
+
 from impulsoetl.sisab.parametros_requisicao import head
 
 VISOES_EQUIPE_CODIGOS: Final[dict[str, str]] = {

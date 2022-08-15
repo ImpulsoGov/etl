@@ -3,16 +3,16 @@
 # SPDX-License-Identifier: MIT
 
 from __future__ import annotations
+
 import urllib
+from datetime import date
 from io import StringIO
 from typing import Final
+
 import pandas as pd
 import requests
-from impulsoetl.sisab.parametros_requisicao import (
-    head
-)
-from datetime import date
 
+from impulsoetl.sisab.parametros_requisicao import head
 
 VISOES_EQUIPE_CODIGOS: Final[dict[str, str]] = {
     "todas-equipes": "",

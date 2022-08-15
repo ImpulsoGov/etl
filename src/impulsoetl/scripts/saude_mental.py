@@ -18,7 +18,6 @@ from impulsoetl.siasus.raas_ps import obter_raas_ps
 from impulsoetl.sihsus.aih_rd import obter_aih_rd
 from impulsoetl.sisab.producao import obter_relatorio_producao
 
-
 agendamentos = tabelas["configuracoes.capturas_agendamentos"]
 capturas_historico = tabelas["configuracoes.capturas_historico"]
 

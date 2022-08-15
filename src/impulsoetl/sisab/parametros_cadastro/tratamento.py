@@ -4,12 +4,14 @@
 
 
 import uuid
-from datetime import datetime
+from datetime import date, datetime
+
 import pandas as pd
 from sqlalchemy.orm import Session
-from impulsoetl.comum.datas import periodo_por_codigo,periodo_por_data
+
+from impulsoetl.comum.datas import periodo_por_codigo, periodo_por_data
 from impulsoetl.comum.geografias import id_sus_para_id_impulso
-from datetime import date
+
 
 def tratamento_dados(sessao: Session,dados_sisab_cadastros:pd.DataFrame,periodo:date,nivel_agregacao:str)->pd.DataFrame:
 

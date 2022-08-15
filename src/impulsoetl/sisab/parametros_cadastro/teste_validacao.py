@@ -5,6 +5,7 @@
 
 import pandas as pd
 
+
 def verifica_qtd_municipios (df:pd.DataFrame,df_tratado:pd.DataFrame) -> int:
 	""" verifica_qtd_municipios: Verifica se a quantidade de municípios é superior a 5000 """
 	return df['IBGE'].nunique()

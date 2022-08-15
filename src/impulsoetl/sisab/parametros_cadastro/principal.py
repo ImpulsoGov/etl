@@ -4,19 +4,21 @@
 
 
 from __future__ import annotations
-from sqlalchemy.orm import Session
+
 from datetime import date
+
+from sisab.parametros_cadastro.tratamento import tratamento_dados
+from sqlalchemy.orm import Session
+
+from impulsoetl.bd import Sessao
 from impulsoetl.sisab.parametros_cadastro.carregamento import (
-    carregar_parametros ,
+    carregar_parametros,
 )
-from impulsoetl.sisab.parametros_cadastro.extracao import (
-    extrair_parametros,
-)
+from impulsoetl.sisab.parametros_cadastro.extracao import extrair_parametros
 from impulsoetl.sisab.parametros_cadastro.teste_validacao import (
     teste_validacao,
 )
-from sisab.parametros_cadastro.tratamento import tratamento_dados
-from impulsoetl.bd import Sessao
+
 
 def obter_parametros(
     sessao: Session,

@@ -12,14 +12,14 @@ from sqlalchemy.orm import Session
 
 from impulsoetl.bd import Sessao, tabelas
 from impulsoetl.loggers import logger
-
 from impulsoetl.sisab.cadastros_individuais import obter_cadastros_individuais
+from impulsoetl.sisab.indicadores_municipios.principal import (
+    obter_indicadores_desempenho,
+)
 from impulsoetl.sisab.parametros_cadastro.principal import obter_parametros
-from impulsoetl.sisab.indicadores_municipios.principal import obter_indicadores_desempenho
 from impulsoetl.sisab.relatorio_validacao import (
     obter_validacao_municipios_producao,
 )
-
 
 agendamentos = tabelas["configuracoes.capturas_agendamentos"]
 capturas_historico = tabelas["configuracoes.capturas_historico"]

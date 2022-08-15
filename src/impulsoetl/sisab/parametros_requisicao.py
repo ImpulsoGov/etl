@@ -19,9 +19,11 @@
 # *   **quad** - Periodo de referencia (String)
 # > *Atribuições* : Criar arquivo .csv
 
+import urllib
+
 import requests
 from bs4 import BeautifulSoup as bs
-import urllib
+
 
 def get_cookie(url):
     r = requests.get(url)

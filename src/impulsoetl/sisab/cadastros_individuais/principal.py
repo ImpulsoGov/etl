@@ -4,8 +4,11 @@
 
 
 from __future__ import annotations
-from sqlalchemy.orm import Session
+
 from datetime import date
+
+from sqlalchemy.orm import Session
+
 from impulsoetl.sisab.cadastros_individuais.carregamento import (
     carregar_cadastros,
 )

@@ -4,12 +4,20 @@
 
 
 from __future__ import annotations
+
 import json
-from sqlalchemy.orm import Session
+
 import pandas as pd
-from impulsoetl.loggers import logger
+from modelos import (
+    cadastros_equipe_homologadas,
+    cadastros_equipe_validas,
+    cadastros_todas_equipes,
+)
+from sqlalchemy.orm import Session
+
 from impulsoetl.bd import logger
-from modelos import cadastros_equipe_homologadas ,cadastros_todas_equipes, cadastros_equipe_validas
+from impulsoetl.loggers import logger
+
 
 def carregar_cadastros(sessao: Session,cadastros_transformada:pd.DataFrame,visao_equipe:str) -> int:
 
