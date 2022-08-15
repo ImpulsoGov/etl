@@ -19,8 +19,8 @@ from impulsoetl.sisab.indicadores_municipios.carregamento import (
 from impulsoetl.sisab.indicadores_municipios.extracao import (
     extrair_indicadores,
 )
-from impulsoetl.sisab.indicadores_municipios.teste_validacao import (
-    teste_validacao,
+from impulsoetl.sisab.indicadores_municipios.verificacao import (
+    verificar_indicadores_municipios,
 )
 from impulsoetl.sisab.indicadores_municipios.tratamento import tratamento_dados
 
@@ -36,7 +36,10 @@ INDICADORES_CODIGOS: Final[dict[str, str]] = {
 
 
 def obter_indicadores_desempenho(
-    sessao: Session, visao_equipe: str, quadrimestre: date, teste: bool = False
+    sessao: Session,
+    visao_equipe: str,
+    quadrimestre: date,
+    teste: bool = False,
 ) -> None:
     for indicador in INDICADORES_CODIGOS:
         df = extrair_indicadores(
@@ -50,7 +53,7 @@ def obter_indicadores_desempenho(
             periodo=quadrimestre,
             indicador=indicador,
         )
-        teste_validacao(df, df_tratado, indicador)
+        verificar_indicadores_municipios(df=df, df_tratado=df_tratado)
         carregar_indicadores(
             sessao=sessao,
             indicadores_transformada=df_tratado,

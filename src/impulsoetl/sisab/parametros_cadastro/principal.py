@@ -10,13 +10,12 @@ from datetime import date
 from sisab.parametros_cadastro.tratamento import tratamento_dados
 from sqlalchemy.orm import Session
 
-from impulsoetl.bd import Sessao
 from impulsoetl.sisab.parametros_cadastro.carregamento import (
     carregar_parametros,
 )
 from impulsoetl.sisab.parametros_cadastro.extracao import extrair_parametros
-from impulsoetl.sisab.parametros_cadastro.teste_validacao import (
-    teste_validacao,
+from impulsoetl.sisab.parametros_cadastro.verificacao import (
+    verificar_parametros_cadastro,
 )
 
 
@@ -57,7 +56,11 @@ def obter_parametros(
         periodo=periodo,
         nivel_agregacao=nivel_agregacao,
     )
-    teste_validacao(df, df_tratado, nivel_agregacao=nivel_agregacao)
+    verificar_parametros_cadastro(
+        df=df,
+        df_tratado=df_tratado,
+        nivel_agregacao=nivel_agregacao,
+    )
     carregar_parametros(
         sessao=sessao,
         parametros_transformada=df_tratado,
