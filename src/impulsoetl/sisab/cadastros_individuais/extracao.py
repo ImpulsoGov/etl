@@ -15,7 +15,6 @@ import requests
 
 from impulsoetl.sisab.parametros_requisicao import head
 
-
 VISOES_EQUIPE_CODIGOS: Final[dict[str, str]] = {
     "todas-equipes": "",
     "equipes-homologadas": "|HM|",

@@ -12,7 +12,7 @@ from bs4 import BeautifulSoup as bs
 
 
 def get_cookie(url):
-    resposta = requests.get(url)
+    resposta = requests.get(url,timeout=120)
     ck = resposta.cookies.get_dict()
     soup = bs(resposta.text, "html.parser")
     vs = urllib.parse.quote(soup.findAll("input")[1].attrs["value"])

@@ -4,9 +4,12 @@
 
 
 from __future__ import annotations
+
 import json
+
 import pandas as pd
 from sqlalchemy.orm import Session
+
 from impulsoetl.loggers import logger
 from impulsoetl.sisab.parametros_cadastro.modelos import (
     parametros_equipes_equipe_homologadas,

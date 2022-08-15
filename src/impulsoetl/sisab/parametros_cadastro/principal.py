@@ -1,16 +1,22 @@
+# SPDX-FileCopyrightText: 2022 ImpulsoGov <contato@impulsogov.org>
+#
+# SPDX-License-Identifier: MIT
+
+
 from __future__ import annotations
-from sqlalchemy.orm import Session
+
 from datetime import date
+
+from sisab.parametros_cadastro.tratamento import tratamento_dados
+from sqlalchemy.orm import Session
+
 from impulsoetl.sisab.parametros_cadastro.carregamento import (
-    carregar_parametros ,
+    carregar_parametros,
 )
-from impulsoetl.sisab.parametros_cadastro.extracao import (
-    extrair_parametros,
+from impulsoetl.sisab.parametros_cadastro.extracao import extrair_parametros
+from impulsoetl.sisab.parametros_cadastro.verificacao import (
+    verificar_parametros_cadastro,
 )
-from impulsoetl.sisab.parametros_cadastro.teste_validacao import (
-    teste_validacao,
-)
-from impulsoetl.sisab.parametros_cadastro.tratamento import tratamento_dados
 
 
 def obter_parametros(
@@ -18,9 +24,10 @@ def obter_parametros(
     visao_equipe: str,
     periodo: date,
     nivel_agregacao: str,
-    teste: bool = True
+    teste: bool = True,
 ) -> None:
-    """Extrai, transforma e carrega dados de parâmetros cadastros de equipes pelo SISAB.
+    """Extrai, transforma e carrega dados de parâmetros cadastros de equipes.
+
     Argumentos:
         sessao: objeto [`sqlalchemy.orm.session.Session`][] que permite
             acessar a base de dados da ImpulsoGov.
@@ -37,15 +44,30 @@ def obter_parametros(
             dados (`False`, padrão). Caso seja `True`, as modificações são
             adicionadas à uma transação, e podem ser revertidas com uma chamada
             posterior ao método [`Session.rollback()`][] da sessão gerada com o
-            SQLAlchemy."""
-            
-    df = extrair_parametros(visao_equipe=visao_equipe,competencia=periodo,nivel_agregacao=nivel_agregacao)
-    logger.info("Extração dos dados realizada...")
-    df_tratado = tratamento_dados(sessao=sessao,dados_sisab_cadastros=df,periodo=periodo,nivel_agregacao=nivel_agregacao)
-    logger.info("Transformação dos dados realizada...")
-    teste_validacao(df, df_tratado,nivel_agregacao=nivel_agregacao)
-    logger.info("Validação dos dados realizada...")
-    carregar_parametros(sessao=sessao,parametros_transformada=df_tratado,visao_equipe=visao_equipe,nivel_agregacao=nivel_agregacao)
+            SQLAlchemy.
+    """
 
-
-
+    df = extrair_parametros(
+        visao_equipe=visao_equipe,
+        competencia=periodo,
+        nivel_agregacao=nivel_agregacao,
+    )
+    df_tratado = tratamento_dados(
+        sessao=sessao,
+        dados_sisab_cadastros=df,
+        periodo=periodo,
+        nivel_agregacao=nivel_agregacao,
+    )
+    verificar_parametros_cadastro(
+        df=df,
+        df_tratado=df_tratado,
+        nivel_agregacao=nivel_agregacao,
+    )
+    carregar_parametros(
+        sessao=sessao,
+        parametros_transformada=df_tratado,
+        visao_equipe=visao_equipe,
+        nivel_agregacao=nivel_agregacao,
+    )
+    if not teste:
+        sessao.commit()

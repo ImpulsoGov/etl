@@ -15,10 +15,10 @@ from impulsoetl.sisab.cadastros_individuais.carregamento import (
 from impulsoetl.sisab.cadastros_individuais.extracao import (
     extrair_cadastros_individuais,
 )
-from impulsoetl.sisab.cadastros_individuais.teste_validacao import (
-    teste_validacao,
-)
 from impulsoetl.sisab.cadastros_individuais.tratamento import tratamento_dados
+from impulsoetl.sisab.cadastros_individuais.verificacao import (
+    verificar_cadastros_individuais
+)
 
 
 def obter_cadastros_individuais(
@@ -29,7 +29,7 @@ def obter_cadastros_individuais(
     teste: bool = True,
 ) -> None:
     """Extrai, transforma e carrega dados de cadastros de equipes pelo SISAB.
-    
+
     Argumentos:
         sessao: objeto [`sqlalchemy.orm.session.Session`][] que permite
             acessar a base de dados da ImpulsoGov.
@@ -62,11 +62,11 @@ def obter_cadastros_individuais(
             com_ponderacao=status_ponderacao,
             periodo=periodo,
         )
-        logger.info("Transformação dos dados realizada...")
-        teste_validacao(df, df_tratado)
-        logger.info("Validação dos dados realizada...")
+        verificar_cadastros_individuais(df=df, df_tratado=df_tratado)
         carregar_cadastros(
             sessao=sessao,
             cadastros_transformada=df_tratado,
             visao_equipe=visao_equipe,
         )
+        if not teste:
+            sessao.commit()
