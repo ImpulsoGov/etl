@@ -25,7 +25,7 @@ def obter_parametros(
     visao_equipe: str,
     periodo: date,
     nivel_agregacao: str,
-    teste: bool = True
+    teste: bool = True,
 ) -> None:
     """Extrai, transforma e carrega dados de parâmetros cadastros de equipes pelo SISAB.
     Argumentos:
@@ -46,11 +46,23 @@ def obter_parametros(
             posterior ao método [`Session.rollback()`][] da sessão gerada com o
             SQLAlchemy."""
 
-    df = extrair_parametros(visao_equipe=visao_equipe,competencia=periodo,nivel_agregacao=nivel_agregacao)
-    df_tratado = tratamento_dados(sessao=sessao,dados_sisab_cadastros=df,periodo=periodo,nivel_agregacao=nivel_agregacao)
-    teste_validacao(df, df_tratado,nivel_agregacao=nivel_agregacao)
-    carregar_parametros(sessao=sessao,parametros_transformada=df_tratado,visao_equipe=visao_equipe,nivel_agregacao=nivel_agregacao)
+    df = extrair_parametros(
+        visao_equipe=visao_equipe,
+        competencia=periodo,
+        nivel_agregacao=nivel_agregacao,
+    )
+    df_tratado = tratamento_dados(
+        sessao=sessao,
+        dados_sisab_cadastros=df,
+        periodo=periodo,
+        nivel_agregacao=nivel_agregacao,
+    )
+    teste_validacao(df, df_tratado, nivel_agregacao=nivel_agregacao)
+    carregar_parametros(
+        sessao=sessao,
+        parametros_transformada=df_tratado,
+        visao_equipe=visao_equipe,
+        nivel_agregacao=nivel_agregacao,
+    )
     if not teste:
         sessao.commit()
-
-
