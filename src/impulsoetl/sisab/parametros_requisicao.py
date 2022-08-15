@@ -19,16 +19,14 @@
 # *   **quad** - Periodo de referencia (String)
 # > *Atribuições* : Criar arquivo .csv
 
-import urllib
-
 import requests
 from bs4 import BeautifulSoup as bs
 
 
 def get_cookie(url):
-    response = requests.get(url,timeout=120)
-    ck = response.cookies.get_dict()
-    soup = bs(response.text, "html.parser")
+    r = requests.get(url)
+    ck = r.cookies.get_dict()
+    soup = bs(r.text, "html.parser")
     vs = urllib.parse.quote(soup.findAll("input")[1].attrs["value"])
     return ck, vs
 
@@ -52,8 +50,8 @@ def head(url):
         "Sec-Fetch-User": "?1",
         "Sec-Fetch-Dest": "document",
         "Accept-Language": "pt-BR,pt;q=0.9,en-US;q=0.8,en;q=0.7",
-        "Cookie": "BIGipServerpool_sisab_jboss="
-        + cookies[0]["BIGipServerpool_sisab_jboss"]
+        "Cookie": "BIGipServersisab_prod="
+        + cookies[0]["BIGipServersisab_prod"]
         + ";JSESSIONID="
         + cookies[0]["JSESSIONID"],
     }

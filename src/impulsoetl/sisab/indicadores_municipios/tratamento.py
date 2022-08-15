@@ -5,94 +5,89 @@
 
 """Processa dados de indicadores de desempenho para o formato usado no BD."""
 
-
-from datetime import date, datetime
-
+from __future__ import annotations
+from typing import Final
+from datetime import date
 import pandas as pd
-from sqlalchemy import or_
 from sqlalchemy.orm import Session
-
-from impulsoetl.comum.datas import periodo_por_codigo, periodo_por_data
+from impulsoetl.comum.datas import periodo_por_codigo,periodo_por_data
 from impulsoetl.comum.geografias import id_sus_para_id_impulso
 from impulsoetl.sisab.indicadores_municipios.modelos import indicadores_regras
+from frozendict import frozendict
+from loggers import logger
 
+TIPOS: Final[frozendict] = frozendict(
+    {
+        "municipio_id_sus": str,
+        "numerador": int,
+        "denominador_utilizado":int,
+        "denominador_estimado": int,
+        "denominador_informado": int,
+        "nota_porcentagem": int,
+        "cadastro": int,
+        "base_externa": float,
+        "porcentagem": int,
+        "populacao": int
+    })
 
-def indicadores_regras_id_por_periodo(  # noqa: WPS122
+INDICADORES_RENOMEIA_COLUNAS : Final[dict[str, str]] = {
+    "IBGE":"municipio_id_sus",
+    "Numerador":"numerador",
+    "Denominador Utilizado":"denominador_utilizado",
+    "2022 Q1 (%)":"nota_porcentagem",
+    "Denominador Identificado":"denominador_informado",
+    "Denominador Estimado":"denominador_estimado",
+    "Cadastro":"cadastro", 
+    "Base Externa":"base_externa",
+    "Percentual":"porcentagem",
+    "População":"populacao"
+}
+    
+def indicadores_regras_id_por_periodo(
     sessao: Session,
     indicador: str,
-    data=date,
+    data:date,
 ):
 
     return (
         sessao.query(indicadores_regras)  # type: ignore
         .filter(indicadores_regras.c.nome == indicador)
         .filter(indicadores_regras.c.versao_inicio <= data)
-        .filter(
-            or_(
-                indicadores_regras.c.versao_fim >= data,
-                indicadores_regras.c.versao_fim is None,
-            )
-        )
+        .filter(indicadores_regras.c.versao_fim == None)
         .first()
         .id
-    )
+        )
 
 
-def tratamento_dados(
-    sessao: Session,
-    dados_sisab_indicadores: pd.DataFrame,
-    periodo: date,
-    indicador: str,
-) -> pd.DataFrame:
+def tratamento_dados(sessao:Session,df_extraido:str,periodo:date,indicador:str)->pd.DataFrame:
+    """ Trata dados capturados do relatório de indicadores do SISAB
 
-    tabela_consolidada = pd.DataFrame(
-        columns=[
-            "municipio_id_sus",
-            "periodo_id",
-            "periodo_codigo",
-            "indicadores_nome",
-            "indicadores_regras_id",
-            "numerador",
-            "denominador_estimado",
-            "denominador_informado",
-            "nota_porcentagem",
-        ]
-    )
+        Argumentos:
+            sessao: objeto [`sqlalchemy.orm.session.Session`][] que permite
+                acessar a base de dados da ImpulsoGov.
+            df_extraido: [`DataFrame`][] contendo os dados capturados no relatório de Indicadores do Sisab
+             (conforme retornado pela função
+                [`extrair_dados()`][]).
+            periodo: Data do quadrimestre da competência em referência
+            indicador: Nome do indicador.
 
-    tabela_consolidada[
-        [
-            "municipio_id_sus",
-            "numerador",
-            "denominador_estimado",
-            "denominador_informado",
-            "nota_porcentagem",
-        ]
-    ] = dados_sisab_indicadores.loc[
-        :,
-        [
-            "ibge",
-            "numerador",
-            "denominador_estimado",
-            "denominador_informado",
-            "nota",
-        ],
-    ]
-    tabela_consolidada["indicadores_nome"] = indicador
-    indicadores_regras_id = indicadores_regras_id_por_periodo(
-        sessao=sessao, indicador=indicador, data=periodo
-    )
-    tabela_consolidada["indicadores_regras_id"] = indicadores_regras_id
-    tabela_consolidada["criacao_data"] = datetime.now().strftime(
-        "%Y-%m-%d %H:%M:%S"
-    )
-    tabela_consolidada["atualizacao_data"] = datetime.now().strftime(
-        "%Y-%m-%d %H:%M:%S"
-    )
-    periodo_cod = periodo_por_data(sessao=sessao, data=periodo)
-    tabela_consolidada["periodo_codigo"] = periodo_cod[3]
-    periodo_obj = periodo_por_codigo(sessao=sessao, codigo=periodo_cod[3])
-    tabela_consolidada["periodo_id"] = periodo_obj.id
-    tabela_consolidada["unidade_geografica_id"] = tabela_consolidada[
+        Retorna:
+            `DataFrame` com dados tratados para armazenamento em tabela :
+            * Exclui campos;
+            * Renomeia colunas;
+            * Enriquece tabela com novos campos;
+            * Exclui índice
+            * Define tipos de dados """
+
+    logger.info("Iniciando tratamento dos dados...")
+    df_tratado = df_extraido.rename(columns=INDICADORES_RENOMEIA_COLUNAS)
+    df_tratado['indicadores_nome'] = indicador
+    df_tratado["indicadores_regras_id"] = indicadores_regras_id_por_periodo(sessao=sessao,indicador=indicador, data=periodo)
+    df_tratado["periodo_codigo"] = periodo_por_data(sessao=sessao, data=periodo,tipo_periodo="quadrimestral").codigo
+    df_tratado["periodo_id"] = periodo_por_codigo(sessao=sessao, codigo=periodo_por_data(sessao=sessao, data=periodo,tipo_periodo="quadrimestral").codigo).id
+    df_tratado.reset_index(drop=True, inplace=True)
+    df_tratado["municipio_id_sus"] = df_tratado["municipio_id_sus"].astype(int).astype('string')
+    df_tratado["unidade_geografica_id"] = df_tratado[
         "municipio_id_sus"
     ].apply(
         lambda municipio_id_sus: id_sus_para_id_impulso(
@@ -100,44 +95,6 @@ def tratamento_dados(
             id_sus=municipio_id_sus,
         )
     )
-    tabela_consolidada.reset_index(drop=True, inplace=True)
-
-    # Formatação de tipo
-    tabela_consolidada["municipio_id_sus"] = tabela_consolidada[
-        "municipio_id_sus"
-    ].astype("string")
-    tabela_consolidada["periodo_id"] = tabela_consolidada["periodo_id"].astype(
-        "string"
-    )
-    tabela_consolidada["periodo_codigo"] = tabela_consolidada[
-        "periodo_codigo"
-    ].astype("string")
-    tabela_consolidada["unidade_geografica_id"] = tabela_consolidada[
-        "unidade_geografica_id"
-    ].astype("string")
-    tabela_consolidada["indicadores_nome"] = tabela_consolidada[
-        "indicadores_nome"
-    ].astype("string")
-    tabela_consolidada["indicadores_regras_id"] = tabela_consolidada[
-        "indicadores_regras_id"
-    ].astype("string")
-    tabela_consolidada["numerador"] = tabela_consolidada["numerador"].astype(
-        int
-    )
-    tabela_consolidada["denominador_estimado"] = tabela_consolidada[
-        "denominador_estimado"
-    ].astype(int)
-    tabela_consolidada["denominador_informado"] = tabela_consolidada[
-        "denominador_informado"
-    ].astype(int)
-    tabela_consolidada["nota_porcentagem"] = tabela_consolidada[
-        "nota_porcentagem"
-    ].astype(int)
-    tabela_consolidada["criacao_data"] = tabela_consolidada[
-        "criacao_data"
-    ].astype("string")
-    tabela_consolidada["atualizacao_data"] = tabela_consolidada[
-        "atualizacao_data"
-    ].astype("string")
-
-    return tabela_consolidada
+    df_tratado = df_tratado.astype(TIPOS)
+    logger.info(f"Tratamento dos dados realizado | Total de registros : {df_tratado.shape[0]}")
+    return df_tratado
