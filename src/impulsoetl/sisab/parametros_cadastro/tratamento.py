@@ -1,3 +1,8 @@
+# SPDX-FileCopyrightText: 2022 ImpulsoGov <contato@impulsogov.org>
+#
+# SPDX-License-Identifier: MIT
+
+
 import uuid
 from datetime import datetime
 import pandas as pd

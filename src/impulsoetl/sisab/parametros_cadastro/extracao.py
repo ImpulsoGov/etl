@@ -1,3 +1,8 @@
+# SPDX-FileCopyrightText: 2022 ImpulsoGov <contato@impulsogov.org>
+#
+# SPDX-License-Identifier: MIT
+
+
 from __future__ import annotations
 from typing import Final
 import requests
