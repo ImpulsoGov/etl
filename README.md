@@ -56,8 +56,8 @@ Antes de rodar o container com o pacote `impulsoetl` localmente, crie um arquivo
 Em seguida, execute os comandos abaixo em um terminal de linha de comando (a execução completa pode demorar):
 
 ```sh
-$ docker build -f impulsoetl.Dockerfile -t impulsoetl
-$ docker run -p 8889:8888 impulsoetl:latest
+$ docker build -t impulsoetl .
+$ docker run -p 8888:8888 impulsoetl:latest
 ```
 
 Esses comandos vão construir uma cópia local da imagem do Impulso e tentar executar as capturas de dados públicos agendadas no banco de dados.

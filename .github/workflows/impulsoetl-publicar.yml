@@ -8,15 +8,9 @@ name: Cria imagem Docker - ImpulsoETL
 on:
   push:
     branches: [ main ]
-    paths-ignore:
-      - 'src/impulsoprevine/**'
-      - 'Dockerfile'
   pull_request:
     types: [ closed ]
     branches: [ main ]
-    paths-ignore:
-      - 'src/impulsoprevine/**'
-      - 'Dockerfile'
 
 jobs:
   build:
@@ -32,8 +26,6 @@ jobs:
         SLACK_WEBHOOK_URL: ${{secrets.SLACK_WEBHOOK_URL}}
       run: docker login -u $DOCKER_USER -p $DOCKER_SENHA
     - name: Construir imagem do ImpulsoETL
-      run: >
-        docker build -t impulsogov/impulsoetl:latest
-        -f "./impulsoetl.Dockerfile" .
+      run: docker build -t impulsogov/impulsoetl:latest .
     - name: Enviar imagem do ImpulsoETL
       run: docker push impulsogov/impulsoetl
