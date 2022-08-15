@@ -10,26 +10,22 @@ Extração, tratamento e caregamento de dados públicos direta ou indiretamente 
 
 ## Estrutura do repositório
 
-O repositório possui dois pacotes Python contendo a lógica de para a
-captura de dados públicos: `impulsoetl` e `impulsoprevine`.
+O repositório possui um pacote Python contendo a lógica para a
+captura de dados públicos, sob o nome `impulsoetl`.
 
 ```plain
 etl
 ├─ src
 │  ├─ impulsoetl
 │  │  └─ ...
-│  └─ impulsoprevine
-│     └─ ...
-└─ ...   
+└─ ...
 ```
 
-O pacote `impulsoprevine` contém sobretudo dados do SISAB utilizados para consumo pelas aplicações do [Impulso Previne](http://impulsoprevine.com.br/). Esse foi o primeiro pacote de ETL implementado e permanece em uso, mas novas funcionalidades de ETL devem ser implementadas preferencialmente no `impulsoetl`
-
-O pacote `impulsoetl` contém as lógicas de obtenção de dados do SIASUS, SIHSUS e alguns dados do SCNES e do SISAB, incluindo interfaces com agendadores de tarefas e registradores de logs de transações. Inicialmente, foi desenvolvido para a obtenção de dados do [Impulso Saúde Mental](https://impulsosaudemental.org/), mas atualmente esse pacote deve ser preferido para a implementação de todas as funções de ETL - mesmo aquelas relacionadas ao Impulso Previne.
+O pacote `impulsoetl` contém as lógicas de obtenção de dados do SIASUS, SIHSUS
+e alguns dados do SCNES e do SISAB, incluindo interfaces com agendadores de
+tarefas e registradores de logs de transações.
 
 ## Instalação via código fonte (para desenvolvimento local)
-
-### ImpulsoETL
 
 A instalação do pacote depende do gerenciador de dependências [Poetry][].
 
@@ -55,8 +51,6 @@ $ source .venv/bin/activate
 
 ## Instalação e execução locais com Docker
 
-### ImpulsoETL
-
 Antes de rodar o container com o pacote `impulsoetl` localmente, crie um arquivo nomeado `.env` na raiz do repositório. Esse arquivo deve conter as credenciais de acesso ao banco de dados e outras configurações de execução do ETL. Você pode utilizar o modelo do arquivo `.env.sample` como referência.
 
 Em seguida, execute os comandos abaixo em um terminal de linha de comando (a execução completa pode demorar):
@@ -68,17 +62,13 @@ $ docker run -p 8889:8888 impulsoetl:latest
 
 Esses comandos vão construir uma cópia local da imagem do Impulso e tentar executar as capturas de dados públicos agendadas no banco de dados.
 
-### Impulso Previne
-
-Para criar e rodar a imagem do container atualmente contendo o ETL do Impulso Previne, execute em um terminal de linha de comando:
-
-```sh
-$ docker build -t impulsoprevine .
-$ docker run -p 8888:8888 impulsoprevine:latest
-```
-
 ## Rodando em produção
 
-Tanto o pacote `impulsoetl` quanto o `impulsoprevine` utilizam ações do [GitHub Actions](https://docs.github.com/actions) para enviar imagens para o [DockerHub da Impulso Gov](https://hub.docker.com/orgs/impulsogov/repositories) sempre que há uma atualização da branch principal do repositório. Diariamente, essa imagem é baixada para uma máquina virtual que executa as capturas pendentes.
+O pacote `impulsoetl` utiliza ações do
+[GitHub Actions](https://docs.github.com/actions) para enviar imagens para o
+[DockerHub da Impulso Gov](https://hub.docker.com/orgs/impulsogov/repositories)
+sempre que há uma atualização da branch principal do repositório. Diariamente,
+essa imagem é baixada para uma máquina virtual que executa as capturas
+pendentes.
 
 Para executar os pacotes em produção, defina as credenciais necessárias como [segredos no repositório](https://docs.github.com/en/actions/security-guides/encrypted-secrets). Se necessário, ajuste os arquivos do diretório [.github/workflows](./.github/workflows) com as definições apropriadas para a execução das tarefas de implantação e de execução dos fluxos de ETL.
