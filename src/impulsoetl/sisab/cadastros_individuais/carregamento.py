@@ -8,14 +8,14 @@ from __future__ import annotations
 import json
 
 import pandas as pd
-from modelos import (
+from sqlalchemy.orm import Session
+
+from impulsoetl.loggers import logger
+from impulsoetl.sisab.cadastros_individuais.modelos import (
     cadastros_equipe_homologadas,
     cadastros_equipe_validas,
     cadastros_todas_equipes,
 )
-from sqlalchemy.orm import Session
-
-from impulsoetl.loggers import logger
 
 
 def carregar_cadastros(
