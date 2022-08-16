@@ -8,10 +8,13 @@
 
 from __future__ import annotations
 
+import shutil
+from contextlib import closing
 from ftplib import FTP  # noqa: B402  # nosec: B402
 from pathlib import Path
-from tempfile import NamedTemporaryFile, TemporaryDirectory
+from tempfile import TemporaryDirectory
 from typing import Generator, cast
+from urllib.request import urlopen
 
 import pandas as pd
 from dbfread import DBF
@@ -97,49 +100,55 @@ def extrair_dbc_lotes(
     arquivo_dbf_nome = arquivo_nome.replace(".dbc", ".dbf")
 
     with TemporaryDirectory() as diretorio_temporario:
-        with NamedTemporaryFile(dir=diretorio_temporario) as arquivo_dbc:
-            logger.info("Tudo pronto para o download.")
+        arquivo_dbc = Path(diretorio_temporario, arquivo_nome)
+        logger.info("Tudo pronto para o download.")
 
-            logger.info("Iniciando download do arquivo `{}`...", arquivo_nome)
-            cliente_ftp.retrbinary(
-                "RETR {}".format(arquivo_nome),
-                arquivo_dbc.write,
+        logger.info("Iniciando download do arquivo `{}`...", arquivo_nome)
+
+        # baixar do FTP usando urllib
+        # ver https://stackoverflow.com/a/11768443/7733563
+        with closing(
+            urlopen(  # nosec: B310
+                "ftp://" + ftp + caminho_diretorio + "/" + arquivo_nome,
             )
-            logger.info("Download concluído.")
+        ) as resposta:
+            with open(arquivo_dbc, "wb") as arquivo:
+                shutil.copyfileobj(resposta, arquivo)
+        logger.info("Download concluído.")
 
-            if _checar_arquivo_corrompido(
-                tamanho_arquivo_ftp=cast(int, cliente_ftp.size(arquivo_nome)),
-                tamanho_arquivo_local=Path(arquivo_dbc.name).stat().st_size,
-            ):
-                raise RuntimeError(
-                    "A extração da fonte `{}{}` ".format(
-                        ftp,
-                        caminho_diretorio,
-                    )
-                    + "falhou porque o arquivo baixado está corrompido."
+        if _checar_arquivo_corrompido(
+            tamanho_arquivo_ftp=cast(int, cliente_ftp.size(arquivo_nome)),
+            tamanho_arquivo_local=arquivo_dbc.stat().st_size,
+        ):
+            raise RuntimeError(
+                "A extração da fonte `{}{}` ".format(
+                    ftp,
+                    caminho_diretorio,
                 )
-
-            logger.info("Descompactando arquivo DBC...")
-            arquivo_dbf_caminho = Path(diretorio_temporario, arquivo_dbf_nome)
-            dbc2dbf(arquivo_dbc.name, str(arquivo_dbf_caminho))
-            logger.info("Lendo arquivo DBF...")
-            arquivo_dbf = DBF(
-                arquivo_dbf_caminho,
-                encoding="iso-8859-1",
-                load=False,
+                + "falhou porque o arquivo baixado está corrompido."
             )
-            arquivo_dbf_fatias = ichunked(arquivo_dbf, passo)
 
-            contador = 0
-            for fatia in arquivo_dbf_fatias:
-                logger.info(
-                    "Lendo trecho do arquivo DBF disponibilizado pelo DataSUS "
-                    + "e convertendo em DataFrame (linhas {} a {})...",
-                    contador,
-                    contador + passo,
-                )
-                yield pd.DataFrame(fatia)
-                contador += passo
+        logger.info("Descompactando arquivo DBC...")
+        arquivo_dbf_caminho = Path(diretorio_temporario, arquivo_dbf_nome)
+        dbc2dbf(str(arquivo_dbc), str(arquivo_dbf_caminho))
+        logger.info("Lendo arquivo DBF...")
+        arquivo_dbf = DBF(
+            arquivo_dbf_caminho,
+            encoding="iso-8859-1",
+            load=False,
+        )
+        arquivo_dbf_fatias = ichunked(arquivo_dbf, passo)
+
+        contador = 0
+        for fatia in arquivo_dbf_fatias:
+            logger.info(
+                "Lendo trecho do arquivo DBF disponibilizado pelo DataSUS "
+                + "e convertendo em DataFrame (linhas {} a {})...",
+                contador,
+                contador + passo,
+            )
+            yield pd.DataFrame(fatia)
+            contador += passo
 
     logger.debug("Encerrando a conexão com o servidor FTP `{}`...", ftp)
     cliente_ftp.close()
