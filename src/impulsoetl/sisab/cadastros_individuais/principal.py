@@ -9,6 +9,7 @@ from datetime import date
 
 from sqlalchemy.orm import Session
 
+from impulsoetl.loggers import logger
 from impulsoetl.sisab.cadastros_individuais.carregamento import (
     carregar_cadastros,
 )
@@ -17,7 +18,7 @@ from impulsoetl.sisab.cadastros_individuais.extracao import (
 )
 from impulsoetl.sisab.cadastros_individuais.tratamento import tratamento_dados
 from impulsoetl.sisab.cadastros_individuais.verificacao import (
-    verificar_cadastros_individuais
+    verificar_cadastros_individuais,
 )
 
 

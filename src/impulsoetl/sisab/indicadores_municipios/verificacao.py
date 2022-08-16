@@ -84,11 +84,10 @@ def verificar_diferenca_qtd_nota(
     ) == 0
 
 
-def verificar_validade_nota(df_tratado: pd.DataFrame):
+def verificar_validade_nota(df_tratado: pd.DataFrame) -> bool:
     """Verifica se os valores de nota está entre 0 e 100."""
-    return (
-        (df_tratado["nota_porcentagem"].min() >= 0)
-        and (df_tratado["nota_porcentagem"].max() <= 100)
+    return (df_tratado["nota_porcentagem"].min() >= 0) and (
+        df_tratado["nota_porcentagem"].max() <= 100
     )
 
 

@@ -22,7 +22,9 @@ from impulsoetl.sisab.indicadores_municipios.modelos import (
 
 
 def carregar_indicadores(
-    sessao: Session, indicadores_transformada: pd.DataFrame, visao_equipe: str
+    sessao: Session,
+    indicadores_transformada: pd.DataFrame,
+    visao_equipe: str,
 ) -> int:
 
     registros = json.loads(

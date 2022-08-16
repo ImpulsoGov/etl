@@ -28,7 +28,9 @@ NIVEL_AGREGACAO_CODIGOS: Final[dict[str, str]] = {
 
 
 def _extrair_parametros(
-    visao_equipe: str, competencia: date, nivel_agregacao: str
+    visao_equipe: str,
+    competencia: date,
+    nivel_agregacao: str,
 ) -> str:
 
     url = (
@@ -53,12 +55,20 @@ def _extrair_parametros(
         + vs
         + "&j_idt83=j_idt83"
     )
-    response = requests.request("POST", url, headers=headers, data=payload,timeout=120)
+    response = requests.request(
+        "POST",
+        url,
+        headers=headers,
+        data=payload,
+        timeout=120,
+    )
     return response.text
 
 
 def extrair_parametros(
-    visao_equipe: str, competencia: date, nivel_agregacao: str
+    visao_equipe: str,
+    competencia: date,
+    nivel_agregacao: str,
 ) -> pd.DataFrame:
 
     resposta = _extrair_parametros(

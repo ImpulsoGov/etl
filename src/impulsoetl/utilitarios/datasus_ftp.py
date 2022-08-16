@@ -10,7 +10,7 @@ from __future__ import annotations
 
 from ftplib import FTP  # noqa: B402  # nosec: B402
 from pathlib import Path
-from tempfile import TemporaryDirectory, NamedTemporaryFile
+from tempfile import NamedTemporaryFile, TemporaryDirectory
 from typing import Generator, cast
 
 import pandas as pd

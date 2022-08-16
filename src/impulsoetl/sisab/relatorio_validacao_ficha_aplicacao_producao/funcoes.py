@@ -1,5 +1,8 @@
-# flake8: noqa
-# type: ignore
+# SPDX-FileCopyrightText: 2021, 2022 ImpulsoGov <contato@impulsogov.org>
+#
+# SPDX-License-Identifier: MIT
+
+
 import json
 from datetime import date, datetime
 from io import StringIO
@@ -85,7 +88,7 @@ def requisicao_validacao_sisab_producao_ficha_aplicacao(
     envio_prazo: bool,
 ) -> Response:
 
-    """Obtém relatórios de validação do SISAB, por ficha e por aplicação. 
+    """Obtém relatórios de validação do SISAB, por ficha e por aplicação.
 
     Argumentos:
         periodo_competencia: Período de competência do dado a ser buscado no
@@ -101,7 +104,7 @@ def requisicao_validacao_sisab_producao_ficha_aplicacao(
     periodo_competencia_AAAAMM = "{:%Y%m}".format(periodo_competencia)
     print(periodo_competencia_AAAAMM)
 
-    if envio_prazo == True:
+    if envio_prazo:
         envio_tipo = "&envioPrazo=on"
     else:
         envio_tipo = ""
@@ -137,7 +140,7 @@ def tratamento_validacao_producao_ficha_aplicacao(
     resposta: Response,
     ficha_tipo: str,
     aplicacao_tipo: str,
-    envio_prazo: str,
+    envio_prazo: bool,
     periodo_codigo: str,
 ) -> pd.DataFrame:
     """Tratamento dos dados obtidos
@@ -234,7 +237,7 @@ def tratamento_validacao_producao_ficha_aplicacao(
 
     df["periodo_codigo"] = periodo_codigo
 
-    df["no_prazo"] = 1 if (envio_prazo == True) else 0
+    df["no_prazo"] = 1 if envio_prazo else 0
 
     df["ficha"] = ficha_tipo
 
@@ -301,7 +304,7 @@ def testes_pre_carga_validacao_ficha_aplicacao_producao(
             df_validacao_tratado: objeto [`pandas.DataFrame`][] contendo os
                 dados a serem carregados na tabela de destino, já no formato
                 utilizado pelo banco de dados da Impulso Gov.
-    
+
     Exceções:
         Levanta uma exceção `AssertionError` caso alguma das validações falhe.
 
@@ -342,7 +345,7 @@ def carregar_validacao_ficha_aplicacao_producao(
     Argumentos:
         sessao: objeto [`sqlalchemy.orm.session.Session`][] que permite
             acessar a base de dados da ImpulsoGov.
-        df_validacao_tratado: objeto [`pandas.DataFrame`][] contendo os dados a 
+        df_validacao_tratado: objeto [`pandas.DataFrame`][] contendo os dados a
             serem carregados na tabela de destino, já no formato utilizado pelo
             banco de dados da Impulso Gov.
         periodo_codigo: Código do período de referência.

@@ -27,8 +27,8 @@ from psycopg2.extensions import AsIs, register_adapter
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 
-from impulsoetl.utilitarios.bd import TabelasRefletidasDicionario
 from impulsoetl.loggers import logger
+from impulsoetl.utilitarios.bd import TabelasRefletidasDicionario
 
 logger.info("Configurando interface com o banco de dados...")
 

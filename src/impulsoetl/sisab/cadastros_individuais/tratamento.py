@@ -38,7 +38,13 @@ def tratamento_dados(
 
     periodo_cod = periodo_por_data(sessao=sessao, data=periodo)
     tabela_consolidada[
-        ["municipio_id_sus", "cnes_id", "cnes_nome", "equipe_id_ine", "quantidade"]
+        [
+            "municipio_id_sus",
+            "cnes_id",
+            "cnes_nome",
+            "equipe_id_ine",
+            "quantidade",
+        ]
     ] = dados_sisab_cadastros.loc[
         :, ["IBGE", "CNES", "Nome UBS", "INE", "quantidade"]
     ]
@@ -85,9 +91,9 @@ def tratamento_dados(
     tabela_consolidada["unidade_geografica_id"] = tabela_consolidada[
         "unidade_geografica_id"
     ].astype("string")
-    tabela_consolidada["equipe_id_ine"] = tabela_consolidada["equipe_id_ine"].astype(
-        "string"
-    )
+    tabela_consolidada["equipe_id_ine"] = tabela_consolidada[
+        "equipe_id_ine"
+    ].astype("string")
     tabela_consolidada["quantidade"] = tabela_consolidada["quantidade"].astype(
         int
     )

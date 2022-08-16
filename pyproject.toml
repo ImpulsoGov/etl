@@ -47,8 +47,6 @@ more-itertools = {version = "^8.12.0", extras = ["impulsoetl"]}
 uuid6 = "^2022.6.25"
 
 
-
-
 [tool.poetry.dev-dependencies]
 
 bandit = "1.7.1"

@@ -41,7 +41,8 @@ def verificar_qtd_uf(df: pd.DataFrame, df_tratado: pd.DataFrame) -> bool:
 
 
 def verificar_diferenca_qtd_cadastros(
-    df: pd.DataFrame, df_tratado: pd.DataFrame
+    df: pd.DataFrame,
+    df_tratado: pd.DataFrame,
 ) -> int:
     """Verifica se há diferença na soma de cadastros."""
     return (
@@ -50,14 +51,16 @@ def verificar_diferenca_qtd_cadastros(
 
 
 def verificar_diferenca_ctg_cnes(
-    df: pd.DataFrame, df_tratado: pd.DataFrame
+    df: pd.DataFrame,
+    df_tratado: pd.DataFrame,
 ) -> int:
     """Verifica se há diferença na contagem de estabelecimentos."""
     return df["CNES"].nunique() - df_tratado["cnes_id"].nunique() == 0
 
 
 def verificar_diferenca_ctg_ine(
-    df: pd.DataFrame, df_tratado: pd.DataFrame
+    df: pd.DataFrame,
+    df_tratado: pd.DataFrame,
 ) -> int:
     """Verifica se há diferença na contagem de equipes."""
     return df["INE"].nunique() - df_tratado["ine_id"].nunique() == 0

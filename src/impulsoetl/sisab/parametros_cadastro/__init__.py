@@ -3,4 +3,6 @@
 # SPDX-License-Identifier: MIT
 
 
-from impulsoetl.sisab.parametros_cadastro.principal import obter_parametros
+from impulsoetl.sisab.parametros_cadastro.principal import (  # noqa: F401
+    obter_parametros
+)

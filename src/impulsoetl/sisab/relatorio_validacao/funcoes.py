@@ -276,7 +276,7 @@ def carregar_validacao_producao(
     periodo_competencia: date,
     tabela_destino: str,
 ) -> int:
-    """Carrega os dados de um arquivo validação do portal SISAB no BD da Impulso.
+    """Carrega os dados de um arquivo validação do SISAB no banco da Impulso.
 
     Argumentos:
         sessao: objeto [`sqlalchemy.orm.session.Session`][] que permite

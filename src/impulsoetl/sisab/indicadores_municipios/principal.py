@@ -6,13 +6,11 @@
 """Junta etapas do fluxo de ETL de indicadores de desempenho dos municípios."""
 
 from __future__ import annotations
-from typing import Final
-from sqlalchemy.orm import Session
+
 from datetime import date
-from impulsoetl.sisab.indicadores_municipios.extracao import (extrair_dados)
-from impulsoetl.sisab.indicadores_municipios.tratamento import (tratamento_dados)
-from impulsoetl.sisab.indicadores_municipios.teste_validacao import (teste_validacao)
-from impulsoetl.sisab.indicadores_municipios.carregamento import (carregar_indicadores)
+from typing import Final
+
+from sqlalchemy.orm import Session
 
 from impulsoetl.sisab.indicadores_municipios.carregamento import (
     carregar_indicadores,
@@ -23,7 +21,10 @@ from impulsoetl.sisab.indicadores_municipios.extracao import (
 from impulsoetl.sisab.indicadores_municipios.teste_validacao import (
     teste_validacao,
 )
-from impulsoetl.sisab.indicadores_municipios.tratamento import tratamento_dados
+from impulsoetl.sisab.indicadores_municipios.tratamento import (
+    transformar_indicadores,
+)
+
 
 INDICADORES_CODIGOS: Final[dict[str, str]] = {
     "Pré-Natal (6 consultas)": "1",
@@ -37,7 +38,10 @@ INDICADORES_CODIGOS: Final[dict[str, str]] = {
 
 
 def obter_indicadores_desempenho(
-    sessao: Session, visao_equipe: str, quadrimestre: date, teste: bool = False
+    sessao: Session,
+    visao_equipe: str,
+    quadrimestre: date,
+    teste: bool = False,
 ) -> None:
     for indicador in INDICADORES_CODIGOS:
         df = extrair_indicadores(
@@ -45,9 +49,9 @@ def obter_indicadores_desempenho(
             quadrimestre=quadrimestre,
             indicador=indicador,
         )
-        df_tratado = tratamento_dados(
+        df_tratado = transformar_indicadores(
             sessao=sessao,
-            dados_sisab_indicadores=df,
+            df_extraido=df,
             periodo=quadrimestre,
             indicador=indicador,
         )
