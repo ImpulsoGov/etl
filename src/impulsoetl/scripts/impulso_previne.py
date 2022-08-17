@@ -11,14 +11,19 @@ from sqlalchemy.orm import Session
 
 from impulsoetl.bd import Sessao, tabelas
 from impulsoetl.loggers import logger
-from impulsoetl.sisab.cadastros_individuais import obter_cadastros_individuais
+
+from impulsoetl.sisab.cadastros_individuais.principal import (obter_cadastros_individuais)
+from impulsoetl.sisab.parametros_cadastro.principal import (obter_parametros)
 from impulsoetl.sisab.indicadores_municipios.principal import (
     obter_indicadores_desempenho,
+    )
+from impulsoetl.sisab.relatorio_validacao.principal import (
+    obter_validacao_por_producao,
 )
-from impulsoetl.sisab.parametros_cadastro.principal import obter_parametros
-from impulsoetl.sisab.relatorio_validacao import (
-    obter_validacao_municipios_producao,
+from impulsoetl.sisab.relatorio_validacao_ficha_aplicacao_producao.principal import (
+    obter_validacao_por_ficha_por_aplicacao_producao,
 )
+
 
 agendamentos = tabelas["configuracoes.capturas_agendamentos"]
 capturas_historico = tabelas["configuracoes.capturas_historico"]
@@ -666,18 +671,12 @@ def validacao_municipios_por_producao(
 
     logger.info("Leitura dos Agendamentos ok!")
 
-    envio_prazo_lista = [True, False]
 
     for agendamento in agendamentos_relatorio_validacao:
-        for tipo in envio_prazo_lista:
-            envio_prazo = tipo
-            obter_validacao_municipios_producao(
-                sessao=sessao,
-                periodo_competencia=agendamento.periodo_data_inicio,
-                envio_prazo=envio_prazo,
-                tabela_destino=agendamento.tabela_destino,
-                periodo_codigo=agendamento.periodo_codigo,
-            )
+        obter_validacao_por_producao(
+            sessao=sessao,
+            periodo_competencia=agendamento.periodo_data_inicio,
+        )
 
         if teste:  # evitar rodar muitas iterações
             break
@@ -699,6 +698,52 @@ def validacao_municipios_por_producao(
         sessao.commit()
         logger.info("OK.")
 
+def validacao_producao_ficha_por_aplicacao(
+    sessao: Session,
+    teste: bool = False,
+) -> None:
+
+    # este já é o ID definitivo da operação!
+    operacao_id = "c577c9fd-6a8e-43e3-9d65-042ad2268cf0"
+
+    # Ler agendamentos e rodar ETL para cada agendamento pendente
+    # ...
+    agendamentos = tabelas["configuracoes.capturas_agendamentos"]
+    agendamentos_relatorio_validacao = (
+        sessao.query(agendamentos)
+        .filter(agendamentos.c.operacao_id == operacao_id)
+        .all()
+    )
+    sessao.commit()
+
+    logger.info("Leitura dos Agendamentos ok!")
+
+
+    for agendamento in agendamentos_relatorio_validacao:
+        obter_validacao_por_ficha_por_aplicacao_producao(
+            sessao=sessao,
+            periodo_competencia=agendamento.periodo_data_inicio,
+        )
+
+        if teste:  # evitar rodar muitas iterações
+            break
+
+        logger.info("Registrando captura bem-sucedida...")
+        # NOTE: necessário registrar a operação de captura em nível de UF,
+        # mesmo que o gatilho na tabela de destino no banco de dados já
+        # registre a captura em nível dos municípios automaticamente quando há
+        # a inserção de uma nova linha
+        requisicao_inserir_historico = capturas_historico.insert(
+            {
+                "operacao_id": operacao_id,
+                "periodo_id": agendamento.periodo_id,
+                "unidade_geografica_id": agendamento.unidade_geografica_id,
+            }
+        )
+        conector = sessao.connection()
+        conector.execute(requisicao_inserir_historico)
+        sessao.commit()
+        logger.info("OK.")
 
 def principal(sessao: Session, teste: bool = False) -> None:
     """Executa todos os scripts de captura de dados do Impulso Previne.
@@ -724,102 +769,10 @@ def principal(sessao: Session, teste: bool = False) -> None:
     indicadores_municipios_equipes_homologadas(sessao=sessao, teste=teste)
     indicadores_municipios_equipe_todas(sessao=sessao, teste=teste)
     validacao_municipios_por_producao(sessao=sessao, teste=teste)
+    validacao_producao_ficha_por_aplicacao(sessao=sessao, teste=teste)
 
     # outros scripts do Impulso Previne aqui...
 
-
-def validacao_producao_ficha_por_aplicacao(
-    sessao: Session,
-    teste: bool = False,
-) -> None:
-
-    # este já é o ID definitivo da operação!
-    operacao_id = "c577c9fd-6a8e-43e3-9d65-042ad2268cf0"
-
-    # Ler agendamentos e rodar ETL para cada agendamento pendente
-    # ...
-    agendamentos = tabelas["configuracoes.capturas_agendamentos"]
-    agendamentos_relatorio_validacao = (
-        sessao.query(agendamentos)
-        .filter(agendamentos.c.operacao_id == operacao_id)
-        .all()
-    )
-    sessao.commit()
-
-    logger.info("Leitura dos Agendamentos ok!")
-
-    envio_prazo_lista = [True, False]
-
-    fichas = {
-        "Cadastro individual": "&j_idt87=2",
-        "Atendimento individual": "&j_idt87=4",
-        "Procedimentos": "&j_idt87=7",
-        "Visita Domiciliar": "&j_idt87=8",
-    }
-
-    aplicacoes = {
-        "CDS-offline": "&j_idt92=0",
-        "CDS-online": "&j_idt92=1",
-        "PEC": "&j_idt92=2",
-        "Sistema proprio": "&j_idt92=3",
-        "Android ACS": "&j_idt92=4",
-    }
-
-    for agendamento in agendamentos_relatorio_validacao:
-        for ficha_tipo, ficha_codigo in fichas.items():
-            for aplicacao_tipo, aplicacao_codigo in aplicacoes.items():
-                if (
-                    (
-                        ficha_tipo == "Cadastro individual"
-                        and aplicacao_tipo == "PEC"
-                    )  # não precisa de \
-                    or (
-                        ficha_tipo == "Visita Domiciliar"
-                        and aplicacao_tipo == "PEC"
-                    )
-                    or (
-                        ficha_tipo == "Atendimento individual"
-                        and aplicacao_tipo == "Android ACS"
-                    )
-                    or (
-                        ficha_tipo == "Procedimentos"
-                        and aplicacao_tipo == "Android ACS"
-                    )
-                ):
-                    continue
-                for tipo in envio_prazo_lista:
-                    envio_prazo = tipo
-                    obter_validacao_ficha_aplicacao_producao(
-                        sessao=sessao,
-                        periodo_competencia=agendamento.periodo_data_inicio,
-                        ficha_tipo=ficha_tipo,
-                        aplicacao_tipo=aplicacao_tipo,
-                        ficha_codigo=ficha_codigo,
-                        aplicacao_codigo=aplicacao_codigo,
-                        envio_prazo=envio_prazo,
-                        tabela_destino=agendamento.tabela_destino,
-                        periodo_codigo=agendamento.periodo_codigo,
-                    )
-
-                    if teste:  # evitar rodar muitas iterações
-                        break
-
-        logger.info("Registrando captura bem-sucedida...")
-        # NOTE: necessário registrar a operação de captura em nível de UF,
-        # mesmo que o gatilho na tabela de destino no banco de dados já
-        # registre a captura em nível dos municípios automaticamente quando há
-        # a inserção de uma nova linha
-        requisicao_inserir_historico = capturas_historico.insert(
-            {
-                "operacao_id": operacao_id,
-                "periodo_id": agendamento.periodo_id,
-                "unidade_geografica_id": agendamento.unidade_geografica_id,
-            }
-        )
-        conector = sessao.connection()
-        conector.execute(requisicao_inserir_historico)
-        sessao.commit()
-        logger.info("OK.")
 
 
 if __name__ == "__main__":
