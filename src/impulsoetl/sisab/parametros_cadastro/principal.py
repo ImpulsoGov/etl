@@ -7,7 +7,7 @@ from __future__ import annotations
 
 from datetime import date
 
-from sisab.parametros_cadastro.tratamento import tratamento_dados
+from impulsoetl.sisab.parametros_cadastro.tratamento import tratamento_dados
 from sqlalchemy.orm import Session
 
 from impulsoetl.sisab.parametros_cadastro.carregamento import (

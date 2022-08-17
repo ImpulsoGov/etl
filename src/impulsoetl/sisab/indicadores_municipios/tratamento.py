@@ -12,7 +12,7 @@ from typing import Final
 
 import pandas as pd
 from frozendict import frozendict
-from loggers import logger
+from impulsoetl.loggers import logger
 from sqlalchemy.orm import Session
 
 from impulsoetl.comum.datas import periodo_por_codigo, periodo_por_data

@@ -18,8 +18,8 @@ from impulsoetl.sisab.indicadores_municipios.carregamento import (
 from impulsoetl.sisab.indicadores_municipios.extracao import (
     extrair_indicadores,
 )
-from impulsoetl.sisab.indicadores_municipios.teste_validacao import (
-    teste_validacao,
+from impulsoetl.sisab.indicadores_municipios.verificacao import (
+    verificar_indicadores_municipios
 )
 from impulsoetl.sisab.indicadores_municipios.tratamento import (
     transformar_indicadores,
@@ -55,7 +55,7 @@ def obter_indicadores_desempenho(
             periodo=quadrimestre,
             indicador=indicador,
         )
-        teste_validacao(df, df_tratado, indicador)
+        verificar_indicadores_municipios(df=df, df_tratado=df_tratado)
         carregar_indicadores(
             sessao=sessao,
             indicadores_transformada=df_tratado,

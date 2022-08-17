@@ -17,8 +17,8 @@ def get_cookie(url):
     soup = bs(resposta.text, "html.parser")
     vs = urllib.parse.quote(soup.findAll("input")[1].attrs["value"])
     cookie = (
-        "BIGipServersisab_prod="
-        + ck["BIGipServersisab_prod"]
+        "BIGipServerpool_sisab_jboss="
+        + ck["BIGipServerpool_sisab_jboss"]
         + ";JSESSIONID="
         + ck["JSESSIONID"]
     )
