@@ -34,19 +34,12 @@ Com o Poetry instalado, em sistemas com gerenciador de pacotes `apt` (ex. Debian
 [Poetry]: https://python-poetry.org/docs/#installation
 
 ```sh
-# instalar pré-requisitos do sistema
-$ sudo apt-get install gdal-bin libgdal-dev libgdal1h
-
 # clonar e acessar a raíz do repositório
 $ git clone https://github.com/ImpulsoGov/etl.git
 $ cd etl
 
-# Instalar dependências
-$ python -m venv .venv
-$ source .venv/bin/activate
-(.venv) $ python -m pip install GDAL==$(gdal-config --version) --global-option=build_ext --global-option="-I/usr/include/gdal"
-(.venv) $ poetry add gdal==$(gdal-config --version)  # Fixar versão do GDAL
-(.venv) $ poetry install -E impulsoetl
+# Instalar pacote e dependências
+$ poetry install -E impulsoetl
 ```
 
 ## Instalação e execução locais com Docker
