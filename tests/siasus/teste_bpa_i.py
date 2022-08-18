@@ -107,11 +107,15 @@ def teste_extrair_pa(uf_sigla, periodo_data_inicio, passo):
     assert len(lote_2) == 100
 
 
-@pytest.mark.integracao
-def teste_transformar_bpa_i(sessao, bpa_i):
+@pytest.mark.parametrize(
+    "condicoes",
+    ["UFMUN == '280030'", None],
+)
+def teste_transformar_bpa_i(sessao, bpa_i, condicoes):
     bpa_i_transformada = transformar_bpa_i(
         sessao=sessao,
         bpa_i=bpa_i,
+        condicoes=condicoes,
     )
 
     assert isinstance(bpa_i_transformada, pd.DataFrame)
@@ -163,12 +167,17 @@ def teste_carregar_bpa_i(
     "uf_sigla,periodo_data_inicio",
     [("SE", date(2021, 8, 1))],
 )
+@pytest.mark.parametrize(
+    "parametros",
+    [{"condicoes": "UFMUN == '280030'"}, {}],
+)
 def teste_obter_bpa_i(
     sessao,
     uf_sigla,
     periodo_data_inicio,
     caplog,
     tabela_teste,
+    parametros,
 ):
     obter_bpa_i(
         sessao=sessao,
@@ -176,6 +185,7 @@ def teste_obter_bpa_i(
         periodo_data_inicio=periodo_data_inicio,
         tabela_destino=tabela_teste,
         teste=True,
+        **parametros,
     )
 
     logs = caplog.text

@@ -166,8 +166,37 @@ def extrair_bpa_i(
 def transformar_bpa_i(
     sessao: Session,
     bpa_i: pd.DataFrame,
+    condicoes: str | None = None,
 ) -> pd.DataFrame:
-    """Transforma um `DataFrame` de BPA-i obtido do FTP público do DataSUS."""
+    """Transforma um `DataFrame` de BPA-i obtido do FTP público do DataSUS.
+
+    Argumentos:
+        sessao: objeto [`sqlalchemy.orm.session.Session`][] que permite
+            acessar a base de dados da ImpulsoGov.
+        bpa_i: objeto [`pandas.DataFrame`][] contendo os dados de um arquivo de
+            disseminação de Boletins de Produção Ambulatorial -
+            individualizados, conforme extraídos para uma unidade federativa e
+            competência (mês) pela função [`extrair_bpa_i()`][].
+        condicoes: conjunto opcional de condições a serem aplicadas para
+            filtrar os registros obtidos da fonte. O valor informado deve ser
+            uma *string* com a sintaxe utilizada pelo método
+            [`pandas.DataFrame.query()`][]. Por padrão, o valor do argumento é
+            `None`, o que equivale a não aplicar filtro algum.
+
+    Note:
+        Para otimizar a performance, os filtros são aplicados antes de qualquer
+        outra transformação nos dados, de forma que as condições fornecidas
+        devem considerar que o nome, os tipos e os valores aparecem exatamente
+        como registrados no arquivo de disseminação disponibilizado no FTP
+        público do DataSUS. Verifique o [Informe Técnico][it-siasus] para mais
+        informações.
+
+    [`sqlalchemy.orm.session.Session`]: https://docs.sqlalchemy.org/en/14/orm/session_api.html#sqlalchemy.orm.Session
+    [`pandas.DataFrame`]: https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html
+    [`extrair_bpa_i()`]: impulsoetl.siasus.bpa_i.extrair_bpa_i
+    [`pandas.DataFrame.query()`]: https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.query.html
+    [it-siasus]: https://drive.google.com/file/d/1DC5093njSQIhMHydYptlj2rMbrMF36y6
+    """
     logger.info(
         "Transformando DataFrame com {num_registros_bpa_i} registros de BPAi.",
         num_registros_bpa_i=len(bpa_i),
@@ -176,6 +205,11 @@ def transformar_bpa_i(
         "Memória ocupada pelo DataFrame original:  {memoria_usada:.2f} mB.",
         memoria_usada=bpa_i.memory_usage(deep=True).sum() / 10 ** 6,
     )
+
+    # aplica condições de filtragem dos registros
+    if condicoes:
+        bpa_i = bpa_i.query(condicoes)
+
     bpa_i_transformada = (
         bpa_i  # noqa: WPS221  # ignorar linha complexa no pipeline
         # renomear colunas
@@ -292,10 +326,15 @@ def obter_bpa_i(
             adicionadas à uma transação, e podem ser revertidas com uma chamada
             posterior ao método [`Session.rollback()`][] da sessão gerada com o
             SQLAlchemy.
+        \\*\\*kwargs: Parâmetros adicionais definidos no agendamento da
+            captura. Atualmente, apenas o parâmetro `condicoes` (do tipo `str`)
+            é aceito, e repassado como argumento na função
+            [`transformar_bpa_i()`][].
 
     [`sqlalchemy.orm.session.Session`]: https://docs.sqlalchemy.org/en/14/orm/session_api.html#sqlalchemy.orm.Session
     [`sqlalchemy.engine.Row`]: https://docs.sqlalchemy.org/en/14/core/connections.html#sqlalchemy.engine.Row
     [`datetime.date`]: https://docs.python.org/3/library/datetime.html#date-objects
+    [`transformar_bpa_i()`]: impulsoetl.siasus.bpa_i.transformar_bpa_i
     """
     logger.info(
         "Iniciando captura de BPA-i's para Unidade Federativa "
@@ -318,6 +357,7 @@ def obter_bpa_i(
         bpa_i_transformada = transformar_bpa_i(
             sessao=sessao,
             bpa_i=bpa_i_lote,
+            condicoes=kwargs.get("condicoes"),
         )
 
         carregamento_status = carregar_dataframe(
