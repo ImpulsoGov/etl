@@ -220,8 +220,37 @@ def extrair_pa(
 def transformar_pa(
     sessao: Session,
     pa: pd.DataFrame,
+    condicoes: str | None = None,
 ) -> pd.DataFrame:
-    """Transforma um `DataFrame` de procedimentos ambulatoriais do SIASUS."""
+    """Transforma um `DataFrame` de procedimentos ambulatoriais do SIASUS.
+    
+    Argumentos:
+        sessao: objeto [`sqlalchemy.orm.session.Session`][] que permite
+            acessar a base de dados da ImpulsoGov.
+        pa: objeto [`pandas.DataFrame`][] contendo os dados de um arquivo de
+            disseminação de procedimentos ambulatoriais do SIASUS, conforme
+            extraídos para uma unidade federativa e competência (mês) pela
+            função [`extrair_pa()`][].
+        condicoes: conjunto opcional de condições a serem aplicadas para
+            filtrar os registros obtidos da fonte. O valor informado deve ser
+            uma *string* com a sintaxe utilizada pelo método
+            [`pandas.DataFrame.query()`][]. Por padrão, o valor do argumento é
+            `None`, o que equivale a não aplicar filtro algum.
+
+    Note:
+        Para otimizar a performance, os filtros são aplicados antes de qualquer
+        outra transformação nos dados, de forma que as condições fornecidas
+        devem considerar que o nome, os tipos e os valores aparecem exatamente
+        como registrados no arquivo de disseminação disponibilizado no FTP
+        público do DataSUS. Verifique o [Informe Técnico][it-siasus] para mais
+        informações.
+
+    [`sqlalchemy.orm.session.Session`]: https://docs.sqlalchemy.org/en/14/orm/session_api.html#sqlalchemy.orm.Session
+    [`pandas.DataFrame`]: https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html
+    [`extrair_pa()`]: impulsoetl.siasus.procedimentos.extrair_pa
+    [`pandas.DataFrame.query()`]: https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.query.html
+    [it-siasus]: https://drive.google.com/file/d/1DC5093njSQIhMHydYptlj2rMbrMF36y6
+    """
     logger.info(
         "Transformando DataFrame com {num_registros_pa} procedimentos "
         + "ambulatoriais.",
@@ -231,6 +260,15 @@ def transformar_pa(
         "Memória ocupada pelo DataFrame original:  {memoria_usada:.2f} mB.",
         memoria_usada=pa.memory_usage(deep=True).sum() / 10 ** 6,
     )
+
+    # aplica condições de filtragem dos registros
+    if condicoes:
+        pa = pa.query(condicoes)
+        logger.info(
+            "Registros após aplicar confições de filtragem: {num_registros}.",
+            num_registros=len(pa),
+        )
+
     pa_transformada = (
         pa  # noqa: WPS221  # ignorar linha complexa no pipeline
         # renomear colunas
@@ -408,10 +446,15 @@ def obter_pa(
             adicionadas à uma transação, e podem ser revertidas com uma chamada
             posterior ao método [`Session.rollback()`][] da sessão gerada com o
             SQLAlchemy.
+        \\*\\*kwargs: Parâmetros adicionais definidos no agendamento da
+            captura. Atualmente, apenas o parâmetro `condicoes` (do tipo `str`)
+            é aceito, e repassado como argumento na função
+            [`transformar_pa()`][].
 
     [`sqlalchemy.orm.session.Session`]: https://docs.sqlalchemy.org/en/14/orm/session_api.html#sqlalchemy.orm.Session
     [`sqlalchemy.engine.Row`]: https://docs.sqlalchemy.org/en/14/core/connections.html#sqlalchemy.engine.Row
     [`datetime.date`]: https://docs.python.org/3/library/datetime.html#date-objects
+    [`transformar_pa()`]: impulsoetl.siasus.procedimentos.transformar_pa
     """
     logger.info(
         "Iniciando captura de procedimentos ambulatoriais para Unidade "
@@ -431,7 +474,11 @@ def obter_pa(
 
     contador = 0
     for pa_lote in pa_lotes:
-        pa_transformada = transformar_pa(sessao=sessao, pa=pa_lote)
+        pa_transformada = transformar_pa(
+            sessao=sessao, 
+            pa=pa_lote,
+            condicoes=kwargs.get("condicoes"),
+        )
         try:
             validar_pa(pa_transformada)
         except AssertionError as mensagem:
