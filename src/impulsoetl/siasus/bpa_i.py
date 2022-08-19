@@ -209,6 +209,10 @@ def transformar_bpa_i(
     # aplica condições de filtragem dos registros
     if condicoes:
         bpa_i = bpa_i.query(condicoes)
+        logger.info(
+            "Registros após aplicar confições de filtragem: {num_registros}.",
+            num_registros=len(bpa_i),
+        )
 
     bpa_i_transformada = (
         bpa_i  # noqa: WPS221  # ignorar linha complexa no pipeline
