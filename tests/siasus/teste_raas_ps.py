@@ -114,11 +114,15 @@ def teste_extrair_raas_ps(uf_sigla, periodo_data_inicio, passo):
     assert len(lote_2) == 100
 
 
-@pytest.mark.integracao
-def teste_transformar_raas_ps(sessao, raas_ps):
+@pytest.mark.parametrize(
+    "condicoes",
+    ["UFMUN == '280030'", None],
+)
+def teste_transformar_raas_ps(sessao, raas_ps, condicoes):
     raas_ps_transformada = transformar_raas_ps(
         sessao=sessao,
         raas_ps=raas_ps,
+        condicoes=condicoes,
     )
 
     assert isinstance(raas_ps_transformada, pd.DataFrame)
@@ -170,12 +174,17 @@ def teste_carregar_raas_ps(
     "uf_sigla,periodo_data_inicio",
     [("SE", date(2021, 8, 1))],
 )
+@pytest.mark.parametrize(
+    "parametros",
+    [{"condicoes": "UFMUN == '280030'"}, {}],
+)
 def teste_obter_raas_ps(
     sessao,
     uf_sigla,
     periodo_data_inicio,
     tabela_teste,
     caplog,
+    parametros,
 ):
     obter_raas_ps(
         sessao=sessao,
@@ -183,6 +192,7 @@ def teste_obter_raas_ps(
         periodo_data_inicio=periodo_data_inicio,
         tabela_destino=tabela_teste,
         teste=True,
+        **parametros,
     )
     sessao.commit()
 
