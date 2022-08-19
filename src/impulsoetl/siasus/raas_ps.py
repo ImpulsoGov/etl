@@ -231,7 +231,7 @@ def transformar_raas_ps(
 
     # aplica condições de filtragem dos registros
     if condicoes:
-        raas_ps = raas_ps.query(condicoes)
+        raas_ps = raas_ps.query(condicoes, engine="python")
         logger.info(
             "Registros após aplicar confições de filtragem: {num_registros}.",
             num_registros=len(raas_ps),

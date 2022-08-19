@@ -263,7 +263,7 @@ def transformar_pa(
 
     # aplica condições de filtragem dos registros
     if condicoes:
-        pa = pa.query(condicoes)
+        pa = pa.query(condicoes, engine="python")
         logger.info(
             "Registros após aplicar confições de filtragem: {num_registros}.",
             num_registros=len(pa),
