@@ -135,6 +135,7 @@ def raas_disseminacao(
             periodo_data_inicio=agendamento.periodo_data_inicio,
             tabela_destino=agendamento.tabela_destino,
             teste=teste,
+            **agendamento.parametros,
         )
         if teste:
             break
@@ -222,6 +223,7 @@ def procedimentos_disseminacao(
             periodo_data_inicio=agendamento.periodo_data_inicio,
             tabela_destino=agendamento.tabela_destino,
             teste=teste,
+            **agendamento.parametros,
         )
         if teste:
             break
