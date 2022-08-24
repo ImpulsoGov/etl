@@ -6,19 +6,22 @@
 """Junta etapas do fluxo de ETL de validação por ficha por aplicação dos municípios."""
 
 from __future__ import annotations
+
 from typing import Final
-from sqlalchemy.orm import Session
 from datetime import date
-from impulsoetl.sisab.relatorio_validacao_ficha_aplicacao_producao.extracao import (
+
+from sqlalchemy.orm import Session
+
+from impulsoetl.sisab.relatorio_validacao_producao.extracao import (
     extrair_dados,
     )
-from impulsoetl.sisab.relatorio_validacao_ficha_aplicacao_producao.tratamento import (
+from impulsoetl.sisab.relatorio_validacao_producao.tratamento import (
     tratamento_dados,
     )
-from impulsoetl.sisab.relatorio_validacao_ficha_aplicacao_producao.teste_validacao import (
+from impulsoetl.sisab.relatorio_validacao_producao.teste_validacao import (
     teste_validacao,
     )
-from impulsoetl.sisab.relatorio_validacao_ficha_aplicacao_producao.carregamento import (
+from impulsoetl.sisab.relatorio_validacao_producao.carregamento import (
     carregar_dados,
     )
 
@@ -35,13 +38,15 @@ APLICACAO_CODIGOS : Final[dict[str, str]] = {
     "PEC": "2",
     "Sistema proprio": "3",
     "Android ACS": "4",
-    "Android AC": "5",
     }
 ENVIO_PRAZO = [True,False]
 
-def obter_validacao_por_ficha_por_aplicacao_producao(
+def obter_validacao_producao(
     sessao: Session,
     periodo_competencia: date,
+    periodo_id:str,
+    periodo_codigo:str,
+    tabela_destino:str,
 ) -> None:
 
         """ Extrai, transforma e carrega os dados do relatório de validação [por produção] do SISAB.
@@ -52,6 +57,14 @@ def obter_validacao_por_ficha_por_aplicacao_producao(
         for envio_prazo in ENVIO_PRAZO:
             for ficha in FICHA_CODIGOS: 
                 for aplicacao in APLICACAO_CODIGOS:
+                    if (
+                        (
+                            ficha == "Cadastro Individual" and aplicacao == "PEC"
+                            ) or 
+                            (
+                                ficha == "Visita Domiciliar" and aplicacao == "PEC"
+                                ) or (ficha == "Atendimento Individual" and aplicacao == "Android ACS")):
+                        continue
                     df_extraido = extrair_dados(
                         periodo_competencia=periodo_competencia,
                         envio_prazo=envio_prazo,
@@ -61,16 +74,18 @@ def obter_validacao_por_ficha_por_aplicacao_producao(
                     df_tratado = tratamento_dados(
                         sessao=sessao,
                         df_extraido=df_extraido,
-                        periodo_competencia=periodo_competencia,
+                        periodo_id=periodo_id,
+                        periodo_codigo=periodo_codigo,
                         envio_prazo=envio_prazo,
                         ficha=ficha,
                         aplicacao=aplicacao,
                         )
-                    teste_validacao(
-                        df_extraido=df_extraido,
-                        df_tratado=df_tratado
-                        )
+                    teste_validacao(df_extraido=df_extraido,df_tratado=df_tratado)
                     carregar_dados(
-                        sessao=sessao,
-                        df_tratado=df_tratado
-                        )
+                        sessao = sessao, 
+                        df_tratado = df_tratado,
+                        tabela_destino = tabela_destino,
+                        periodo_id = periodo_id,
+                        no_prazo = envio_prazo,
+                        ficha_tipo = ficha,
+                        aplicacao_tipo = aplicacao)

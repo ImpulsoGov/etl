@@ -11,19 +11,14 @@ from sqlalchemy.orm import Session
 
 from impulsoetl.bd import Sessao, tabelas
 from impulsoetl.loggers import logger
-
-from impulsoetl.sisab.cadastros_individuais.principal import (obter_cadastros_individuais)
-from impulsoetl.sisab.parametros_cadastro.principal import (obter_parametros)
+from impulsoetl.sisab.cadastros_individuais import obter_cadastros_individuais
 from impulsoetl.sisab.indicadores_municipios.principal import (
     obter_indicadores_desempenho,
-    )
-from impulsoetl.sisab.relatorio_validacao.principal import (
-    obter_validacao_por_producao,
 )
-from impulsoetl.sisab.relatorio_validacao_ficha_aplicacao_producao.principal import (
-    obter_validacao_por_ficha_por_aplicacao_producao,
+from impulsoetl.sisab.parametros_cadastro.principal import obter_parametros
+from impulsoetl.sisab.relatorio_validacao_producao.principal import (
+    obter_validacao_producao,
 )
-
 
 agendamentos = tabelas["configuracoes.capturas_agendamentos"]
 capturas_historico = tabelas["configuracoes.capturas_historico"]
@@ -649,56 +644,7 @@ def indicadores_municipios_equipe_todas(
         sessao.commit()
         logger.info("OK.")
 
-
-@logger.catch
-def validacao_municipios_por_producao(
-    sessao: Session,
-    teste: bool = False,
-) -> None:
-
-    # este já é o ID definitivo da operação!
-    operacao_id = "c84c1917-4f57-4592-a974-50a81b3ed6d5"
-
-    # Ler agendamentos e rodar ETL para cada agendamento pendente
-    # ...
-    agendamentos = tabelas["configuracoes.capturas_agendamentos"]
-    agendamentos_relatorio_validacao = (
-        sessao.query(agendamentos)
-        .filter(agendamentos.c.operacao_id == operacao_id)
-        .all()
-    )
-    sessao.commit()
-
-    logger.info("Leitura dos Agendamentos ok!")
-
-
-    for agendamento in agendamentos_relatorio_validacao:
-        obter_validacao_por_producao(
-            sessao=sessao,
-            periodo_competencia=agendamento.periodo_data_inicio,
-        )
-
-        if teste:  # evitar rodar muitas iterações
-            break
-
-        logger.info("Registrando captura bem-sucedida...")
-        # NOTE: necessário registrar a operação de captura em nível de UF,
-        # mesmo que o gatilho na tabela de destino no banco de dados já
-        # registre a captura em nível dos municípios automaticamente quando há
-        # a inserção de uma nova linha
-        requisicao_inserir_historico = capturas_historico.insert(
-            {
-                "operacao_id": operacao_id,
-                "periodo_id": agendamento.periodo_id,
-                "unidade_geografica_id": agendamento.unidade_geografica_id,
-            }
-        )
-        conector = sessao.connection()
-        conector.execute(requisicao_inserir_historico)
-        sessao.commit()
-        logger.info("OK.")
-
-def validacao_producao_ficha_por_aplicacao(
+def validacao_producao(
     sessao: Session,
     teste: bool = False,
 ) -> None:
@@ -720,9 +666,12 @@ def validacao_producao_ficha_por_aplicacao(
 
 
     for agendamento in agendamentos_relatorio_validacao:
-        obter_validacao_por_ficha_por_aplicacao_producao(
+        obter_validacao_producao(
             sessao=sessao,
             periodo_competencia=agendamento.periodo_data_inicio,
+            periodo_id = agendamento.periodo_id,
+            periodo_codigo = agendamento.periodo_codigo,
+            tabela_destino = agendamento.tabela_destino,
         )
 
         if teste:  # evitar rodar muitas iterações
@@ -744,6 +693,7 @@ def validacao_producao_ficha_por_aplicacao(
         conector.execute(requisicao_inserir_historico)
         sessao.commit()
         logger.info("OK.")
+
 
 def principal(sessao: Session, teste: bool = False) -> None:
     """Executa todos os scripts de captura de dados do Impulso Previne.
@@ -768,10 +718,10 @@ def principal(sessao: Session, teste: bool = False) -> None:
     indicadores_municipios_equipe_validas(sessao=sessao, teste=teste)
     indicadores_municipios_equipes_homologadas(sessao=sessao, teste=teste)
     indicadores_municipios_equipe_todas(sessao=sessao, teste=teste)
-    validacao_municipios_por_producao(sessao=sessao, teste=teste)
-    validacao_producao_ficha_por_aplicacao(sessao=sessao, teste=teste)
+    validacao_producao(sessao=sessao, teste=teste)
 
     # outros scripts do Impulso Previne aqui...
+
 
 
 
