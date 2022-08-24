@@ -44,8 +44,8 @@ DE_PARA_VINCULOS: Final[frozendict] = frozendict(
         "ATIVIDAD": "estabelecimento_atividade_ensino_id_scnes",
         "RETENCAO": "estabelecimento_tributos_retencao_id_scnes",
         "NATUREZA": "estabelecimento_natureza_id_scnes",
-        "CLIENTEL": "estabelecimento_tipo_id_scnes",
-        "TP_UNID": "estabelecimento_fluxo_id_scnes",
+        "CLIENTEL": "estabelecimento_fluxo_id_scnes",
+        "TP_UNID": "estabelecimento_tipo_id_scnes",
         "TURNO_AT": "estabelecimento_turno_id_scnes",
         "NIV_HIER": "estabelecimento_hierarquia_id_scnes",
         "TERCEIRO": "estabelecimento_terceiro",
@@ -124,6 +124,9 @@ TIPOS_VINCULOS: Final[frozendict] = frozendict(
 
 COLUNAS_DATA_AAAAMM: Final[list[str]] = [
     "periodo_data_inicio",
+    "vigencia_data_inicio",
+    "vigencia_data_fim",
+    "portaria_periodo_data_inicio"
 ]
 
 COLUNAS_NUMERICAS: Final[list[str]] = [
