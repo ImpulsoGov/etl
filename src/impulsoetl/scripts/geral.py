@@ -14,6 +14,7 @@ from impulsoetl.bd import Sessao, tabelas
 from impulsoetl.brasilapi.cep import obter_cep
 from impulsoetl.loggers import logger
 from impulsoetl.scnes.vinculos import obter_vinculos
+from impulsoetl.sim.do import obter_do
 
 agendamentos = tabelas["configuracoes.capturas_agendamentos"]
 capturas_historico = tabelas["configuracoes.capturas_historico"]
@@ -59,6 +60,50 @@ def vinculos_disseminacao(
         if teste:
             sessao.rollback()
             break
+        sessao.commit()
+        logger.info("OK.")
+
+
+@logger.catch
+def obitos_disseminacao(
+    sessao: Session,
+    teste: bool = False,
+) -> None:
+    logger.info("Capturando Declarações de Óbito do SIM.")
+    operacao_ids = [
+        "063091e1-9bf4-782c-95bb-a564713aeaa0",
+    ]
+    agendamentos_do = (
+        sessao.query(agendamentos)
+        .filter(agendamentos.c.operacao_id.in_(operacao_ids))
+        .all()
+    )
+    for agendamento in agendamentos_do:
+        obter_do(
+            sessao=sessao,
+            uf_sigla=agendamento.uf_sigla,
+            periodo_data_inicio=agendamento.periodo_data_inicio,
+            tabela_destino=agendamento.tabela_destino,
+            teste=teste,
+            **agendamento.parametros,
+        )
+        if teste:
+            break
+
+        logger.info("Registrando captura bem-sucedida...")
+        # NOTE: necessário registrar a operação de captura em nível de UF,
+        # mesmo que o gatilho na tabela de destino no banco de dados já
+        # registre a captura em nível dos municípios automaticamente quando há
+        # a inserção de uma nova linha
+        requisicao_inserir_historico = capturas_historico.insert(
+            {
+                "operacao_id": agendamento.operacao_id,
+                "periodo_id": agendamento.periodo_id,
+                "unidade_geografica_id": agendamento.unidade_geografica_id,
+            }
+        )
+        conector = sessao.connection()
+        conector.execute(requisicao_inserir_historico)
         sessao.commit()
         logger.info("OK.")
 
