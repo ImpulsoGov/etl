@@ -53,7 +53,7 @@ BR_UFS: FrozenList[str] = FrozenList(
 
 
 ufs = tabelas["listas_de_codigos.ufs"]
-municipios = tabelas["listas_de_codigos.municipios"]
+unidades_geograficas = tabelas["listas_de_codigos.unidades_geograficas"]
 
 
 @lru_cache(27)
@@ -93,8 +93,8 @@ def id_sus_para_id_impulso(sessao: Session, id_sus: str | int) -> str:
     [`sqlalchemy.orm.session.Session`]: https://docs.sqlalchemy.org/en/14/orm/session_api.html#sqlalchemy.orm.Session
     """
     return (
-        sessao.query(municipios.c.id)
-        .filter(municipios.c.id_sus == str(id_sus))
+        sessao.query(unidades_geograficas.c.id)
+        .filter(unidades_geograficas.c.id_sus == str(id_sus))
         .one()[0]
     )
 
@@ -116,7 +116,7 @@ def id_impulso_para_id_sus(sessao: Session, id_impulso: str) -> str:
     [`sqlalchemy.orm.session.Session`]: https://docs.sqlalchemy.org/en/14/orm/session_api.html#sqlalchemy.orm.Session
     """
     return (
-        sessao.query(municipios.c.id_sus)
-        .filter(municipios.c.id == str(id_impulso))
+        sessao.query(unidades_geograficas.c.id_sus)
+        .filter(unidades_geograficas.c.id == str(unidades_geograficas))
         .one()[0]
     )
