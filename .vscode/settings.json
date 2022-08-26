@@ -36,12 +36,12 @@
   "python.pythonPath": "${workspaceFolder}/.venv/bin/python3",
   "conventionalCommits.scopes": [
     "impulsoetl",
-    "impulsoprevine"
+    "impulsoprevine",
+    "sim"
   ],
   "cSpell.diagnosticLevel": "Hint",
 
   "cSpell.language": "en,pt,pt_BR","cSpell.languageSettings": [
-    // This one works with python
     {
         "languageId": "python",
         "ignoreRegExpList": [
