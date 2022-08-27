@@ -89,7 +89,7 @@ TIPOS_HABILITACOES: Final[frozendict] = frozendict(
         "estabelecimento_turno_id_scnes": "object",
         "estabelecimento_hierarquia_id_scnes": "object",
         "estabelecimento_terceiro": "boolean",
-        "atendimento_sus": "object",
+        "atendimento_sus": "boolean",
         "prestador_tipo_id_fca": "object",
         "habilitacao_id_scnes": "object",
         "vigencia_data_inicio": "datetime64[ns]",
