@@ -120,6 +120,10 @@ DE_PARA_DO: Final[frozendict] = frozendict(
     },
 )
 
+DE_PARA_DO_ADICIONAIS: Final[frozendict] = frozendict({
+    "CRM": "atestado_atestante_id_crm",
+})
+
 TIPOS_DO: Final[frozendict] = frozendict(
     {
         "id": "object",
@@ -216,6 +220,10 @@ TIPOS_DO: Final[frozendict] = frozendict(
         "atualizacao_data": "datetime64[ns]",
     },
 )
+
+TIPOS_DO_ADICIONAIS: Final(frozendict) = frozendict({
+    "atestado_atestante_id_crm": "object"
+})
 
 COLUNAS_DATA_DDMMAAAA: Final[list[str]] = [
     "ocorrencia_data",
@@ -335,12 +343,31 @@ def transformar_do(
             "Registros após aplicar confições de filtragem: {num_registros}.",
             num_registros=len(do),
         )
+    
+    # Determina quais das colunas que existem em apenas alguns anos estão 
+    # presentes no DataFrame de origem 
+    colunas_adicionais = {
+        nome_origem: nome_destino
+        for nome_origem, nome_destino in DE_PARA_DO_ADICIONAIS.items()
+        if nome_origem in do.columns
+    }
+
+    # Determina os tipos para as colunas adicionais
+    tipos_adicionais = {
+        nome_destino: tipo_destino
+        for nome_destino, tipo_destino in TIPOS_DO_ADICIONAIS.items()
+        if nome_destino in colunas_adicionais
+    }
+
+    # Junta nomes de colunas e tipos adicionais aos obrigatórios
+    de_para = dict(DE_PARA_DO, **colunas_adicionais)
+    tipos = dict(TIPOS_DO, **tipos_adicionais)
 
     do_transformada = (
         do  # noqa: WPS221  # ignorar linha complexa no pipeline
         # renomear colunas
         .rename_columns(function=lambda col: col.strip())
-        .rename_columns(DE_PARA_DO)
+        .rename_columns(de_para)
         # processar colunas com datas
         .transform_columns(
             # corrigir datas com dígito 0 substituído por espaço
@@ -509,7 +536,7 @@ def transformar_do(
             COLUNAS_NUMERICAS,
             "float",
         )
-        .astype(TIPOS_DO)
+        .astype(tipos)
     )
 
     logger.debug(
