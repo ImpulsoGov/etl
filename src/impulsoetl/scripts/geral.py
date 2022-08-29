@@ -13,8 +13,8 @@ from sqlalchemy.orm import Session
 from impulsoetl.bd import Sessao, tabelas
 from impulsoetl.brasilapi.cep import obter_cep
 from impulsoetl.loggers import logger
-from impulsoetl.scnes.vinculos import obter_vinculos
 from impulsoetl.scnes.habilitacoes import obter_habilitacoes
+from impulsoetl.scnes.vinculos import obter_vinculos
 
 agendamentos = tabelas["configuracoes.capturas_agendamentos"]
 capturas_historico = tabelas["configuracoes.capturas_historico"]

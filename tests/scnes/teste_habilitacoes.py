@@ -36,7 +36,7 @@ def habilitacoes(_habilitacoes):
 
 @pytest.fixture(scope="module")
 def _habilitacoes_transformado():
-    return pd.read_parquet("habilitacoes_transformado.parquet") 
+    return pd.read_parquet("habilitacoes_transformado.parquet")
 
 
 @pytest.fixture(scope="function")
@@ -92,9 +92,9 @@ def teste_tipos(habilitacoes):
             col in colunas_destino
         ), "Coluna inexistente na tabela de destino: '{}'".format(col)
     for col in colunas_destino.keys():
-        assert col in TIPOS_HABILITACOES, "Coluna sem tipo definido: '{}'".format(
-            col
-        )
+        assert (
+            col in TIPOS_HABILITACOES
+        ), "Coluna sem tipo definido: '{}'".format(col)
 
 
 def teste_colunas_datas():
@@ -107,9 +107,7 @@ def teste_colunas_datas():
 )
 def teste_extrair_pa(uf_sigla, periodo_data_inicio, passo):
     iterador_registros_procedimentos = extrair_habilitacoes(
-        uf_sigla=uf_sigla,
-        periodo_data_inicio=periodo_data_inicio,
-        passo=passo
+        uf_sigla=uf_sigla, periodo_data_inicio=periodo_data_inicio, passo=passo
     )
     lote_1 = next(iterador_registros_procedimentos)
     assert isinstance(lote_1, pd.DataFrame)

@@ -110,12 +110,10 @@ COLUNAS_DATA_AAAAMM: Final[list[str]] = [
     "periodo_data_inicio",
     "vigencia_data_inicio",
     "vigencia_data_fim",
-    "portaria_periodo_data_inicio"
+    "portaria_periodo_data_inicio",
 ]
 
-COLUNAS_DATA_AAAAMMDD: Final[list[str]] = [
-    "portaria_data"
-]
+COLUNAS_DATA_AAAAMMDD: Final[list[str]] = ["portaria_data"]
 
 COLUNAS_NUMERICAS: Final[list[str]] = [
     nome_coluna
@@ -183,21 +181,21 @@ def transformar_habilitacoes(
 ) -> pd.DataFrame:
     """Transforma um `DataFrame` de habilitações do SCNES.
 
-    Argumentos:
-        sessao: objeto [`sqlalchemy.orm.session.Session`][] que permite
-            acessar a base de dados da ImpulsoGov.
-        habilitações: [`DataFrame`][] contendo os dados a serem transformados
-            (conforme retornado pela função
-            [`pysus.online_data.CNES.download()`][] com o argumento
-            `group='PF'`).
-ß
-    Retorna:
-        Um [`DataFrame`][] com dados de habilitações de estabelecimentos tratados para
-        inserção no banco de dados da ImpulsoGov.
+        Argumentos:
+            sessao: objeto [`sqlalchemy.orm.session.Session`][] que permite
+                acessar a base de dados da ImpulsoGov.
+            habilitações: [`DataFrame`][] contendo os dados a serem transformados
+                (conforme retornado pela função
+                [`pysus.online_data.CNES.download()`][] com o argumento
+                `group='PF'`).
+    ß
+        Retorna:
+            Um [`DataFrame`][] com dados de habilitações de estabelecimentos tratados para
+            inserção no banco de dados da ImpulsoGov.
 
-    [`sqlalchemy.orm.session.Session`]: https://docs.sqlalchemy.org/en/14/orm/session_api.html#sqlalchemy.orm.Session
-    [`DataFrame`]: https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html
-    [`pysus.online_data.CNES.download()`]: http://localhost:9090/@https://github.com/AlertaDengue/PySUS/blob/600c61627b7998a1733b71ac163b3de71324cfbe/pysus/online_data/CNES.py#L28
+        [`sqlalchemy.orm.session.Session`]: https://docs.sqlalchemy.org/en/14/orm/session_api.html#sqlalchemy.orm.Session
+        [`DataFrame`]: https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html
+        [`pysus.online_data.CNES.download()`]: http://localhost:9090/@https://github.com/AlertaDengue/PySUS/blob/600c61627b7998a1733b71ac163b3de71324cfbe/pysus/online_data/CNES.py#L28
     """
     logger.info(
         "Transformando DataFrame com {num_registros} habilitações "
@@ -206,7 +204,7 @@ def transformar_habilitacoes(
     )
     logger.debug(
         "Memória ocupada pelo DataFrame original:  {memoria_usada:.2f} mB.",
-        memoria_usada=habilitacoes.memory_usage(deep=True).sum() / 10 ** 6,
+        memoria_usada=habilitacoes.memory_usage(deep=True).sum() / 10**6,
     )
     habilitacoes_transformado = (
         habilitacoes  # noqa: WPS221  # ignorar linha complexa no pipeline
@@ -223,7 +221,7 @@ def transformar_habilitacoes(
                 dt,
                 format="%Y%m",
                 errors="coerce",
-            )
+            ),
         )
         .transform_columns(
             COLUNAS_DATA_AAAAMMDD,
@@ -231,7 +229,7 @@ def transformar_habilitacoes(
                 dt,
                 format="%d/%m/%Y",
                 errors="coerce",
-            )
+            ),
         )
         # limpar e completar códigos de região e distrito de saúde
         .transform_column(
@@ -256,7 +254,6 @@ def transformar_habilitacoes(
             "estabelecimento_microrregiao_saude_id_sus",
             lambda id_sus: (id_sus.zfill(6) if pd.notna(id_sus) else np.nan),
         )
-        
         # tratar como NA colunas com valores nulos
         .replace("", np.nan)
         .transform_columns(
@@ -266,7 +263,7 @@ def transformar_habilitacoes(
                 "estabelecimento_distrito_sanitario_id_sus",
                 "estabelecimento_distrito_administrativo_id_sus",
                 "estabelecimento_id_cpf_cnpj",
-                "estabelecimento_mantenedora_id_cnpj", 
+                "estabelecimento_mantenedora_id_cnpj",
             ],
             function=lambda elemento: (
                 np.nan
@@ -316,7 +313,7 @@ def transformar_habilitacoes(
     logger.debug(
         "Memória ocupada pelo DataFrame transformado: {memoria_usada:.2f} mB.",
         memoria_usada=(
-            habilitacoes_transformado.memory_usage(deep=True).sum() / 10 ** 6
+            habilitacoes_transformado.memory_usage(deep=True).sum() / 10**6
         ),
     )
     return habilitacoes_transformado

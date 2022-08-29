@@ -8,8 +8,11 @@
 
 import pytest
 
-from impulsoetl.scripts.geral import ceps, vinculos_disseminacao
-from impulsoetl.scripts.geral import habilitacoes_disseminacao
+from impulsoetl.scripts.geral import (
+    ceps,
+    habilitacoes_disseminacao,
+    vinculos_disseminacao,
+)
 
 
 @pytest.mark.integracao
