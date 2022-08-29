@@ -447,7 +447,12 @@ def transformar_do(
                 "condicoes_contribuintes_ids_cid10",
             ],
             function=lambda cids: (
-                "{" + ",".join(re.split("[^a-zA-Z0-9]", cids)) + "}"
+                "{"
+                + ",".join([
+                    cid for cid in re.split("[^a-zA-Z0-9]", cids)
+                    if len(cid) > 0  # remove campos com CIDs vazios
+                ])
+                + "}"
             ),
         )
         # tratar como NA colunas com valores nulos
