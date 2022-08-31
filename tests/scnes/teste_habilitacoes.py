@@ -36,7 +36,7 @@ def habilitacoes(_habilitacoes):
 
 @pytest.fixture(scope="module")
 def _habilitacoes_transformado():
-    return pd.read_parquet("habilitacoes_transformado.parquet")
+    return pd.read_parquet("tests/scnes/habilitacoes_transformado.parquet")
 
 
 @pytest.fixture(scope="function")
@@ -73,12 +73,12 @@ def teste_de_para(habilitacoes):
 
     for col in colunas_de:
         assert col in colunas_origem, (
-            "Coluna no De-Para não existe no arquivo de procedimentos: "
+            "Coluna no De-Para não existe no arquivo de habilitações: "
             + "'{}'".format(col)
         )
     for col in colunas_origem:
         assert col in colunas_de, (
-            "Coluna existente no arquivo de procedimentos não encontrada no "
+            "Coluna existente no arquivo de habilitações não encontrada no "
             + "De-Para: '{}'".format(col)
         )
 
