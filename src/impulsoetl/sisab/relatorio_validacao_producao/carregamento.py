@@ -9,12 +9,12 @@
 from __future__ import annotations
 
 import pandas as pd
-from sqlalchemy.orm import Session,Query
 from sqlalchemy import delete
+from sqlalchemy.orm import Query, Session
 
+from impulsoetl.bd import tabelas
 from impulsoetl.loggers import logger
 from impulsoetl.utilitarios.bd import carregar_dataframe
-from impulsoetl.bd import tabelas
 
 
 def obter_lista_registros_inseridos(
@@ -33,19 +33,20 @@ def obter_lista_registros_inseridos(
     """
 
     tabela = tabelas[tabela_destino]
-    registros = sessao.query(
-        tabela.c.periodo_id,tabela.c.no_prazo
-    ).distinct(tabela.c.periodo_id,tabela.c.no_prazo)
+    registros = sessao.query(tabela.c.periodo_id, tabela.c.no_prazo).distinct(
+        tabela.c.periodo_id, tabela.c.no_prazo
+    )
 
     logger.info("Leitura dos períodos inseridos no banco Impulso OK!")
     return registros
 
+
 def carregar_dados(
-    sessao: Session, 
+    sessao: Session,
     df_tratado: pd.DataFrame,
-    tabela_destino:str,
-    no_prazo:bool,
-    periodo_id:str
+    tabela_destino: str,
+    no_prazo: bool,
+    periodo_id: str,
 ) -> int:
     """Carrega os dados de um arquivo validação do portal SISAB no BD da Impulso.
 
@@ -61,7 +62,7 @@ def carregar_dados(
         for bem sucedido, o código de saída será `0`.
 
     [`sqlalchemy.orm.session.Session`]: https://docs.sqlalchemy.org/en/14/orm/session_api.html#sqlalchemy.orm.Session
-    [`pandas.D """
+    [`pandas.D"""
 
     logger.info("Excluíndo registros se houver atualização retroativa...")
     tabela_relatorio_validacao = tabelas[tabela_destino]
@@ -70,23 +71,20 @@ def carregar_dados(
     )
 
     if any(
-        [
-            registro.periodo_id == periodo_id
-            for registro in registros_inseridos
-        ]
+        [registro.periodo_id == periodo_id for registro in registros_inseridos]
     ):
         limpar = (
             delete(tabela_relatorio_validacao)
-            .where(
-                tabela_relatorio_validacao.c.periodo_id == periodo_id
-            )
+            .where(tabela_relatorio_validacao.c.periodo_id == periodo_id)
             .where(tabela_relatorio_validacao.c.no_prazo == no_prazo)
         )
         logger.debug(limpar)
         sessao.execute(limpar)
 
     logger.info("Carregando dados em tabela...")
-    carregar_dataframe(sessao=sessao, df=df_tratado, tabela_destino=tabela_destino)
+    carregar_dataframe(
+        sessao=sessao, df=df_tratado, tabela_destino=tabela_destino
+    )
 
     logger.info(
         "Carregamento concluído para a tabela `{tabela_nome}`: "

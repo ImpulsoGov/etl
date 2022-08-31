@@ -176,8 +176,8 @@ def parametros_municipios_equipes_validas(
     )
 
     operacao_id = "c07a7a29-cacf-4102-9a28-b674ae0ec609"
-    visao_equipe = 'equipes-validas'
-    nivel_agregacao = 'municipios'
+    visao_equipe = "equipes-validas"
+    nivel_agregacao = "municipios"
 
     agendamentos_cadastros = (
         sessao.query(agendamentos)
@@ -192,7 +192,7 @@ def parametros_municipios_equipes_validas(
             visao_equipe=visao_equipe,
             periodo=periodo,
             nivel_agregacao=nivel_agregacao,
-            teste=teste
+            teste=teste,
         )
         if teste:
             break
@@ -226,8 +226,8 @@ def parametros_municipios_equipes_homologada(
     )
 
     operacao_id = "8f593199-fcef-4023-b79a-0ed7f9050cd2"
-    visao_equipe = 'equipes-homologadas'
-    nivel_agregacao = 'municipios'
+    visao_equipe = "equipes-homologadas"
+    nivel_agregacao = "municipios"
 
     agendamentos_cadastros = (
         sessao.query(agendamentos)
@@ -242,7 +242,7 @@ def parametros_municipios_equipes_homologada(
             visao_equipe=visao_equipe,
             periodo=periodo,
             nivel_agregacao=nivel_agregacao,
-            teste=teste
+            teste=teste,
         )
         if teste:
             break
@@ -276,8 +276,8 @@ def parametros_cne_ine_equipes_homologada(
     )
 
     operacao_id = "dcb03493-8ad2-4f48-bd3b-4022fc33c2c2"
-    visao_equipe = 'equipes-homologadas'
-    nivel_agregacao = 'estabelecimentos_equipes'
+    visao_equipe = "equipes-homologadas"
+    nivel_agregacao = "estabelecimentos_equipes"
 
     agendamentos_cadastros = (
         sessao.query(agendamentos)
@@ -292,7 +292,7 @@ def parametros_cne_ine_equipes_homologada(
             visao_equipe=visao_equipe,
             periodo=periodo,
             nivel_agregacao=nivel_agregacao,
-            teste=teste
+            teste=teste,
         )
         if teste:
             break
@@ -326,8 +326,8 @@ def parametros_cnes_ine_equipes_validas(
     )
 
     operacao_id = "3a61f9ca-c32f-4844-b6ac-a115bd8e4b5a"
-    visao_equipe = 'equipes-validas'
-    nivel_agregacao = 'estabelecimentos_equipes'
+    visao_equipe = "equipes-validas"
+    nivel_agregacao = "estabelecimentos_equipes"
 
     agendamentos_cadastros = (
         sessao.query(agendamentos)
@@ -342,7 +342,7 @@ def parametros_cnes_ine_equipes_validas(
             visao_equipe=visao_equipe,
             periodo=periodo,
             nivel_agregacao=nivel_agregacao,
-            teste=teste
+            teste=teste,
         )
         if teste:
             break
@@ -363,6 +363,7 @@ def parametros_cnes_ine_equipes_validas(
         conector.execute(requisicao_inserir_historico)
         sessao.commit()
         logger.info("OK.")
+
 
 @logger.catch
 def indicadores_municipios_equipe_validas(
@@ -504,6 +505,7 @@ def indicadores_municipios_equipe_todas(
         sessao.commit()
         logger.info("OK.")
 
+
 @logger.catch
 def indicadores_municipios_equipe_validas(
     sessao: Session,
@@ -643,6 +645,7 @@ def indicadores_municipios_equipe_todas(
         conector.execute(requisicao_inserir_historico)
         sessao.commit()
         logger.info("OK.")
+
 
 def validacao_producao(
     sessao: Session,
@@ -664,14 +667,13 @@ def validacao_producao(
 
     logger.info("Leitura dos Agendamentos ok!")
 
-
     for agendamento in agendamentos_relatorio_validacao:
         obter_validacao_producao(
             sessao=sessao,
             periodo_competencia=agendamento.periodo_data_inicio,
-            periodo_id = agendamento.periodo_id,
-            periodo_codigo = agendamento.periodo_codigo,
-            tabela_destino = agendamento.tabela_destino,
+            periodo_id=agendamento.periodo_id,
+            periodo_codigo=agendamento.periodo_codigo,
+            tabela_destino=agendamento.tabela_destino,
         )
 
         if teste:  # evitar rodar muitas iterações
@@ -721,8 +723,6 @@ def principal(sessao: Session, teste: bool = False) -> None:
     validacao_producao(sessao=sessao, teste=teste)
 
     # outros scripts do Impulso Previne aqui...
-
-
 
 
 if __name__ == "__main__":
