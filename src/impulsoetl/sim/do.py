@@ -386,7 +386,7 @@ def transformar_do(
             "ocorrencia_hora",
             function=lambda hora: (
                 hora[:2] + ":" + hora[2:4]
-                if re.match(r"\d{4}", hora)
+                if re.match(r"[0-2][0-9][0-5][0-9]", hora)
                 else np.nan
             ),
         )
