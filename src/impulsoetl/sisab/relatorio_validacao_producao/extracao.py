@@ -73,8 +73,7 @@ def extrair_dados(
     # Check box envio requisições no prazo marcado?
     envio_prazo_on = ""
     if envio_prazo:
-        #envio_prazo_on += "&envioPrazo=on"
-        envio_prazo_on += "on"
+        envio_prazo_on += "&envioPrazo=on"
     
     payload=("j_idt44=j_idt44"
             +"&unidGeo=brasil"
