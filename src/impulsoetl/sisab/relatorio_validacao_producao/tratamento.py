@@ -6,9 +6,9 @@
 """Processa dados do relatório de validação por produção para o formato usado no BD."""
 
 from __future__ import annotations
+
 from typing import Final
 from frozendict import frozendict
-from datetime import date
 import pandas as pd
 import numpy as np
 from sqlalchemy.orm import Session
@@ -80,6 +80,7 @@ def tratamento_dados(
     logger.info("Iniciando tratamento dos dados...")
     logger.info("Renomeando colunas...")
     df_tratado = df_extraido.rename(columns=VALIDACAO_COLUNAS)
+    
     logger.info("Enriquecendo tabela com campos complementares...")
     df_tratado['no_prazo'] = envio_prazo
     df_tratado['ficha'] = ficha
@@ -94,21 +95,13 @@ def tratamento_dados(
     )
     
     df_tratado.reset_index(drop=True, inplace=True)
-    df_tratado[["cnes_tipo", "ine_tipo"]] = (
-        df_tratado[["cnes_tipo", "ine_tipo"]]
-        .fillna("0")
-        .replace("0", np.nan)
-    )
-    df_tratado["cnes_id"] = df_tratado["cnes_id"].str.zfill(7)
-    df_tratado["ine_id"] = df_tratado["ine_id"].fillna("0").str.zfill(10).replace("0000000000", np.nan)
-    
-    validacao_quantidade = []
-    for string in df_tratado['validacao_quantidade']:
-        string=string.replace('.','')
-        validacao_quantidade.append(string)
-    df_tratado['validacao_quantidade'] = validacao_quantidade
 
     logger.info("Garantindo tipagem dos dados...")
     df_tratado = df_tratado.astype(VALIDACAO_TIPOS)
+
+    df_tratado[["cnes_tipo", "ine_tipo","ine_id"]] = (
+        df_tratado[["cnes_tipo", "ine_tipo","ine_id"]]
+        .replace("nan", np.nan)
+    )
     logger.info(f"Tratamento dos dados realizado | Total de registros : {df_tratado.shape[0]}")
     return df_tratado

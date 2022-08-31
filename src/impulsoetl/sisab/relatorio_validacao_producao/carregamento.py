@@ -16,6 +16,7 @@ from impulsoetl.loggers import logger
 from impulsoetl.utilitarios.bd import carregar_dataframe
 from impulsoetl.bd import tabelas
 
+
 def obter_lista_registros_inseridos(
     sessao: Session,
     tabela_destino: str,
@@ -33,8 +34,8 @@ def obter_lista_registros_inseridos(
 
     tabela = tabelas[tabela_destino]
     registros = sessao.query(
-        tabela.c.periodo_id, tabela.c.ficha, tabela.c.aplicacao, tabela.c.no_prazo
-    ).distinct(tabela.c.periodo_id, tabela.c.ficha, tabela.c.aplicacao,tabela.c.no_prazo)
+        tabela.c.periodo_id,tabela.c.no_prazo
+    ).distinct(tabela.c.periodo_id,tabela.c.no_prazo)
 
     logger.info("Leitura dos períodos inseridos no banco Impulso OK!")
     return registros
@@ -43,10 +44,8 @@ def carregar_dados(
     sessao: Session, 
     df_tratado: pd.DataFrame,
     tabela_destino:str,
-    periodo_id:str,
     no_prazo:bool,
-    ficha_tipo: str,
-    aplicacao_tipo: str,
+    periodo_id:str
 ) -> int:
     """Carrega os dados de um arquivo validação do portal SISAB no BD da Impulso.
 
@@ -72,10 +71,7 @@ def carregar_dados(
 
     if any(
         [
-            registro.aplicacao == aplicacao_tipo
-            and registro.ficha == ficha_tipo
-            and registro.periodo_id == periodo_id
-            and registro.no_prazo == no_prazo
+            registro.periodo_id == periodo_id
             for registro in registros_inseridos
         ]
     ):
@@ -84,8 +80,6 @@ def carregar_dados(
             .where(
                 tabela_relatorio_validacao.c.periodo_id == periodo_id
             )
-            .where(tabela_relatorio_validacao.c.ficha == ficha_tipo)
-            .where(tabela_relatorio_validacao.c.aplicacao == aplicacao_tipo)
             .where(tabela_relatorio_validacao.c.no_prazo == no_prazo)
         )
         logger.debug(limpar)
@@ -93,8 +87,6 @@ def carregar_dados(
 
     logger.info("Carregando dados em tabela...")
     carregar_dataframe(sessao=sessao, df=df_tratado, tabela_destino=tabela_destino)
-
-    
 
     logger.info(
         "Carregamento concluído para a tabela `{tabela_nome}`: "

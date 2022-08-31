@@ -8,18 +8,19 @@
 from __future__ import annotations
 
 from typing import Final
-from datetime import date
-
 from sqlalchemy.orm import Session
+from datetime import date
+import pandas as pd
 
+from impulsoetl.loggers import logger
 from impulsoetl.sisab.relatorio_validacao_producao.extracao import (
     extrair_dados,
     )
 from impulsoetl.sisab.relatorio_validacao_producao.tratamento import (
     tratamento_dados,
     )
-from impulsoetl.sisab.relatorio_validacao_producao.teste_validacao import (
-    teste_validacao,
+from impulsoetl.sisab.relatorio_validacao_producao.verificacao import (
+    verificar_relatorio_validacao_producao,
     )
 from impulsoetl.sisab.relatorio_validacao_producao.carregamento import (
     carregar_dados,
@@ -39,7 +40,7 @@ APLICACAO_CODIGOS : Final[dict[str, str]] = {
     "Sistema proprio": "3",
     "Android ACS": "4",
     }
-ENVIO_PRAZO = [True,False]
+ENVIO_PRAZO = [False,True]
 
 def obter_validacao_producao(
     sessao: Session,
@@ -55,6 +56,7 @@ def obter_validacao_producao(
                 periodo_competencia: Data do mês em referência.
         """ 
         for envio_prazo in ENVIO_PRAZO:
+            df_consolidado = pd.DataFrame()
             for ficha in FICHA_CODIGOS: 
                 for aplicacao in APLICACAO_CODIGOS:
                     if (
@@ -70,7 +72,7 @@ def obter_validacao_producao(
                         envio_prazo=envio_prazo,
                         ficha=ficha,
                         aplicacao=aplicacao,
-                        )
+                    )
                     df_tratado = tratamento_dados(
                         sessao=sessao,
                         df_extraido=df_extraido,
@@ -80,12 +82,23 @@ def obter_validacao_producao(
                         ficha=ficha,
                         aplicacao=aplicacao,
                         )
-                    teste_validacao(df_extraido=df_extraido,df_tratado=df_tratado)
-                    carregar_dados(
-                        sessao = sessao, 
-                        df_tratado = df_tratado,
-                        tabela_destino = tabela_destino,
-                        periodo_id = periodo_id,
-                        no_prazo = envio_prazo,
-                        ficha_tipo = ficha,
-                        aplicacao_tipo = aplicacao)
+                    verificar_relatorio_validacao_producao(df_extraido=df_extraido,df_tratado=df_tratado)
+                    df_consolidado = pd.concat([df_consolidado, df_tratado], ignore_index=True)
+
+                    logger.info(
+                    "Captura realizada e tratada para a ficha de `{ficha}`"
+                    + "com aplicação '{aplicacao}' no período '{periodo_codigo}'"
+                    + "e envio no prazo = {envio_prazo}",
+                    ficha=ficha,
+                    aplicacao=aplicacao,
+                    periodo_codigo=periodo_codigo,
+                    envio_prazo=envio_prazo,
+                    )
+        
+            carregar_dados(
+                sessao = sessao, 
+                df_tratado = df_consolidado,
+                tabela_destino = tabela_destino,
+                no_prazo = envio_prazo,
+                periodo_id = periodo_id
+                )

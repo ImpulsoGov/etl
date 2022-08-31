@@ -8,10 +8,10 @@
 from __future__ import annotations
 
 from typing import Final
-import requests
 from datetime import date
 from io import StringIO
 import pandas as pd
+import requests
 
 from impulsoetl.sisab.parametros_requisicao import head
 from impulsoetl.loggers import logger
@@ -34,9 +34,9 @@ APLICACAO_CODIGOS : Final[dict[str, str]] = {
 
 def verificar_colunas (
     df_extraido:pd.DataFrame
-    ) -> int:
+    ) -> bool:
 	""" Verifica se 'Dataframe' possui 7 colunas como esperado"""
-	return df_extraido.shape[1] 
+	return (df_extraido.shape[1] == 7)
 
 def extrair_dados(
     periodo_competencia:date,
@@ -73,7 +73,8 @@ def extrair_dados(
     # Check box envio requisições no prazo marcado?
     envio_prazo_on = ""
     if envio_prazo:
-        envio_prazo_on += "&envioPrazo=on"
+        #envio_prazo_on += "&envioPrazo=on"
+        envio_prazo_on += "on"
     
     payload=("j_idt44=j_idt44"
             +"&unidGeo=brasil"
@@ -91,13 +92,14 @@ def extrair_dados(
             +"&javax.faces.ViewState="+view_state
             +"&j_idt102=j_idt102")
 
+
     logger.info("Iniciando conexão com o SISAB ...")
     response = requests.request(
         "POST",
         url,
         headers=headers,
         data=payload,
-        timeout=240
+        timeout=680
         )
     logger.info("Criando dataframe com dados extraídos do relatório...")
     df_extraido = (
@@ -108,6 +110,7 @@ def extrair_dados(
                 encoding='ISO-8859-1',
                 engine="python",
                 skipfooter=4,
+                thousands=".",
                 dtype="object",
                 )
                 )
@@ -116,8 +119,9 @@ def extrair_dados(
         axis=1
         )
     logger.info("Verificando a estrutura da tabela...")
-    assert verificar_colunas(df_extraido=df_extraido) == 7
-    logger.info(f"Extração do relatório realizada | Total de registros : {df_extraido.shape[0]}")
+    assert verificar_colunas(df_extraido=df_extraido)
+    logger.info("Extração do relatório realizada | Total de registros : '{numero_linhas}'",
+    numero_linhas=df_extraido.shape[0])
 
     return df_extraido
 
