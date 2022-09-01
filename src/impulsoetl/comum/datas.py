@@ -65,7 +65,7 @@ def de_aaaammdd_para_timestamp(
 
 
 @lru_cache(365)
-def periodo_por_data(
+def periodo_por_data(  # noqa: WPS122 - permite argumento `data`
     sessao: Session,
     data: DatetimeLike,
     tipo_periodo="mensal",

@@ -12,12 +12,6 @@ import sqlalchemy as sa
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.ext.declarative import declared_attr
 
-# from sqlalchemy_continuum import make_versioned
-
-
-# TODO: habilitar versionamento
-# make_versioned(options={"native_versioning": True})
-
 
 class TabelaProducao(object):
     """Modelo genérico para tabelas de produção do SISAB."""

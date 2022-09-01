@@ -207,39 +207,40 @@ def carregar_dataframe(
     )
 
     logger.info("Copiando registros...")
-    engine = sessao.get_bind()
-    with engine.connect() as conexao:
-        ponto_de_recuperacao = conexao.begin_nested()
-        try:
-            df.to_sql(
-                name=tabela_nome,
-                con=conexao,
-                schema=schema_nome,
-                if_exists="append",
-                index=False,
-                chunksize=passo,
-                method=postgresql_copiar_dados,
-            )
-            ponto_de_recuperacao.commit()
-        # trata exceções levantadas pelo backend
-        except (DBAPIError, Psycopg2Error) as erro:
-            ponto_de_recuperacao.rollback()
-            sessao.rollback()
-            if isinstance(erro, DBAPIError):
-                erro.hide_parameters = True
-                erro = cast(Psycopg2Error, erro.orig)
-            logger.error(
-                "Erro ao inserir registros na tabela `{}` (Código {})",
-                tabela_destino,
-                erro.pgcode,
-            )
-            logger.debug(
-                "({}.{}) {}",
-                erro.__class__.__module__,
-                erro.__class__.__name__,
-                erro.pgerror,
-            )
-            return erro.pgcode
+
+    ponto_de_recuperacao = sessao.begin_nested()
+    conexao = sessao.connection()
+    try:
+        df.to_sql(
+            name=tabela_nome,
+            con=conexao,
+            schema=schema_nome,
+            if_exists="append",
+            index=False,
+            chunksize=passo,
+            method=postgresql_copiar_dados,
+        )
+    # trata exceções levantadas pelo backend
+    except (DBAPIError, Psycopg2Error) as erro:
+        ponto_de_recuperacao.rollback()
+        sessao.rollback()
+        if isinstance(erro, DBAPIError):
+            erro.hide_parameters = True
+            erro = cast(Psycopg2Error, erro.orig)
+        logger.error(
+            "Erro ao inserir registros na tabela `{}` (Código {})",
+            tabela_destino,
+            erro.pgcode,
+        )
+        logger.debug(
+            "({}.{}) {}",
+            erro.__class__.__module__,
+            erro.__class__.__name__,
+            erro.pgerror,
+        )
+        return erro.pgcode
+    else:
+        ponto_de_recuperacao.commit()
 
     logger.info("Carregamento concluído.")
 

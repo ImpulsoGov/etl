@@ -10,7 +10,6 @@
 from __future__ import annotations
 
 import os
-import uuid
 from datetime import date
 from typing import Final, Generator
 
@@ -19,26 +18,30 @@ import numpy as np
 import pandas as pd
 from frozendict import frozendict
 from sqlalchemy.orm import Session
+from uuid6 import uuid7
 
-from impulsoetl.comum.datas import de_aaaammdd_para_timestamp, periodo_por_data
+from impulsoetl.comum.datas import (
+    agora_gmt_menos3,
+    de_aaaammdd_para_timestamp,
+    periodo_por_data,
+)
 from impulsoetl.comum.geografias import id_sus_para_id_impulso
 from impulsoetl.loggers import logger
 from impulsoetl.utilitarios.bd import carregar_dataframe
 from impulsoetl.utilitarios.datasus_ftp import extrair_dbc_lotes
 
-
 DE_PARA_BPA_I: Final[frozendict] = frozendict(
     {
-        "CODUNI": "estabelecimento_id_cnes",
-        "GESTAO": "gestao_unidade_geografica_id",
+        "CODUNI": "estabelecimento_id_scnes",
+        "GESTAO": "gestao_unidade_geografica_id_sus",
         "CONDIC": "gestao_condicao_id_siasus",
         "UFMUN": "unidade_geografica_id_sus",
         "TPUPS": "estabelecimento_tipo_id_sigtap",
         "TIPPRE": "prestador_tipo_id_sigtap",
         "MN_IND": "estabelecimento_mantido",
-        "CNPJCPF": "estabelecimento_cnpj",
-        "CNPJMNT": "mantenedora_cnpj",
-        "CNPJ_CC": "receptor_credito_cnpj",
+        "CNPJCPF": "estabelecimento_id_cnpj",
+        "CNPJMNT": "mantenedora_id_cnpj",
+        "CNPJ_CC": "receptor_credito_id_cnpj",
         "DT_PROCESS": "processamento_periodo_data_inicio",
         "DT_ATEND": "realizacao_periodo_data_inicio",
         "PROC_ID": "procedimento_id_sigtap",
@@ -46,12 +49,12 @@ DE_PARA_BPA_I: Final[frozendict] = frozendict(
         "SUBFIN": "financiamento_subtipo_id_sigtap",
         "COMPLEX": "complexidade_id_siasus",
         "AUTORIZ": "autorizacao_id_siasus",
-        "CNSPROF": "profissional_cns",
-        "CBOPROF": "profissional_ocupacao_id_cbo",
+        "CNSPROF": "profissional_id_cns",
+        "CBOPROF": "profissional_vinculo_ocupacao_id_cbo2002",
         "CIDPRI": "condicao_principal_id_cid10",
         "CATEND": "carater_atendimento_id_siasus",
-        "CNS_PAC": "usuario_cns_criptografado",
-        "DTNASC": "usuario_data_nascimento",
+        "CNS_PAC": "usuario_id_cns_criptografado",
+        "DTNASC": "usuario_nascimento_data",
         "TPIDADEPAC": "usuario_idade_tipo_id_sigtap",
         "IDADEPAC": "usuario_idade",
         "SEXOPAC": "usuario_sexo_id_sigtap",
@@ -64,22 +67,22 @@ DE_PARA_BPA_I: Final[frozendict] = frozendict(
         "UFDIF": "atendimento_residencia_ufs_distintas",
         "MNDIF": "atendimento_residencia_municipios_distintos",
         "ETNIA": "usuario_etnia_id_sus",
-        "NAT_JUR": "estabelecimento_natureza_juridica_id_cnes",
+        "NAT_JUR": "estabelecimento_natureza_juridica_id_scnes",
     },
 )
 
 TIPOS_BPA_I: Final[frozendict] = frozendict(
     {
-        "estabelecimento_id_cnes": "object",
-        "gestao_unidade_geografica_id": "object",
+        "estabelecimento_id_scnes": "object",
+        "gestao_unidade_geografica_id_sus": "object",
         "gestao_condicao_id_siasus": "object",
         "unidade_geografica_id_sus": "object",
         "estabelecimento_tipo_id_sigtap": "object",
         "prestador_tipo_id_sigtap": "object",
         "estabelecimento_mantido": "bool",
-        "estabelecimento_cnpj": "object",
-        "mantenedora_cnpj": "object",
-        "receptor_credito_cnpj": "object",
+        "estabelecimento_id_cnpj": "object",
+        "mantenedora_id_cnpj": "object",
+        "receptor_credito_id_cnpj": "object",
         "processamento_periodo_data_inicio": "datetime64[ns]",
         "realizacao_periodo_data_inicio": "datetime64[ns]",
         "procedimento_id_sigtap": "object",
@@ -87,12 +90,12 @@ TIPOS_BPA_I: Final[frozendict] = frozendict(
         "financiamento_subtipo_id_sigtap": "object",
         "complexidade_id_siasus": "object",
         "autorizacao_id_siasus": "object",
-        "profissional_cns": "object",
-        "profissional_ocupacao_id_cbo": "object",
+        "profissional_id_cns": "object",
+        "profissional_vinculo_ocupacao_id_cbo2002": "object",
         "condicao_principal_id_cid10": "object",
         "carater_atendimento_id_siasus": "object",
-        "usuario_cns_criptografado": "object",
-        "usuario_data_nascimento": "datetime64[ns]",
+        "usuario_id_cns_criptografado": "object",
+        "usuario_nascimento_data": "datetime64[ns]",
         "usuario_idade_tipo_id_sigtap": "object",
         "usuario_idade": "Int64",
         "usuario_sexo_id_sigtap": "object",
@@ -105,15 +108,17 @@ TIPOS_BPA_I: Final[frozendict] = frozendict(
         "atendimento_residencia_ufs_distintas": "bool",
         "atendimento_residencia_municipios_distintos": "bool",
         "usuario_etnia_id_sus": "object",
-        "estabelecimento_natureza_juridica_id_cnes": "object",
+        "estabelecimento_natureza_juridica_id_scnes": "object",
         "id": "str",
         "periodo_id": "str",
         "unidade_geografica_id": "str",
+        "criacao_data": "datetime64[ns]",
+        "atualizacao_data": "datetime64[ns]",
     },
 )
 
 COLUNAS_DATA_AAAAMMDD: Final[list[str]] = [
-    "usuario_data_nascimento",
+    "usuario_nascimento_data",
 ]
 
 COLUNAS_DATA_AAAAMM: Final[list[str]] = [
@@ -165,8 +170,37 @@ def extrair_bpa_i(
 def transformar_bpa_i(
     sessao: Session,
     bpa_i: pd.DataFrame,
+    condicoes: str | None = None,
 ) -> pd.DataFrame:
-    """Transforma um `DataFrame` de BPA-i obtido do FTP público do DataSUS."""
+    """Transforma um `DataFrame` de BPA-i obtido do FTP público do DataSUS.
+
+    Argumentos:
+        sessao: objeto [`sqlalchemy.orm.session.Session`][] que permite
+            acessar a base de dados da ImpulsoGov.
+        bpa_i: objeto [`pandas.DataFrame`][] contendo os dados de um arquivo de
+            disseminação de Boletins de Produção Ambulatorial -
+            individualizados, conforme extraídos para uma unidade federativa e
+            competência (mês) pela função [`extrair_bpa_i()`][].
+        condicoes: conjunto opcional de condições a serem aplicadas para
+            filtrar os registros obtidos da fonte. O valor informado deve ser
+            uma *string* com a sintaxe utilizada pelo método
+            [`pandas.DataFrame.query()`][]. Por padrão, o valor do argumento é
+            `None`, o que equivale a não aplicar filtro algum.
+
+    Note:
+        Para otimizar a performance, os filtros são aplicados antes de qualquer
+        outra transformação nos dados, de forma que as condições fornecidas
+        devem considerar que o nome, os tipos e os valores aparecem exatamente
+        como registrados no arquivo de disseminação disponibilizado no FTP
+        público do DataSUS. Verifique o [Informe Técnico][it-siasus] para mais
+        informações.
+
+    [`sqlalchemy.orm.session.Session`]: https://docs.sqlalchemy.org/en/14/orm/session_api.html#sqlalchemy.orm.Session
+    [`pandas.DataFrame`]: https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html
+    [`extrair_bpa_i()`]: impulsoetl.siasus.bpa_i.extrair_bpa_i
+    [`pandas.DataFrame.query()`]: https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.query.html
+    [it-siasus]: https://drive.google.com/file/d/1DC5093njSQIhMHydYptlj2rMbrMF36y6
+    """
     logger.info(
         "Transformando DataFrame com {num_registros_bpa_i} registros de BPAi.",
         num_registros_bpa_i=len(bpa_i),
@@ -175,6 +209,15 @@ def transformar_bpa_i(
         "Memória ocupada pelo DataFrame original:  {memoria_usada:.2f} mB.",
         memoria_usada=bpa_i.memory_usage(deep=True).sum() / 10 ** 6,
     )
+
+    # aplica condições de filtragem dos registros
+    if condicoes:
+        bpa_i = bpa_i.query(condicoes, engine="python")
+        logger.info(
+            "Registros após aplicar condições de filtragem: {num_registros}.",
+            num_registros=len(bpa_i),
+        )
+
     bpa_i_transformada = (
         bpa_i  # noqa: WPS221  # ignorar linha complexa no pipeline
         # renomear colunas
@@ -209,8 +252,8 @@ def transformar_bpa_i(
         .replace("", np.nan)
         .transform_columns(
             [
-                "mantenedora_cnpj",
-                "receptor_credito_cnpj",
+                "mantenedora_id_cnpj",
+                "receptor_credito_id_cnpj",
                 "financiamento_subtipo_id_sigtap",
                 "condicao_principal_id_cid10",
                 "autorizacao_id_siasus",
@@ -223,7 +266,7 @@ def transformar_bpa_i(
         )
         # adicionar id
         .add_column("id", str())
-        .transform_column("id", function=lambda _: uuid.uuid4().hex)
+        .transform_column("id", function=lambda _: uuid7().hex)
         # adicionar id do periodo
         .transform_column(
             "realizacao_periodo_data_inicio",
@@ -239,6 +282,9 @@ def transformar_bpa_i(
             ),
             dest_column_name="unidade_geografica_id",
         )
+        # adicionar datas de inserção e atualização
+        .add_column("criacao_data", agora_gmt_menos3())
+        .add_column("atualizacao_data", agora_gmt_menos3())
         # garantir tipos
         .change_type(
             # HACK: ver https://github.com/pandas-dev/pandas/issues/25472
@@ -279,10 +325,15 @@ def obter_bpa_i(
             adicionadas à uma transação, e podem ser revertidas com uma chamada
             posterior ao método [`Session.rollback()`][] da sessão gerada com o
             SQLAlchemy.
+        \\*\\*kwargs: Parâmetros adicionais definidos no agendamento da
+            captura. Atualmente, apenas o parâmetro `condicoes` (do tipo `str`)
+            é aceito, e repassado como argumento na função
+            [`transformar_bpa_i()`][].
 
     [`sqlalchemy.orm.session.Session`]: https://docs.sqlalchemy.org/en/14/orm/session_api.html#sqlalchemy.orm.Session
     [`sqlalchemy.engine.Row`]: https://docs.sqlalchemy.org/en/14/core/connections.html#sqlalchemy.engine.Row
     [`datetime.date`]: https://docs.python.org/3/library/datetime.html#date-objects
+    [`transformar_bpa_i()`]: impulsoetl.siasus.bpa_i.transformar_bpa_i
     """
     logger.info(
         "Iniciando captura de BPA-i's para Unidade Federativa "
@@ -301,35 +352,31 @@ def obter_bpa_i(
     )
 
     contador = 0
-    with sessao.begin_nested():
-        for bpa_i_lote in bpa_i_lotes:
-            bpa_i_transformada = transformar_bpa_i(
-                sessao=sessao,
-                bpa_i=bpa_i_lote,
-            )
+    for bpa_i_lote in bpa_i_lotes:
+        bpa_i_transformada = transformar_bpa_i(
+            sessao=sessao,
+            bpa_i=bpa_i_lote,
+            condicoes=kwargs.get("condicoes"),
+        )
 
-            carregamento_status = carregar_dataframe(
-                sessao=sessao,
-                df=bpa_i_transformada,
-                tabela_destino=tabela_destino,
-                passo=None,
-                teste=teste,
+        carregamento_status = carregar_dataframe(
+            sessao=sessao,
+            df=bpa_i_transformada,
+            tabela_destino=tabela_destino,
+            passo=None,
+            teste=teste,
+        )
+        if carregamento_status != 0:
+            raise RuntimeError(
+                "Execução interrompida em razão de um erro no "
+                + "carregamento."
             )
-            if carregamento_status != 0:
-                raise RuntimeError(
-                    "Execução interrompida em razão de um erro no "
-                    + "carregamento."
-                )
-            contador += len(bpa_i_lote)
-            if teste and contador > 1000:
-                logger.info("Execução interrompida para fins de teste.")
-                break
+        contador += len(bpa_i_lote)
+        if teste and contador > 1000:
+            logger.info("Execução interrompida para fins de teste.")
+            break
 
     if teste:
         logger.info("Desfazendo alterações realizadas durante o teste...")
         sessao.rollback()
         logger.info("Todas transações foram desfeitas com sucesso!")
-    else:
-        logger.info("Gravando alterações no banco de dados...")
-        sessao.commit()
-        logger.info("Todas as alterações foram gravadas com sucesso!")

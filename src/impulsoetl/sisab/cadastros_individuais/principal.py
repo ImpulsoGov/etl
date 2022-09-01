@@ -5,25 +5,27 @@
 
 from __future__ import annotations
 
+from datetime import date
+
 from sqlalchemy.orm import Session
 
-from impulsoetl.tipos import DatetimeLike
+from impulsoetl.loggers import logger
 from impulsoetl.sisab.cadastros_individuais.carregamento import (
     carregar_cadastros,
 )
 from impulsoetl.sisab.cadastros_individuais.extracao import (
     extrair_cadastros_individuais,
 )
-from impulsoetl.sisab.cadastros_individuais.teste_validacao import (
-    teste_validacao,
-)
 from impulsoetl.sisab.cadastros_individuais.tratamento import tratamento_dados
+from impulsoetl.sisab.cadastros_individuais.verificacao import (
+    verificar_cadastros_individuais,
+)
 
 
 def obter_cadastros_individuais(
     sessao: Session,
     visao_equipe: str,
-    periodo: DatetimeLike,
+    periodo: date,
     com_ponderacao: list[bool] = [True, False],
     teste: bool = True,
 ) -> None:
@@ -45,7 +47,8 @@ def obter_cadastros_individuais(
             dados (`False`, padrão). Caso seja `True`, as modificações são
             adicionadas à uma transação, e podem ser revertidas com uma chamada
             posterior ao método [`Session.rollback()`][] da sessão gerada com o
-            SQLAlchemy."""
+            SQLAlchemy.
+    """
 
     for status_ponderacao in com_ponderacao:
         df = extrair_cadastros_individuais(
@@ -53,13 +56,14 @@ def obter_cadastros_individuais(
             com_ponderacao=status_ponderacao,
             competencia=periodo,
         )
+        logger.info("Extração dos dados realizada...")
         df_tratado = tratamento_dados(
             sessao=sessao,
             dados_sisab_cadastros=df,
             com_ponderacao=status_ponderacao,
             periodo=periodo,
         )
-        teste_validacao(df, df_tratado)
+        verificar_cadastros_individuais(df=df, df_tratado=df_tratado)
         carregar_cadastros(
             sessao=sessao,
             cadastros_transformada=df_tratado,

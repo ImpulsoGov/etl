@@ -10,4 +10,5 @@
 !pyproject.toml
 !poetry.lock
 !src
+!README.md
 !*/entrypoint.sh

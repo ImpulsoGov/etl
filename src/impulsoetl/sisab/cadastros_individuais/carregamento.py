@@ -10,12 +10,12 @@ import json
 import pandas as pd
 from sqlalchemy.orm import Session
 
+from impulsoetl.loggers import logger
 from impulsoetl.sisab.cadastros_individuais.modelos import (
     cadastros_equipe_homologadas,
     cadastros_equipe_validas,
     cadastros_todas_equipes,
 )
-from impulsoetl.loggers import logger
 
 
 def carregar_cadastros(
@@ -33,17 +33,17 @@ def carregar_cadastros(
         requisicao_insercao = cadastros_equipe_validas.insert().values(
             registros
         )
-        sulfixo_tabela = "equipe_validas"
+        sufixo_tabela = "equipe_validas"
     elif visao_equipe == "equipes-homologadas":
         requisicao_insercao = cadastros_equipe_homologadas.insert().values(
             registros
         )
-        sulfixo_tabela = "equipe_homologadas"
+        sufixo_tabela = "equipe_homologadas"
     else:
         requisicao_insercao = cadastros_todas_equipes.insert().values(
             registros
         )
-        sulfixo_tabela = "equipe_todas"
+        sufixo_tabela = "equipe_todas"
 
     conector = sessao.connection()
     conector.execute(requisicao_insercao)
@@ -51,7 +51,7 @@ def carregar_cadastros(
     logger.info(
         "Carregamento concluído para a tabela `{tabela_nome}`: "
         + "adicionadas {linhas_adicionadas} novas linhas.",
-        tabela_nome=f"dados_publicos._sisab_cadastros_municipios_{sulfixo_tabela}",
+        tabela_nome=f"dados_publicos._sisab_cadastros_municipios_{sufixo_tabela}",
         linhas_adicionadas=len(cadastros_transformada),
     )
 

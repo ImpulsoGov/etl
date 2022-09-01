@@ -9,38 +9,40 @@
 from __future__ import annotations
 
 import os
-import uuid
+import re
 from datetime import date
+from ftplib import FTP
 from typing import Final, Generator
+from urllib.error import URLError
 
 import janitor  # noqa: F401  # nopycln: import
 import numpy as np
 import pandas as pd
 from frozendict import frozendict
 from sqlalchemy.orm import Session
+from uuid6 import uuid7
 
-from impulsoetl.comum.datas import periodo_por_data
+from impulsoetl.comum.datas import agora_gmt_menos3, periodo_por_data
 from impulsoetl.comum.geografias import id_sus_para_id_impulso
 from impulsoetl.loggers import logger
 from impulsoetl.utilitarios.bd import carregar_dataframe
 from impulsoetl.utilitarios.datasus_ftp import extrair_dbc_lotes
 
-
 DE_PARA_PA: Final[frozendict] = frozendict(
     {
-        "PA_CODUNI": "estabelecimento_id_cnes",
-        "PA_GESTAO": "gestao_unidade_geografica_id",
+        "PA_CODUNI": "estabelecimento_id_scnes",
+        "PA_GESTAO": "gestao_unidade_geografica_id_sus",
         "PA_CONDIC": "gestao_condicao_id_siasus",
         "PA_UFMUN": "unidade_geografica_id_sus",
-        "PA_REGCT": "regra_contratual_id_cnes",
+        "PA_REGCT": "regra_contratual_id_scnes",
         "PA_INCOUT": "incremento_outros_id_sigtap",
         "PA_INCURG": "incremento_urgencia_id_sigtap",
         "PA_TPUPS": "estabelecimento_tipo_id_sigtap",
         "PA_TIPPRE": "prestador_tipo_id_sigtap",
         "PA_MN_IND": "estabelecimento_mantido",
-        "PA_CNPJCPF": "estabelecimento_cnpj",
-        "PA_CNPJMNT": "mantenedora_cnpj",
-        "PA_CNPJ_CC": "receptor_credito_cnpj",
+        "PA_CNPJCPF": "estabelecimento_id_cnpj",
+        "PA_CNPJMNT": "mantenedora_id_cnpj",
+        "PA_CNPJ_CC": "receptor_credito_id_cnpj",
         "PA_MVM": "processamento_periodo_data_inicio",
         "PA_CMP": "realizacao_periodo_data_inicio",
         "PA_PROC_ID": "procedimento_id_sigtap",
@@ -49,8 +51,8 @@ DE_PARA_PA: Final[frozendict] = frozendict(
         "PA_NIVCPL": "complexidade_id_siasus",
         "PA_DOCORIG": "instrumento_registro_id_siasus",
         "PA_AUTORIZ": "autorizacao_id_siasus",
-        "PA_CNSMED": "profissional_cns",
-        "PA_CBOCOD": "profissional_ocupacao_id_cbo",
+        "PA_CNSMED": "profissional_id_cns",
+        "PA_CBOCOD": "profissional_vinculo_ocupacao_id_cbo2002",
         "PA_MOTSAI": "desfecho_motivo_id_siasus",
         "PA_OBITO": "obito",
         "PA_ENCERR": "encerramento",
@@ -85,27 +87,27 @@ DE_PARA_PA: Final[frozendict] = frozendict(
         "PA_VL_CF": "complemento_valor_federal",
         "PA_VL_CL": "complemento_valor_local",
         "PA_VL_INC": "incremento_valor",
-        "PA_SRV_C": "servico_especializado_id_cnes",
+        "PA_SRV_C": "servico_especializado_id_scnes",
         "PA_INE": "equipe_id_ine",
-        "PA_NAT_JUR": "estabelecimento_natureza_juridica_id_cnes",
+        "PA_NAT_JUR": "estabelecimento_natureza_juridica_id_scnes",
     },
 )
 
 TIPOS_PA: Final[frozendict] = frozendict(
     {
-        "estabelecimento_id_cnes": "object",
-        "gestao_unidade_geografica_id": "object",
+        "estabelecimento_id_scnes": "object",
+        "gestao_unidade_geografica_id_sus": "object",
         "gestao_condicao_id_siasus": "object",
         "unidade_geografica_id_sus": "object",
-        "regra_contratual_id_cnes": "object",
+        "regra_contratual_id_scnes": "object",
         "incremento_outros_id_sigtap": "object",
         "incremento_urgencia_id_sigtap": "object",
         "estabelecimento_tipo_id_sigtap": "object",
         "prestador_tipo_id_sigtap": "object",
         "estabelecimento_mantido": "bool",
-        "estabelecimento_cnpj": "object",
-        "mantenedora_cnpj": "object",
-        "receptor_credito_cnpj": "object",
+        "estabelecimento_id_cnpj": "object",
+        "mantenedora_id_cnpj": "object",
+        "receptor_credito_id_cnpj": "object",
         "processamento_periodo_data_inicio": "datetime64[ns]",
         "realizacao_periodo_data_inicio": "datetime64[ns]",
         "procedimento_id_sigtap": "object",
@@ -114,8 +116,8 @@ TIPOS_PA: Final[frozendict] = frozendict(
         "complexidade_id_siasus": "object",
         "instrumento_registro_id_siasus": "object",
         "autorizacao_id_siasus": "object",
-        "profissional_cns": "object",
-        "profissional_ocupacao_id_cbo": "object",
+        "profissional_id_cns": "object",
+        "profissional_vinculo_ocupacao_id_cbo2002": "object",
         "desfecho_motivo_id_siasus": "object",
         "obito": "bool",
         "encerramento": "bool",
@@ -153,10 +155,12 @@ TIPOS_PA: Final[frozendict] = frozendict(
         "servico_id_sigtap": "object",
         "servico_classificacao_id_sigtap": "object",
         "equipe_id_ine": "object",
-        "estabelecimento_natureza_juridica_id_cnes": "object",
+        "estabelecimento_natureza_juridica_id_scnes": "object",
         "id": "object",
         "periodo_id": "object",
         "unidade_geografica_id": "object",
+        "criacao_data": "datetime64[ns]",
+        "atualizacao_data": "datetime64[ns]",
     },
 )
 
@@ -205,13 +209,15 @@ def extrair_pa(
     [`datetime.date`]: https://docs.python.org/3/library/datetime.html#date-objects
     """
 
+    arquivo_padrao = "PA{uf_sigla}{periodo_data_inicio:%y%m}[a-z]?.dbc".format(
+        uf_sigla=uf_sigla,
+        periodo_data_inicio=periodo_data_inicio,
+    )
+
     return extrair_dbc_lotes(
         ftp="ftp.datasus.gov.br",
         caminho_diretorio="/dissemin/publicos/SIASUS/200801_/Dados",
-        arquivo_nome="PA{uf_sigla}{periodo_data_inicio:%y%m}.dbc".format(
-            uf_sigla=uf_sigla,
-            periodo_data_inicio=periodo_data_inicio,
-        ),
+        arquivo_nome=re.compile(arquivo_padrao, re.IGNORECASE),
         passo=passo,
     )
 
@@ -219,8 +225,37 @@ def extrair_pa(
 def transformar_pa(
     sessao: Session,
     pa: pd.DataFrame,
+    condicoes: str | None = None,
 ) -> pd.DataFrame:
-    """Transforma um `DataFrame` de procedimentos ambulatoriais do SIASUS."""
+    """Transforma um `DataFrame` de procedimentos ambulatoriais do SIASUS.
+    
+    Argumentos:
+        sessao: objeto [`sqlalchemy.orm.session.Session`][] que permite
+            acessar a base de dados da ImpulsoGov.
+        pa: objeto [`pandas.DataFrame`][] contendo os dados de um arquivo de
+            disseminação de procedimentos ambulatoriais do SIASUS, conforme
+            extraídos para uma unidade federativa e competência (mês) pela
+            função [`extrair_pa()`][].
+        condicoes: conjunto opcional de condições a serem aplicadas para
+            filtrar os registros obtidos da fonte. O valor informado deve ser
+            uma *string* com a sintaxe utilizada pelo método
+            [`pandas.DataFrame.query()`][]. Por padrão, o valor do argumento é
+            `None`, o que equivale a não aplicar filtro algum.
+
+    Note:
+        Para otimizar a performance, os filtros são aplicados antes de qualquer
+        outra transformação nos dados, de forma que as condições fornecidas
+        devem considerar que o nome, os tipos e os valores aparecem exatamente
+        como registrados no arquivo de disseminação disponibilizado no FTP
+        público do DataSUS. Verifique o [Informe Técnico][it-siasus] para mais
+        informações.
+
+    [`sqlalchemy.orm.session.Session`]: https://docs.sqlalchemy.org/en/14/orm/session_api.html#sqlalchemy.orm.Session
+    [`pandas.DataFrame`]: https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html
+    [`extrair_pa()`]: impulsoetl.siasus.procedimentos.extrair_pa
+    [`pandas.DataFrame.query()`]: https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.query.html
+    [it-siasus]: https://drive.google.com/file/d/1DC5093njSQIhMHydYptlj2rMbrMF36y6
+    """
     logger.info(
         "Transformando DataFrame com {num_registros_pa} procedimentos "
         + "ambulatoriais.",
@@ -230,6 +265,15 @@ def transformar_pa(
         "Memória ocupada pelo DataFrame original:  {memoria_usada:.2f} mB.",
         memoria_usada=pa.memory_usage(deep=True).sum() / 10 ** 6,
     )
+
+    # aplica condições de filtragem dos registros
+    if condicoes:
+        pa = pa.query(condicoes, engine="python")
+        logger.info(
+            "Registros após aplicar condições de filtragem: {num_registros}.",
+            num_registros=len(pa),
+        )
+
     pa_transformada = (
         pa  # noqa: WPS221  # ignorar linha complexa no pipeline
         # renomear colunas
@@ -248,15 +292,15 @@ def transformar_pa(
         .replace("", np.nan)
         .transform_columns(
             [
-                "regra_contratual_id_cnes",
+                "regra_contratual_id_scnes",
                 "incremento_outros_id_sigtap",
                 "incremento_urgencia_id_sigtap",
-                "mantenedora_cnpj",
-                "receptor_credito_cnpj",
+                "mantenedora_id_cnpj",
+                "receptor_credito_id_cnpj",
                 "financiamento_subtipo_id_sigtap",
                 "condicao_principal_id_cid10",
                 "autorizacao_id_siasus",
-                "profissional_cns",
+                "profissional_id_cns",
                 "condicao_principal_id_cid10",
                 "condicao_secundaria_id_cid10",
                 "condicao_associada_id_cid10",
@@ -320,19 +364,19 @@ def transformar_pa(
         )
         # separar código do serviço e código da classificação do serviço
         .transform_column(
-            "servico_especializado_id_cnes",
+            "servico_especializado_id_scnes",
             function=lambda cod: cod[:3] if pd.notna(cod) else np.nan,
             dest_column_name="servico_id_sigtap",
         )
         .transform_column(
-            "servico_especializado_id_cnes",
+            "servico_especializado_id_scnes",
             function=lambda cod: cod[3:] if pd.notna(cod) else np.nan,
             dest_column_name="servico_classificacao_id_sigtap",
         )
-        .remove_columns("servico_especializado_id_cnes")
+        .remove_columns("servico_especializado_id_scnes")
         # adicionar id
         .add_column("id", str())
-        .transform_column("id", function=lambda _: uuid.uuid4().hex)
+        .transform_column("id", function=lambda _: uuid7().hex)
         # adicionar id do periodo
         .transform_column(
             "realizacao_periodo_data_inicio",
@@ -348,6 +392,9 @@ def transformar_pa(
             ),
             dest_column_name="unidade_geografica_id",
         )
+        # adicionar datas de inserção e atualização
+        .add_column("criacao_data", agora_gmt_menos3())
+        .add_column("atualizacao_data", agora_gmt_menos3())
         # garantir tipos
         .change_type(
             # HACK: ver https://github.com/pandas-dev/pandas/issues/25472
@@ -404,10 +451,15 @@ def obter_pa(
             adicionadas à uma transação, e podem ser revertidas com uma chamada
             posterior ao método [`Session.rollback()`][] da sessão gerada com o
             SQLAlchemy.
+        \\*\\*kwargs: Parâmetros adicionais definidos no agendamento da
+            captura. Atualmente, apenas o parâmetro `condicoes` (do tipo `str`)
+            é aceito, e repassado como argumento na função
+            [`transformar_pa()`][].
 
     [`sqlalchemy.orm.session.Session`]: https://docs.sqlalchemy.org/en/14/orm/session_api.html#sqlalchemy.orm.Session
     [`sqlalchemy.engine.Row`]: https://docs.sqlalchemy.org/en/14/core/connections.html#sqlalchemy.engine.Row
     [`datetime.date`]: https://docs.python.org/3/library/datetime.html#date-objects
+    [`transformar_pa()`]: impulsoetl.siasus.procedimentos.transformar_pa
     """
     logger.info(
         "Iniciando captura de procedimentos ambulatoriais para Unidade "
@@ -426,48 +478,40 @@ def obter_pa(
     )
 
     contador = 0
-    with sessao.begin_nested() as ponto_de_recuperacao:
-        for pa_lote in pa_lotes:
-            pa_transformada = transformar_pa(sessao=sessao, pa=pa_lote)
-            try:
-                validar_pa(pa_transformada)
-            except AssertionError as mensagem:
-                ponto_de_recuperacao.rollback()
-                sessao.rollback()
-                if os.getenv(
-                    "IMPULSOETL_AMBIENTE",
-                    "desenvolvimento",
-                ) == "desenvolvimento":
-                    breakpoint()
-                raise RuntimeError(
-                    "Dados inválidos encontrados após a transformação:"
-                    + " {}".format(mensagem),
-                )
-
-            carregamento_status = carregar_dataframe(
-                sessao=sessao,
-                df=pa_transformada,
-                tabela_destino=tabela_destino,
-                passo=None,
-                teste=teste,
+    for pa_lote in pa_lotes:
+        pa_transformada = transformar_pa(
+            sessao=sessao, 
+            pa=pa_lote,
+            condicoes=kwargs.get("condicoes"),
+        )
+        try:
+            validar_pa(pa_transformada)
+        except AssertionError as mensagem:
+            sessao.rollback()
+            raise RuntimeError(
+                "Dados inválidos encontrados após a transformação:"
+                + " {}".format(mensagem),
             )
-            if carregamento_status != 0:
-                ponto_de_recuperacao.rollback()
-                sessao.rollback()
-                raise RuntimeError(
-                    "Execução interrompida em razão de um erro no "
-                    + "carregamento."
-                )
-            contador += len(pa_lote)
-            if teste and contador > 1000:
-                logger.info("Execução interrompida para fins de teste.")
-                break
+
+        carregamento_status = carregar_dataframe(
+            sessao=sessao,
+            df=pa_transformada,
+            tabela_destino=tabela_destino,
+            passo=None,
+            teste=teste,
+        )
+        if carregamento_status != 0:
+            sessao.rollback()
+            raise RuntimeError(
+                "Execução interrompida em razão de um erro no "
+                + "carregamento."
+            )
+        contador += len(pa_lote)
+        if teste and contador > 1000:
+            logger.info("Execução interrompida para fins de teste.")
+            break
 
     if teste:
         logger.info("Desfazendo alterações realizadas durante o teste...")
         sessao.rollback()
         logger.info("Todas transações foram desfeitas com sucesso!")
-    else:
-        logger.info("Gravando alterações no banco de dados...")
-        sessao.commit()
-        logger.info("Todas as alterações foram gravadas com sucesso!")

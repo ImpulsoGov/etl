@@ -36,8 +36,14 @@
   "python.pythonPath": "${workspaceFolder}/.venv/bin/python3",
   "conventionalCommits.scopes": [
     "impulsoetl",
-    "impulsoprevine"
+    "impulsoprevine",
+    "sisab",
+    "sia",
+    "sih",
+    "scnes"
   ],
+  "cSpell.diagnosticLevel": "Hint",
+
   "cSpell.language": "en,pt,pt_BR","cSpell.languageSettings": [
     // This one works with python
     {
@@ -51,5 +57,12 @@
             "/('''|\"\"\")[^\\1]+?\\1/g"
         ]
     },
-  ]
+  ],
+  "jupyter.jupyterServerType": "local",
+  "files.associations": {
+    "python.pythonPath": "${workspaceDir}/etl/.venv/bin/python3"
+  },
+  "editor.codeActionsOnSave": {
+  
+  }
 }

@@ -21,7 +21,6 @@ Atributos:
 from __future__ import annotations
 
 import re
-import uuid
 from collections.abc import MutableMapping
 from functools import cached_property
 from typing import Any, Final, Iterable
@@ -37,6 +36,7 @@ from selenium.common.exceptions import NoSuchElementException
 from selenium.webdriver.common.by import By
 from sqlalchemy.orm import Session
 from toolz.functoolz import compose_left
+from uuid6 import uuid7
 
 from impulsoetl.bd import Base
 from impulsoetl.comum.datas import periodo_por_data
@@ -1137,12 +1137,9 @@ def gerar_nome_tabela(
     variaveis = sorted(variaveis)  # colocar em ordem alfabética
     unidade_geografica = tratar_nomes_campos(unidade_geografica)
 
-    nome_tabela = (
-        "sisab_producao_{}_por_".format(
-            unidade_geografica,
-        )
-        + "_por_".join(variaveis)
-    )
+    nome_tabela = "sisab_producao_{}_por_".format(
+        unidade_geografica,
+    ) + "_por_".join(variaveis)
 
     # truncar se tiver mais de 63 caracteres
     nome_tabela = nome_tabela[: min(len(nome_tabela), 63)]
@@ -1257,7 +1254,7 @@ def carregar_relatorio_producao(
     for linha_relatorio in dados_producao.itertuples():
         dicionario_linha = linha_relatorio._asdict()
         del dicionario_linha["Index"]
-        dicionario_linha["id"] = uuid.uuid4().hex
+        dicionario_linha["id"] = uuid7().hex
         relatorio_orm = modelo_tabela(**dicionario_linha)
         sessao.add(relatorio_orm)
         adicionados += 1
