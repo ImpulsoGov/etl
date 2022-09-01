@@ -122,10 +122,12 @@ def raas_disseminacao(
     logger.info(
         "Capturando RAAS Psicossociais do SIASUS.",
     )
-    operacao_id = "69bb7a34-05a8-4d9d-bc7e-c4e9e9722ece"
+    operacao_ids = [
+        "69bb7a34-05a8-4d9d-bc7e-c4e9e9722ece",
+    ]
     agendamentos_raas = (
         sessao.query(agendamentos)
-        .filter(agendamentos.c.operacao_id == operacao_id)
+        .filter(agendamentos.c.operacao_id.in_(operacao_ids))
         .all()
     )
     for agendamento in agendamentos_raas:
@@ -135,6 +137,7 @@ def raas_disseminacao(
             periodo_data_inicio=agendamento.periodo_data_inicio,
             tabela_destino=agendamento.tabela_destino,
             teste=teste,
+            **agendamento.parametros,
         )
         if teste:
             break
@@ -146,7 +149,7 @@ def raas_disseminacao(
         # a inserção de uma nova linha
         requisicao_inserir_historico = capturas_historico.insert(
             {
-                "operacao_id": operacao_id,
+                "operacao_id": agendamento.operacao_id,
                 "periodo_id": agendamento.periodo_id,
                 "unidade_geografica_id": agendamento.unidade_geografica_id,
             }
@@ -165,10 +168,13 @@ def bpa_i_disseminacao(
     logger.info(
         "Capturando BPAs individualizados do SIASUS.",
     )
-    operacao_id = "50d46e1c-7fb3-4fbb-b495-825ff1f397d9"
+    operacao_ids = [
+        "50d46e1c-7fb3-4fbb-b495-825ff1f397d9",
+        "063000e1-93e2-7c23-9bd0-1f0e7cf59178"
+    ]
     agendamentos_bpa_i = (
         sessao.query(agendamentos)
-        .filter(agendamentos.c.operacao_id == operacao_id)
+        .filter(agendamentos.c.operacao_id.in_(operacao_ids))
         .all()
     )
     for agendamento in agendamentos_bpa_i:
@@ -178,6 +184,7 @@ def bpa_i_disseminacao(
             periodo_data_inicio=agendamento.periodo_data_inicio,
             tabela_destino=agendamento.tabela_destino,
             teste=teste,
+            **agendamento.parametros,
         )
         if teste:
             break
@@ -189,7 +196,7 @@ def bpa_i_disseminacao(
         # a inserção de uma nova linha
         requisicao_inserir_historico = capturas_historico.insert(
             {
-                "operacao_id": operacao_id,
+                "operacao_id": agendamento.operacao_id,
                 "periodo_id": agendamento.periodo_id,
                 "unidade_geografica_id": agendamento.unidade_geografica_id,
             }
@@ -208,10 +215,13 @@ def procedimentos_disseminacao(
     logger.info(
         "Capturando procedimentos ambulatoriais do SIASUS.",
     )
-    operacao_id = "f2a62b56-932a-431d-aee5-e3c0af33914f"
+    operacao_ids = [
+        "f2a62b56-932a-431d-aee5-e3c0af33914f",
+        "063000ce-23f5-7c29-a1cb-1d631ea26685",
+    ]
     agendamentos_pa = (
         sessao.query(agendamentos)
-        .filter(agendamentos.c.operacao_id == operacao_id)
+        .filter(agendamentos.c.operacao_id.in_(operacao_ids))
         .all()
     )
     for agendamento in agendamentos_pa:
@@ -221,6 +231,7 @@ def procedimentos_disseminacao(
             periodo_data_inicio=agendamento.periodo_data_inicio,
             tabela_destino=agendamento.tabela_destino,
             teste=teste,
+            **agendamento.parametros,
         )
         if teste:
             break
@@ -232,7 +243,7 @@ def procedimentos_disseminacao(
         # a inserção de uma nova linha
         requisicao_inserir_historico = capturas_historico.insert(
             {
-                "operacao_id": operacao_id,
+                "operacao_id": agendamento.operacao_id,
                 "periodo_id": agendamento.periodo_id,
                 "unidade_geografica_id": agendamento.unidade_geografica_id,
             }

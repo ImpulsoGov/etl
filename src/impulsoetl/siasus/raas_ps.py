@@ -192,8 +192,51 @@ def extrair_raas_ps(
 def transformar_raas_ps(
     sessao: Session,
     raas_ps: pd.DataFrame,
+    condicoes: str | None = None,
 ) -> pd.DataFrame:
-    """Transforma um `DataFrame` de RAAS obtido do FTP público do DataSUS."""
+    """Transforma um `DataFrame` de RAAS obtido do FTP público do DataSUS.
+
+    Argumentos:
+        sessao: objeto [`sqlalchemy.orm.session.Session`][] que permite
+            acessar a base de dados da ImpulsoGov.
+        raas_ps: objeto [`pandas.DataFrame`][] contendo os dados de um arquivo
+            de disseminação de Registros de Ações Ambulatoriais em Saúde -
+            RAAS, conforme extraídos para uma unidade federativa e competência
+            (mês) pela função [`extrair_raas()`][].
+        condicoes: conjunto opcional de condições a serem aplicadas para
+            filtrar os registros obtidos da fonte. O valor informado deve ser
+            uma *string* com a sintaxe utilizada pelo método
+            [`pandas.DataFrame.query()`][]. Por padrão, o valor do argumento é
+            `None`, o que equivale a não aplicar filtro algum.
+
+    Note:
+        Para otimizar a performance, os filtros são aplicados antes de qualquer
+        outra transformação nos dados, de forma que as condições fornecidas
+        devem considerar que o nome, os tipos e os valores aparecem exatamente
+        como registrados no arquivo de disseminação disponibilizado no FTP
+        público do DataSUS. Verifique o [Informe Técnico][it-siasus] para mais
+        informações.
+
+    [`sqlalchemy.orm.session.Session`]: https://docs.sqlalchemy.org/en/14/orm/session_api.html#sqlalchemy.orm.Session
+    [`pandas.DataFrame`]: https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html
+    [`extrair_bpa_i()`]: impulsoetl.siasus.raas.extrair_raas
+    [`pandas.DataFrame.query()`]: https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.query.html
+    [it-siasus]: https://drive.google.com/file/d/1DC5093njSQIhMHydYptlj2rMbrMF36y6
+    """
+
+    logger.info(
+        "Transformando DataFrame com {num_registros_raas} registros de RAAS.",
+        num_registros_raas=len(raas_ps),
+    )
+
+    # aplica condições de filtragem dos registros
+    if condicoes:
+        raas_ps = raas_ps.query(condicoes, engine="python")
+        logger.info(
+            "Registros após aplicar condições de filtragem: {num_registros}.",
+            num_registros=len(raas_ps),
+        )
+
     return (
         raas_ps  # noqa: WPS221  # ignorar linha complexa no pipeline
         # renomear colunas
@@ -309,9 +352,14 @@ def obter_raas_ps(
             adicionadas à uma transação, e podem ser revertidas com uma chamada
             posterior ao método [`Session.rollback()`][] da sessão gerada com o
             SQLAlchemy.
+        \\*\\*kwargs: Parâmetros adicionais definidos no agendamento da
+            captura. Atualmente, apenas o parâmetro `condicoes` (do tipo `str`)
+            é aceito, e repassado como argumento na função
+            [`transformar_raas_ps()`][].
 
     [`sqlalchemy.orm.session.Session`]: https://docs.sqlalchemy.org/en/14/orm/session_api.html#sqlalchemy.orm.Session
     [`sqlalchemy.engine.Row`]: https://docs.sqlalchemy.org/en/14/core/connections.html#sqlalchemy.engine.Row
+    [`transformar_raas_ps()`]: impulsoetl.siasus.bpa_i.transformar_raas_ps
     """
     logger.info(
         "Iniciando captura de RAAS-Psicossociais para Unidade Federativa "
@@ -334,6 +382,7 @@ def obter_raas_ps(
         raas_ps_transformada = transformar_raas_ps(
             sessao=sessao,
             raas_ps=raas_ps_lote,
+            condicoes=kwargs.get("condicoes"),
         )
 
         carregamento_status = carregar_dataframe(

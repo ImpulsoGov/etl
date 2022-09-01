@@ -118,11 +118,15 @@ def teste_extrair_pa(uf_sigla, periodo_data_inicio, passo):
     assert len(lote_2) > 0
 
 
-@pytest.mark.integracao
-def teste_transformar_pa(sessao, pa):
+@pytest.mark.parametrize(
+    "condicoes",
+    ["PA_UFMUN == '280030'", None],
+)
+def teste_transformar_pa(sessao, pa, condicoes):
     pa_transformada = transformar_pa(
         sessao=sessao,
         pa=pa,
+        condicoes=condicoes,
     )
 
     assert isinstance(pa_transformada, pd.DataFrame)
@@ -168,12 +172,17 @@ def teste_carregar_pa(sessao, pa_transformada, caplog, tabela_teste, passo):
     "uf_sigla,periodo_data_inicio",
     [("SE", date(2021, 8, 1))],
 )
+@pytest.mark.parametrize(
+    "parametros",
+    [{"condicoes": "PA_UFMUN == '280030'"}, {}],
+)
 def teste_obter_pa(
     sessao,
     uf_sigla,
     periodo_data_inicio,
     caplog,
     tabela_teste,
+    parametros,
 ):
     obter_pa(
         sessao=sessao,
@@ -181,6 +190,7 @@ def teste_obter_pa(
         periodo_data_inicio=periodo_data_inicio,
         tabela_destino=tabela_teste,
         teste=True,
+        **parametros,
     )
 
     logs = caplog.text
