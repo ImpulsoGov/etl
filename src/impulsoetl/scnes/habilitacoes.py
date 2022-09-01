@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: MIT
 
 
-"""Ferramentas para obter dados de vínculos profissionais a partir do SCNES."""
+"""Ferramentas para obter habilitações dos estabelecimentos no SCNES."""
 
 
 from __future__ import annotations
@@ -146,7 +146,7 @@ def extrair_habilitacoes(
     periodo_data_inicio: date,
     passo: int = 10000,
 ) -> Generator[pd.DataFrame, None, None]:
-    """Extrai registros de habilitações profissionais do FTP do DataSUS.
+    """Extrai registros de habilitações de estabelecimentos do FTP do DataSUS.
 
     Argumentos:
         uf_sigla: Sigla da Unidade Federativa cujos estabelecimentos se pretende
@@ -199,7 +199,7 @@ def transformar_habilitacoes(
     """
     logger.info(
         "Transformando DataFrame com {num_registros} habilitações "
-        + "profissionais do SCNES.",
+        + "de estabelecimentos do SCNES.",
         num_registros=len(habilitacoes),
     )
     logger.debug(
@@ -332,8 +332,8 @@ def obter_habilitacoes(
     Argumentos:
         sessao: objeto [`sqlalchemy.orm.session.Session`][] que permite
             acessar a base de dados da ImpulsoGov.
-        uf_sigla: Sigla da Unidade Federativa cujos vínculos profissionais se
-            pretende obter.
+        uf_sigla: Sigla da Unidade Federativa onde se encontram os 
+            estabelecimentos cujas habilitações se pretende obter.
         periodo_data_inicio: Dia de início da competência desejada,
             representado como um objeto [`datetime.date`][].
         tabela_destino: nome da tabela de destino, qualificado com o nome do

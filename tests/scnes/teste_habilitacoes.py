@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: MIT
 
 
-"""Casos de teste para o ETL de dados de vínculos profissionais do SCNES."""
+"""Casos de teste para o ETL de habilitações de estabelecimentos no SCNES."""
 
 
 import re
