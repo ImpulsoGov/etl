@@ -9,8 +9,11 @@
 from __future__ import annotations
 
 import os
+import re
 from datetime import date
+from ftplib import FTP
 from typing import Final, Generator
+from urllib.error import URLError
 
 import janitor  # noqa: F401  # nopycln: import
 import numpy as np
@@ -206,13 +209,15 @@ def extrair_pa(
     [`datetime.date`]: https://docs.python.org/3/library/datetime.html#date-objects
     """
 
+    arquivo_padrao = "PA{uf_sigla}{periodo_data_inicio:%y%m}[a-z]?.dbc".format(
+        uf_sigla=uf_sigla,
+        periodo_data_inicio=periodo_data_inicio,
+    )
+
     return extrair_dbc_lotes(
         ftp="ftp.datasus.gov.br",
         caminho_diretorio="/dissemin/publicos/SIASUS/200801_/Dados",
-        arquivo_nome="PA{uf_sigla}{periodo_data_inicio:%y%m}.dbc".format(
-            uf_sigla=uf_sigla,
-            periodo_data_inicio=periodo_data_inicio,
-        ),
+        arquivo_nome=re.compile(arquivo_padrao, re.IGNORECASE),
         passo=passo,
     )
 

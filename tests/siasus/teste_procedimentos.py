@@ -100,7 +100,10 @@ def teste_colunas_datas():
 
 @pytest.mark.parametrize(
     "uf_sigla,periodo_data_inicio",
-    [("SE", date(2021, 8, 1))],
+    [
+        ("SE", date(2021, 8, 1)),
+        ("SP", date(2017, 1, 1)),
+    ],
 )
 def teste_extrair_pa(uf_sigla, periodo_data_inicio, passo):
     iterador_registros_procedimentos = extrair_pa(
