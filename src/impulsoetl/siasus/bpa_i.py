@@ -20,7 +20,11 @@ from frozendict import frozendict
 from sqlalchemy.orm import Session
 from uuid6 import uuid7
 
-from impulsoetl.comum.datas import agora_gmt_menos3, periodo_por_data
+from impulsoetl.comum.datas import (
+    agora_gmt_menos3,
+    de_aaaammdd_para_timestamp,
+    periodo_por_data,
+)
 from impulsoetl.comum.geografias import id_sus_para_id_impulso
 from impulsoetl.loggers import logger
 from impulsoetl.utilitarios.bd import carregar_dataframe
@@ -221,11 +225,6 @@ def transformar_bpa_i(
         .rename_columns(DE_PARA_BPA_I)
         # processar colunas com datas
         .transform_columns(
-            # corrigir datas com dígito 0 substituído por espaço
-            COLUNAS_DATA_AAAAMMDD,
-            function=lambda dt: dt.replace(" ", "0"),
-        )
-        .transform_columns(
             COLUNAS_DATA_AAAAMM,
             function=lambda dt: pd.to_datetime(
                 dt,
@@ -235,11 +234,7 @@ def transformar_bpa_i(
         )
         .transform_columns(
             COLUNAS_DATA_AAAAMMDD,
-            function=lambda dt: pd.to_datetime(
-                dt,
-                format="%Y%m%d",  # noqa: WPS323
-                errors="coerce",
-            ),
+            function=lambda dt: de_aaaammdd_para_timestamp(dt, erros="coerce"),
         )
         # processar colunas lógicas
         .transform_column(
