@@ -210,7 +210,7 @@ def transformar_bpa_i(
     if condicoes:
         bpa_i = bpa_i.query(condicoes, engine="python")
         logger.info(
-            "Registros após aplicar confições de filtragem: {num_registros}.",
+            "Registros após aplicar condições de filtragem: {num_registros}.",
             num_registros=len(bpa_i),
         )
 

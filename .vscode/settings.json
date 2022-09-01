@@ -36,7 +36,11 @@
   "python.pythonPath": "${workspaceFolder}/.venv/bin/python3",
   "conventionalCommits.scopes": [
     "impulsoetl",
-    "impulsoprevine"
+    "impulsoprevine",
+    "sisab",
+    "sia",
+    "sih",
+    "scnes"
   ],
   "cSpell.diagnosticLevel": "Hint",
 
