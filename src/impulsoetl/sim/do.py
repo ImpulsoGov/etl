@@ -30,40 +30,29 @@ from impulsoetl.utilitarios.datasus_ftp import extrair_dbc_lotes
 
 DE_PARA_DO: Final[frozendict] = frozendict(
     {
-        "ORIGEM": "origem_id_sim",
         "TIPOBITO": "tipo_id_sim",
         "DTOBITO": "ocorrencia_data",
-        "HORAOBITO": "ocorrencia_hora",
         "NATURAL": "usuario_nascimento_pais_uf_id_sus",
-        "CODMUNNATU": "usuario_nascimento_municipio_id_sus",
         "DTNASC": "usuario_nascimento_data",
         "IDADE": "usuario_idade_id_sim",
         "SEXO": "usuario_sexo_id_sim",
         "RACACOR": "usuario_raca_cor_id_sim",
         "ESTCIV": "usuario_estado_civil_id_sim",
         "ESC": "usuario_escolaridade_id_sim1996",
-        "ESC2010": "usuario_escolaridade_id_sim2010",
-        "SERIESCFAL": "usuario_escolaridade_serie",
         "OCUP": "usuario_ocupacao_id_cbo2002",
         "CODMUNRES": "usuario_residencia_municipio_id_sus",
         "LOCOCOR": "local_ocorrencia_id_sim",
-        "CODESTAB": "estabelecimento_id_scnes",
-        "ESTABDESCR": "_nao_documentado_estabdescr",
         "CODMUNOCOR": "unidade_geografica_id_sus",
         "IDADEMAE": "mae_idade",
         "ESCMAE": "mae_escolaridade_id_sim1996",
-        "ESCMAE2010": "mae_escolaridade_id_sim2010",
-        "SERIESCMAE": "mae_escolaridade_serie",
         "OCUPMAE": "mae_ocupacao_id_cbo2002",
         "QTDFILVIVO": "mae_filhos_nascidos_vivos",
         "QTDFILMORT": "mae_filhos_perdas_fetais",
         "GRAVIDEZ": "gestacao_tipo_id_sim",
-        "SEMAGESTAC": "gestacao_semanas",
         "GESTACAO": "gestacao_semanas_id_sim",
         "PARTO": "parto_tipo_id_sim",
         "OBITOPARTO": "parto_relacao_id_sim",
         "PESO": "usuario_nascimento_peso",
-        "TPMORTEOCO": "gestacao_situacao_id_sim2012",
         "OBITOGRAV": "gestacao_relacao",
         "OBITOPUERP": "puerperio_relacao",
         "ASSISTMED": "assistencia_medica_recebeu",
@@ -76,52 +65,67 @@ DE_PARA_DO: Final[frozendict] = frozendict(
         "LINHAD": "condicoes_basicas_ids_cid10",
         "LINHAII": "condicoes_contribuintes_ids_cid10",
         "CAUSABAS": "causa_basica_resselecao_apos_id_cid10",
-        "CB_PRE": "causa_basica_resselecao_antes_localidade_id_cid10",
-        "COMUNSVOIM": "svo_iml_municipio_id_sus",
-        "DTATESTADO": "atestado_data",
         "CIRCOBITO": "circunstancia_id_sim",
         "ACIDTRAB": "acidente_trabalho",
         "FONTE": "circunstancia_fonte_id_sim",
-        "NUMEROLOTE": "lote_id_sim",
-        "TPPOS": "investigacao_houve",
-        "DTINVESTIG": "investigacao_data",
-        "CAUSABAS_O": "causa_basica_resselecao_antes_id_cid10",
-        "DTCADASTRO": "cadastro_data",
-        "ATESTANTE": "atestado_atestante_tipo_id_sim",
-        "STCODIFICA": "sistema_instalacao_codificadora",
-        "CODIFICADO": "declaracao_codificada",
-        "VERSAOSIST": "sistema_versao",
-        "VERSAOSCB": "causa_basica_seletor_versao",
-        "FONTEINV": "investigacao_fonte_id_sim",
-        "DTRECEBIM": "recebimento_data",
-        "ATESTADO": "atestado_condicoes_ids_cid10",
-        "DTRECORIGA": "recebimento_original_data",
-        "CAUSAMAT": "causa_externa_id_cid10",
-        "ESCMAEAGR1": "mae_escolaridade_agregada_id_sim",
-        "ESCFALAGR1": "usuario_escolaridade_agregada_id_sim",
-        "STDOEPIDEM": "declaracao_modelo_epidemiologica",
-        "STDONOVA": "declaracao_modelo_novo",
-        "DIFDATA": "recebimento_original_intervalo",
-        "NUDIASOBCO": "investigacao_duracao",
-        "NUDIASOBIN": "_nao_documentado_nudiasobin",
-        "DTCADINV": "investigacao_cadastro_data",
-        "TPOBITOCOR": "gestacao_situacao_id_sim2009",
-        "DTCONINV": "investigacao_conclusao_data",
-        "FONTES": "fontes_combinacao_id_sim",
-        "TPRESGINFO": "investigacao_desfecho_id_sim",
-        "TPNIVELINV": "investigacao_esfera_id_sim",
-        "NUDIASINF": "_nao_documentado_nudiasinf",
-        "DTCADINF": "_nao_documentado_dtcadinf",
-        "MORTEPARTO": "_nao_documentado_morteparto",
-        "DTCONCASO": "conclusao_data",
-        "FONTESINF": "_nao_documentado_fontesinf",
-        "ALTCAUSA": "investigacao_gerou_alteracao",
-        "CONTADOR": "_nao_documentado_contador",
     },
 )
 
 DE_PARA_DO_ADICIONAIS: Final[frozendict] = frozendict({
+    "ORIGEM": "origem_id_sim",
+    "HORAOBITO": "ocorrencia_hora",
+    "CODMUNNATU": "usuario_nascimento_municipio_id_sus",
+    "ESC2010": "usuario_escolaridade_id_sim2010",
+    "SERIESCFAL": "usuario_escolaridade_serie",
+    "CODESTAB": "estabelecimento_id_scnes",
+    "ESTABDESCR": "_nao_documentado_estabdescr",
+    "ESCMAE2010": "mae_escolaridade_id_sim2010",
+    "SERIESCMAE": "mae_escolaridade_serie",
+    "SEMAGESTAC": "gestacao_semanas",
+    "TPMORTEOCO": "gestacao_situacao_id_sim2012",
+    "CB_PRE": "causa_basica_resselecao_antes_localidade_id_cid10",
+    "COMUNSVOIM": "svo_iml_municipio_id_sus",
+    "DTATESTADO": "atestado_data",
+    "NUMEROLOTE": "lote_id_sim",
+    "TPPOS": "investigacao_houve",
+    "DTINVESTIG": "investigacao_data",
+    "CAUSABAS_O": "causa_basica_resselecao_antes_id_cid10",
+    "DTCADASTRO": "cadastro_data",
+    "ATESTANTE": "atestado_atestante_tipo_id_sim",
+    "STCODIFICA": "sistema_instalacao_codificadora",
+    "CODIFICADO": "declaracao_codificada",
+    "VERSAOSIST": "sistema_versao",
+    "VERSAOSCB": "causa_basica_seletor_versao",
+    "FONTEINV": "investigacao_fonte_id_sim",
+    "DTRECEBIM": "recebimento_data",
+    "ATESTADO": "atestado_condicoes_ids_cid10",
+    "DTRECORIGA": "recebimento_original_data",
+    "CAUSAMAT": "causa_externa_id_cid10",
+    "ESCMAEAGR1": "mae_escolaridade_agregada_id_sim",
+    "ESCFALAGR1": "usuario_escolaridade_agregada_id_sim",
+    "STDOEPIDEM": "declaracao_modelo_epidemiologica",
+    "STDONOVA": "declaracao_modelo_novo",
+    "DIFDATA": "recebimento_original_intervalo",
+    "NUDIASOBCO": "investigacao_duracao",
+    "NUDIASOBIN": "_nao_documentado_nudiasobin",
+    "DTCADINV": "investigacao_cadastro_data",
+    "TPOBITOCOR": "gestacao_situacao_id_sim2009",
+    "DTCONINV": "investigacao_conclusao_data",
+    "FONTES": "fontes_combinacao_id_sim",
+    "TPRESGINFO": "investigacao_desfecho_id_sim",
+    "TPNIVELINV": "investigacao_esfera_id_sim",
+    "NUDIASINF": "_nao_documentado_nudiasinf",
+    "DTCADINF": "_nao_documentado_dtcadinf",
+    "MORTEPARTO": "_nao_documentado_morteparto",
+    "DTCONCASO": "conclusao_data",
+    "FONTESINF": "_nao_documentado_fontesinf",
+    "ALTCAUSA": "investigacao_gerou_alteracao",
+    "CONTADOR": "_nao_documentado_contador",
     "CRM": "atestado_atestante_id_crm",
+    "CODBAIRES": "usuario_residencia_bairro_id_sim",
+    "UFINFORM": "uf_id_ibge",
+    "CODBAIOCOR": "ocorrencia_bairro_id_sim",
+    "TPASSINA": "_nao_documentado_tpassina",
 })
 
 TIPOS_DO: Final[frozendict] = frozendict(
@@ -129,40 +133,29 @@ TIPOS_DO: Final[frozendict] = frozendict(
         "id": "object",
         "periodo_id": "object",
         "unidade_geografica_id": "object",
-        "origem_id_sim": "object",
         "tipo_id_sim": "object",
         "ocorrencia_data": "datetime64[ns]",
-        "ocorrencia_hora": "object",  # pandas não tem tipo apropriado p/ hora
         "usuario_nascimento_pais_uf_id_sus": "object",
-        "usuario_nascimento_municipio_id_sus": "object",
         "usuario_nascimento_data": "datetime64[ns]",
         "usuario_idade_id_sim": "object",
         "usuario_sexo_id_sim": "object",
         "usuario_raca_cor_id_sim": "object",
         "usuario_estado_civil_id_sim": "object",
         "usuario_escolaridade_id_sim1996": "object",
-        "usuario_escolaridade_id_sim2010": "object",
-        "usuario_escolaridade_serie": "object",
         "usuario_ocupacao_id_cbo2002": "object",
         "usuario_residencia_municipio_id_sus": "object",
         "local_ocorrencia_id_sim": "object",
-        "estabelecimento_id_scnes": "object",
-        "_nao_documentado_estabdescr": "object",
         "unidade_geografica_id_sus": "object",
         "mae_idade": "Int64",
         "mae_escolaridade_id_sim1996": "object",
-        "mae_escolaridade_id_sim2010": "object",
-        "mae_escolaridade_serie": "object",
         "mae_ocupacao_id_cbo2002": "object",
         "mae_filhos_nascidos_vivos": "Int64",
         "mae_filhos_perdas_fetais": "Int64",
         "gestacao_tipo_id_sim": "object",
-        "gestacao_semanas": "Int64",
         "gestacao_semanas_id_sim": "object",
         "parto_tipo_id_sim": "object",
         "parto_relacao_id_sim": "object",
         "usuario_nascimento_peso": "Int64",
-        "gestacao_situacao_id_sim2012": "object",
         "gestacao_relacao": "boolean",
         "puerperio_relacao": "boolean",
         "assistencia_medica_recebeu": "boolean",
@@ -175,54 +168,69 @@ TIPOS_DO: Final[frozendict] = frozendict(
         "condicoes_basicas_ids_cid10": "object",  # array
         "condicoes_contribuintes_ids_cid10": "object",  # array
         "causa_basica_resselecao_apos_id_cid10": "object",
-        "causa_basica_resselecao_antes_localidade_id_cid10": "object",
-        "svo_iml_municipio_id_sus": "object",
-        "atestado_data": "datetime64[ns]",
         "circunstancia_id_sim": "object",
         "acidente_trabalho": "boolean",
         "circunstancia_fonte_id_sim": "object",
-        "lote_id_sim": "object",
-        "investigacao_houve": "boolean",
-        "investigacao_data": "datetime64[ns]",
-        "causa_basica_resselecao_antes_id_cid10": "object",
-        "cadastro_data": "datetime64[ns]",
-        "atestado_atestante_tipo_id_sim": "object",
-        "sistema_instalacao_codificadora": "boolean",
-        "declaracao_codificada": "boolean",
-        "sistema_versao": "object",
-        "causa_basica_seletor_versao": "object",
-        "investigacao_fonte_id_sim": "object",
-        "recebimento_data": "datetime64[ns]",
-        "atestado_condicoes_ids_cid10": "object",
-        "recebimento_original_data": "datetime64[ns]",
-        "causa_externa_id_cid10": "object",
-        "mae_escolaridade_agregada_id_sim": "object",
-        "usuario_escolaridade_agregada_id_sim": "object",
-        "declaracao_modelo_epidemiologica": "boolean",
-        "declaracao_modelo_novo": "boolean",
-        "recebimento_original_intervalo": "object",  # intervalo
-        "investigacao_duracao": "object",  # intervalo
-        "_nao_documentado_nudiasobin": "object",
-        "investigacao_cadastro_data": "datetime64[ns]",
-        "gestacao_situacao_id_sim2009": "object",
-        "investigacao_conclusao_data": "datetime64[ns]",
-        "fontes_combinacao_id_sim": "object",
-        "investigacao_desfecho_id_sim": "object",
-        "investigacao_esfera_id_sim": "object",
-        "_nao_documentado_nudiasinf": "object",
-        "_nao_documentado_dtcadinf": "object",
-        "_nao_documentado_morteparto": "object",
-        "conclusao_data": "datetime64[ns]",
-        "_nao_documentado_fontesinf": "object",
-        "investigacao_gerou_alteracao": "boolean",
-        "_nao_documentado_contador": "object",
         "criacao_data": "datetime64[ns]",
         "atualizacao_data": "datetime64[ns]",
     },
 )
 
 TIPOS_DO_ADICIONAIS: Final(frozendict) = frozendict({
-    "atestado_atestante_id_crm": "object"
+    "origem_id_sim": "object",
+    "ocorrencia_hora": "object",  # pandas não tem tipo apropriado p/ hora
+    "atestado_atestante_id_crm": "object",
+    "usuario_nascimento_municipio_id_sus": "object",
+    "usuario_escolaridade_id_sim2010": "object",
+    "usuario_escolaridade_serie": "object",
+    "estabelecimento_id_scnes": "object",
+    "_nao_documentado_estabdescr": "object",
+    "mae_escolaridade_id_sim2010": "object",
+    "mae_escolaridade_serie": "object",
+    "gestacao_semanas": "Int64",
+    "gestacao_situacao_id_sim2012": "object",
+    "causa_basica_resselecao_antes_localidade_id_cid10": "object",
+    "svo_iml_municipio_id_sus": "object",
+    "atestado_data": "datetime64[ns]",
+    "lote_id_sim": "object",
+    "investigacao_houve": "boolean",
+    "investigacao_data": "datetime64[ns]",
+    "causa_basica_resselecao_antes_id_cid10": "object",
+    "cadastro_data": "datetime64[ns]",
+    "atestado_atestante_tipo_id_sim": "object",
+    "sistema_instalacao_codificadora": "boolean",
+    "declaracao_codificada": "boolean",
+    "sistema_versao": "object",
+    "causa_basica_seletor_versao": "object",
+    "investigacao_fonte_id_sim": "object",
+    "recebimento_data": "datetime64[ns]",
+    "atestado_condicoes_ids_cid10": "object",
+    "recebimento_original_data": "datetime64[ns]",
+    "causa_externa_id_cid10": "object",
+    "mae_escolaridade_agregada_id_sim": "object",
+    "usuario_escolaridade_agregada_id_sim": "object",
+    "declaracao_modelo_epidemiologica": "boolean",
+    "declaracao_modelo_novo": "boolean",
+    "recebimento_original_intervalo": "object",  # intervalo
+    "investigacao_duracao": "object",  # intervalo
+    "_nao_documentado_nudiasobin": "object",
+    "investigacao_cadastro_data": "datetime64[ns]",
+    "gestacao_situacao_id_sim2009": "object",
+    "investigacao_conclusao_data": "datetime64[ns]",
+    "fontes_combinacao_id_sim": "object",
+    "investigacao_desfecho_id_sim": "object",
+    "investigacao_esfera_id_sim": "object",
+    "_nao_documentado_nudiasinf": "object",
+    "_nao_documentado_dtcadinf": "object",
+    "_nao_documentado_morteparto": "object",
+    "conclusao_data": "datetime64[ns]",
+    "_nao_documentado_fontesinf": "object",
+    "investigacao_gerou_alteracao": "boolean",
+    "_nao_documentado_contador": "object",
+    "usuario_residencia_bairro_id_sim": "object",
+    "uf_id_ibge": "object",
+    "ocorrencia_bairro_id_sim": "object",
+    "_nao_documentado_tpassina": "object",
 })
 
 COLUNAS_DATA_DDMMAAAA: Final[list[str]] = [
@@ -340,33 +348,26 @@ def transformar_do(
     if condicoes:
         do = do.query(condicoes, engine="python")
         logger.info(
-            "Registros após aplicar confições de filtragem: {num_registros}.",
+            "Registros após aplicar condições de filtragem: {num_registros}.",
             num_registros=len(do),
         )
-    
-    # Determina quais das colunas que existem em apenas alguns anos estão 
-    # presentes no DataFrame de origem 
-    colunas_adicionais = {
-        nome_origem: nome_destino
-        for nome_origem, nome_destino in DE_PARA_DO_ADICIONAIS.items()
-        if nome_origem in do.columns
-    }
-
-    # Determina os tipos para as colunas adicionais
-    tipos_adicionais = {
-        nome_destino: tipo_destino
-        for nome_destino, tipo_destino in TIPOS_DO_ADICIONAIS.items()
-        if nome_destino in colunas_adicionais
-    }
 
     # Junta nomes de colunas e tipos adicionais aos obrigatórios
-    de_para = dict(DE_PARA_DO, **colunas_adicionais)
-    tipos = dict(TIPOS_DO, **tipos_adicionais)
+    de_para = dict(DE_PARA_DO, **DE_PARA_DO_ADICIONAIS)
+    tipos = dict(TIPOS_DO, **TIPOS_DO_ADICIONAIS)
+
+    # corrigir nomes de colunas mal formatados
+    do = do.rename_columns(function=lambda col: col.strip().upper())
 
     do_transformada = (
         do  # noqa: WPS221  # ignorar linha complexa no pipeline
+        # adicionar colunas faltantes, com valores vazios
+        .add_columns(**{
+            coluna: ""
+            for coluna in DE_PARA_DO_ADICIONAIS.keys()
+            if not (coluna in do.columns)
+        })
         # renomear colunas
-        .rename_columns(function=lambda col: col.strip())
         .rename_columns(de_para)
         # processar colunas com datas
         .transform_columns(
@@ -385,8 +386,9 @@ def transformar_do(
         .transform_column(
             "ocorrencia_hora",
             function=lambda hora: (
+                # TODO: Corrigir hora > 24
                 hora[:2] + ":" + hora[2:4]
-                if re.match(r"[0-2][0-9][0-5][0-9]", hora)
+                if re.match(r"([01][0-9]|2[0-3])[0-5][0-9]", hora)
                 else np.nan
             ),
         )
