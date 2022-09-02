@@ -21,6 +21,7 @@ from pandas.api.types import is_datetime64_any_dtype
 from sqlalchemy.orm import Session
 from uuid6 import uuid7
 
+from impulsoetl.comum.condicoes_saude import e_cid10
 from impulsoetl.comum.datas import agora_gmt_menos3, periodo_por_data
 from impulsoetl.comum.geografias import id_sus_para_id_impulso
 from impulsoetl.loggers import logger
@@ -448,11 +449,22 @@ def transformar_do(
                 "condicoes_basicas_ids_cid10",
                 "condicoes_contribuintes_ids_cid10",
             ],
+            function=lambda cids: re.sub(r"\.", "", cids),
+        )
+        .transform_columns(
+            [
+                "condicoes_terminais_ids_cid10",
+                "condicoes_antecedentes_consequenciais_1_ids_cid10",
+                "condicoes_antecedentes_consequenciais_2_ids_cid10",
+                "condicoes_basicas_ids_cid10",
+                "condicoes_contribuintes_ids_cid10",
+            ],
             function=lambda cids: (
                 "{"
                 + ",".join([
                     cid for cid in re.split("[^a-zA-Z0-9]", cids)
                     if len(cid) > 0  # remove campos com CIDs vazios
+                    and e_cid10(cid)  # remove texto que não é um CID10 válido
                 ])
                 + "}"
             ),
