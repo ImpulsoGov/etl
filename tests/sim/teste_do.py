@@ -15,7 +15,9 @@ from impulsoetl.bd import tabelas
 from impulsoetl.sim.do import (
     COLUNAS_DATA_DDMMAAAA,
     DE_PARA_DO,
+    DE_PARA_DO_ADICIONAIS,
     TIPOS_DO,
+    TIPOS_DO_ADICIONAIS,
     extrair_do,
     obter_do,
     transformar_do,
@@ -23,14 +25,14 @@ from impulsoetl.sim.do import (
 from impulsoetl.utilitarios.bd import carregar_dataframe
 
 
-@pytest.fixture(scope="module")
-def _do():
-    return pd.read_parquet("tests/sim/SIM_DORR2020_.parquet")
-
-
-@pytest.fixture(scope="function")
-def do(_do):
-    return _do.copy()
+@pytest.fixture(
+    scope="function",
+    name="do",
+    params=("AP1996", "AC2002", "RR2008", "AP2014", "RR2020"),
+)
+def _do(request):
+    caminho_arquivo = "tests/sim/SIM_DO{}_.parquet".format(request.param)
+    return pd.read_parquet(caminho_arquivo)
 
 
 @pytest.fixture(scope="module")
@@ -66,7 +68,7 @@ def tabela_teste(sessao):
 def teste_de_para(do):
     """Testa se todas as colunas no arquivo de origem estão no De-Para."""
 
-    colunas_origem = [col.strip() for col in do.columns]
+    colunas_origem = [col.strip().upper() for col in do.columns]
     colunas_de = list(DE_PARA_DO.keys())
 
     for col in colunas_de:
@@ -74,6 +76,8 @@ def teste_de_para(do):
             "Coluna no De-Para não existe no arquivo de Declarações de Óbito: "
             + "'{}'".format(col)
         )
+    
+    colunas_de += list(DE_PARA_DO_ADICIONAIS.keys())
     for col in colunas_origem:
         assert col in colunas_de, (
             "Coluna existente no arquivo de Declarações de Óbito não "
@@ -87,12 +91,15 @@ def teste_tipos():
     tabela_destino = tabelas["dados_publicos.sim_do_disseminacao"]
     colunas_destino = tabela_destino.columns
 
-    for col in TIPOS_DO.keys():
+    colunas_tipos = list(TIPOS_DO.keys()) + list(TIPOS_DO_ADICIONAIS.keys())
+    for col in colunas_tipos:
         assert (
             col in colunas_destino
         ), "Coluna inexistente na tabela de destino: '{}'".format(col)
     for col in colunas_destino.keys():
-        assert col in TIPOS_DO, "Coluna sem tipo definido: '{}'".format(col)
+        assert col in colunas_tipos, "Coluna sem tipo definido: '{}'".format(
+            col,
+        )
 
 
 def teste_colunas_datas():
@@ -122,7 +129,7 @@ def teste_extrair_do(uf_sigla, periodo_data_inicio):
 @pytest.mark.parametrize(
     "condicoes",
     [
-        "CODMUNOCOR == '140010'",  # óbitos ocorridos em Boa Vista - RR
+        "IDADE > '420'",  # óbitos de pessoas com mais de 20 anos
         None,  # Sem filtros
     ],
 )
