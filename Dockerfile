@@ -47,4 +47,4 @@ COPY src ./src
 RUN poetry install --no-dev
 
 # Executar o ponto de entrada contendo os scripts
-CMD [ "python3", "src/impulsoetl/__main__.py"]
+CMD [ "poetry", "run", "python3", "-m", "impulsoetl"]
