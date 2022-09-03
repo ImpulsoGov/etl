@@ -647,6 +647,7 @@ def indicadores_municipios_equipe_todas(
         logger.info("OK.")
 
 
+@logger.catch
 def validacao_producao(
     sessao: Session,
     teste: bool = False,
