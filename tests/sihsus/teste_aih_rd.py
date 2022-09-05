@@ -15,6 +15,7 @@ from impulsoetl.bd import tabelas
 from impulsoetl.sihsus.aih_rd import (
     COLUNAS_DATA_AAAAMMDD,
     DE_PARA_AIH_RD,
+    DE_PARA_AIH_RD_ADICIONAIS,
     TIPOS_AIH_RD,
     extrair_aih_rd,
     obter_aih_rd,
@@ -23,14 +24,14 @@ from impulsoetl.sihsus.aih_rd import (
 from impulsoetl.utilitarios.bd import carregar_dataframe
 
 
-@pytest.fixture(scope="module")
-def _aih_rd():
-    return pd.read_parquet("tests/sihsus/SIH_RDSE2108_.parquet")
-
-
-@pytest.fixture(scope="function")
-def aih_rd(_aih_rd):
-    return _aih_rd.copy()
+@pytest.fixture(
+    scope="function",
+    name="aih_rd",
+    params=("AC0801", "SE2108"),
+)
+def _aih_rd(request):
+    caminho_arquivo = "tests/sihsus/SIH_RD{}_.parquet".format(request.param)
+    return pd.read_parquet(caminho_arquivo)
 
 
 @pytest.fixture(scope="module")
@@ -74,6 +75,13 @@ def teste_de_para(aih_rd):
             "Coluna no De-Para não existe no arquivo de internações: "
             + "'{}'".format(col)
         )
+    
+    colunas_de += list(DE_PARA_AIH_RD_ADICIONAIS.keys())
+    for col in colunas_origem:
+        assert col in colunas_de, (
+            "Coluna existente no arquivo de internações não encontrada no "
+            + "De-Para: '{}'".format(col)
+        )
 
 
 def teste_tipos(aih_rd):
@@ -98,9 +106,12 @@ def teste_colunas_datas():
 
 @pytest.mark.parametrize(
     "uf_sigla,periodo_data_inicio",
-    [("SE", date(2021, 8, 1))],
+    [
+        ("AC", date(2008, 1, 1)),
+        ("SE", date(2021, 8, 1)),
+    ],
 )
-def teste_extrair_pa(uf_sigla, periodo_data_inicio, passo):
+def teste_extrair_aih_rd(uf_sigla, periodo_data_inicio, passo):
     iterador_registros_procedimentos = extrair_aih_rd(
         uf_sigla=uf_sigla,
         periodo_data_inicio=periodo_data_inicio,
@@ -111,6 +122,11 @@ def teste_extrair_pa(uf_sigla, periodo_data_inicio, passo):
     assert len(lote_1) == passo
     for coluna in DE_PARA_AIH_RD.keys():
         assert coluna in lote_1
+    for coluna in lote_1.columns:
+        assert (
+            (coluna in DE_PARA_AIH_RD)
+            or (coluna in DE_PARA_AIH_RD_ADICIONAIS)
+        )
     lote_2 = next(iterador_registros_procedimentos)
     assert isinstance(lote_2, pd.DataFrame)
     assert len(lote_2) > 0
