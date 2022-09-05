@@ -22,3 +22,8 @@ CID10: Final[re.Pattern] = re.compile(
 def e_cid10(texto: str) -> bool:
     """Indica se um texto fornecido é compatível com o padrão da CID-10."""
     return bool(CID10.match(texto))
+
+
+def remover_ponto_cid10(texto: str) -> bool:
+    """Remove caractere de ponto após o 3º dígito de um código CID-10."""
+    return re.sub(r"([A-Z][0-9]{2})\.?([0-9X]{,4})", r"\1\2", texto)
