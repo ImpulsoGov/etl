@@ -59,8 +59,6 @@ DE_PARA_AIH_RD: Final[frozendict] = frozendict(
         "DIAG_PRINC": "condicao_principal_id_cid10",
         "DIAG_SECUN": "condicao_secundaria_id_cid10",
         "COBRANCA": "desfecho_motivo_id_sihsus",
-        "NATUREZA": "estabelecimento_natureza_id_scnes",
-        "NAT_JUR": "estabelecimento_natureza_juridica_id_scnes",
         "GESTAO": "gestao_condicao_id_sihsus",
         "IND_VDRL": "exame_vdrl",
         "MUNIC_MOV": "unidade_geografica_id_sus",
@@ -99,34 +97,58 @@ DE_PARA_AIH_RD: Final[frozendict] = frozendict(
         "ETNIA": "usuario_etnia_id_sus",
         "SEQUENCIA": "remessa_aih_id_sequencial",
         "REMESSA": "remessa_id_sihsus",
-        "AUD_JUST": "cns_ausente_justificativa_auditor",
-        "SIS_JUST": "cns_ausente_justificativa_estabelecimento",
-        "VAL_SH_FED": "valor_servicos_hospitalares_complemento_federal",
-        "VAL_SP_FED": "valor_servicos_profissionais_complemento_federal",
-        "VAL_SH_GES": "valor_servicos_hospitalares_complemento_local",
-        "VAL_SP_GES": "valor_servicos_profissionais_complemento_local",
-        "VAL_UCI": "valor_unidade_neonatal",
-        "MARCA_UCI": "unidade_neonatal_tipo_id_sihsus",
-        "DIAGSEC1": "condicao_secundaria_1_id_cid10",
-        "DIAGSEC2": "condicao_secundaria_2_id_cid10",
-        "DIAGSEC3": "condicao_secundaria_3_id_cid10",
-        "DIAGSEC4": "condicao_secundaria_4_id_cid10",
-        "DIAGSEC5": "condicao_secundaria_5_id_cid10",
-        "DIAGSEC6": "condicao_secundaria_6_id_cid10",
-        "DIAGSEC7": "condicao_secundaria_7_id_cid10",
-        "DIAGSEC8": "condicao_secundaria_8_id_cid10",
-        "DIAGSEC9": "condicao_secundaria_9_id_cid10",
-        "TPDISEC1": "condicao_secundaria_1_tipo_id_sihsus",
-        "TPDISEC2": "condicao_secundaria_2_tipo_id_sihsus",
-        "TPDISEC3": "condicao_secundaria_3_tipo_id_sihsus",
-        "TPDISEC4": "condicao_secundaria_4_tipo_id_sihsus",
-        "TPDISEC5": "condicao_secundaria_5_tipo_id_sihsus",
-        "TPDISEC6": "condicao_secundaria_6_tipo_id_sihsus",
-        "TPDISEC7": "condicao_secundaria_7_tipo_id_sihsus",
-        "TPDISEC8": "condicao_secundaria_8_tipo_id_sihsus",
-        "TPDISEC9": "condicao_secundaria_9_tipo_id_sihsus",
     },
 )
+
+DE_PARA_AIH_RD_ADICIONAIS: Final[frozendict] = frozendict({
+    "NATUREZA": "estabelecimento_natureza_id_scnes",
+    "NAT_JUR": "estabelecimento_natureza_juridica_id_scnes",
+    "AUD_JUST": "cns_ausente_justificativa_auditor",
+    "SIS_JUST": "cns_ausente_justificativa_estabelecimento",
+    "VAL_SH_FED": "valor_servicos_hospitalares_complemento_federal",
+    "VAL_SP_FED": "valor_servicos_profissionais_complemento_federal",
+    "VAL_SH_GES": "valor_servicos_hospitalares_complemento_local",
+    "VAL_SP_GES": "valor_servicos_profissionais_complemento_local",
+    "VAL_UCI": "valor_unidade_neonatal",
+    "MARCA_UCI": "unidade_neonatal_tipo_id_sihsus",
+    "DIAGSEC1": "condicao_secundaria_1_id_cid10",
+    "DIAGSEC2": "condicao_secundaria_2_id_cid10",
+    "DIAGSEC3": "condicao_secundaria_3_id_cid10",
+    "DIAGSEC4": "condicao_secundaria_4_id_cid10",
+    "DIAGSEC5": "condicao_secundaria_5_id_cid10",
+    "DIAGSEC6": "condicao_secundaria_6_id_cid10",
+    "DIAGSEC7": "condicao_secundaria_7_id_cid10",
+    "DIAGSEC8": "condicao_secundaria_8_id_cid10",
+    "DIAGSEC9": "condicao_secundaria_9_id_cid10",
+    "TPDISEC1": "condicao_secundaria_1_tipo_id_sihsus",
+    "TPDISEC2": "condicao_secundaria_2_tipo_id_sihsus",
+    "TPDISEC3": "condicao_secundaria_3_tipo_id_sihsus",
+    "TPDISEC4": "condicao_secundaria_4_tipo_id_sihsus",
+    "TPDISEC5": "condicao_secundaria_5_tipo_id_sihsus",
+    "TPDISEC6": "condicao_secundaria_6_tipo_id_sihsus",
+    "TPDISEC7": "condicao_secundaria_7_tipo_id_sihsus",
+    "TPDISEC8": "condicao_secundaria_8_tipo_id_sihsus",
+    "TPDISEC9": "condicao_secundaria_9_tipo_id_sihsus",
+    "UTI_MES_IN": "_nao_documentado_uti_mes_in",
+    "UTI_MES_AN": "_nao_documentado_uti_mes_an",
+    "UTI_MES_AL": "_nao_documentado_uti_mes_al",
+    "UTI_INT_IN": "_nao_documentado_uti_int_in",
+    "UTI_INT_AN": "_nao_documentado_uti_int_an",
+    "UTI_INT_AL": "_nao_documentado_uti_int_al",
+    "VAL_SADT": "_nao_documentado_val_sadt",
+    "VAL_RN": "_nao_documentado_val_rn",
+    "VAL_ACOMP": "_nao_documentado_val_acomp",
+    "VAL_ORTP": "_nao_documentado_val_ortp",
+    "VAL_SANGUE": "_nao_documentado_val_sangue",
+    "VAL_SADTSR": "_nao_documentado_val_sadtsr",
+    "VAL_TRANSP": "_nao_documentado_val_transp",
+    "VAL_OBSANG": "_nao_documentado_val_obsang",
+    "VAL_PED1AC": "_nao_documentado_val_ped1ac",
+    "RUBRICA": "_nao_documentado_rubrica",
+    "NUM_PROC": "_nao_documentado_num_proc",
+    "TOT_PT_SP": "_nao_documentado_tot_pt_sp",
+    "CPF_AUT": "_nao_documentado_cpf_aut",
+})
 
 TIPOS_AIH_RD: Final[frozendict] = frozendict(
     {
@@ -228,6 +250,25 @@ TIPOS_AIH_RD: Final[frozendict] = frozendict(
         "unidade_geografica_id": "object",
         "criacao_data": "datetime64[ns]",
         "atualizacao_data": "datetime64[ns]",
+        "_nao_documentado_uti_mes_in": "object",
+        "_nao_documentado_uti_mes_an": "object",
+        "_nao_documentado_uti_mes_al": "object",
+        "_nao_documentado_uti_int_in": "object",
+        "_nao_documentado_uti_int_an": "object",
+        "_nao_documentado_uti_int_al": "object",
+        "_nao_documentado_val_sadt": "object",
+        "_nao_documentado_val_rn": "object",
+        "_nao_documentado_val_acomp": "object",
+        "_nao_documentado_val_ortp": "object",
+        "_nao_documentado_val_sangue": "object",
+        "_nao_documentado_val_sadtsr": "object",
+        "_nao_documentado_val_transp": "object",
+        "_nao_documentado_val_obsang": "object",
+        "_nao_documentado_val_ped1ac": "object",
+        "_nao_documentado_rubrica": "object",
+        "_nao_documentado_num_proc": "object",
+        "_nao_documentado_tot_pt_sp": "object",
+        "_nao_documentado_cpf_aut": "object",
     },
 )
 
@@ -303,13 +344,22 @@ def transformar_aih_rd(
         "Memória ocupada pelo DataFrame original:  {memoria_usada:.2f} mB.",
         memoria_usada=aih_rd.memory_usage(deep=True).sum() / 10 ** 6,
     )
+
+    # Junta nomes de colunas e tipos adicionais aos obrigatórios
+    de_para = dict(DE_PARA_AIH_RD, **DE_PARA_AIH_RD_ADICIONAIS)
+
+    # corrigir nomes de colunas mal formatados
+    aih_rd = aih_rd.rename_columns(function=lambda col: col.strip().upper())
+
     aih_rd_transformada = (
-        aih_rd.select_columns(  # noqa: WPS221  # ignorar linha complexa no pipeline
-            DE_PARA_AIH_RD.keys()
-        )
-        # renomear colunas
-        .rename_columns(function=lambda col: col.strip())
-        .rename_columns(DE_PARA_AIH_RD)
+        aih_rd  # noqa: WPS221  # ignorar linha complexa no pipeline
+        # adicionar colunas faltantes, com valores vazios
+        .add_columns(**{
+            coluna: ""
+            for coluna in DE_PARA_AIH_RD_ADICIONAIS.keys()
+            if not (coluna in aih_rd.columns)
+        })
+        .rename_columns(de_para)
         # processar colunas com datas
         .join_apply(
             lambda i: pd.Timestamp(
