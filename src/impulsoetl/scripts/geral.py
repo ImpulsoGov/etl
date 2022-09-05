@@ -13,10 +13,55 @@ from sqlalchemy.orm import Session
 from impulsoetl.bd import Sessao, tabelas
 from impulsoetl.brasilapi.cep import obter_cep
 from impulsoetl.loggers import logger
+from impulsoetl.scnes.habilitacoes import obter_habilitacoes
 from impulsoetl.scnes.vinculos import obter_vinculos
 
 agendamentos = tabelas["configuracoes.capturas_agendamentos"]
 capturas_historico = tabelas["configuracoes.capturas_historico"]
+
+
+@logger.catch
+def habilitacoes_disseminacao(
+    sessao: Session,
+    teste: bool = False,
+) -> None:
+    logger.info(
+        "Capturando vínculos profissionais do SCNES.",
+    )
+    operacao_id = "06307c18-d268-748c-8cd2-75cd262126c4"
+    agendamentos_habilitacoes = (
+        sessao.query(agendamentos)
+        .filter(agendamentos.c.operacao_id == operacao_id)
+        .all()
+    )
+    for agendamento in agendamentos_habilitacoes:
+        obter_habilitacoes(
+            sessao=sessao,
+            uf_sigla=agendamento.uf_sigla,
+            periodo_data_inicio=agendamento.periodo_data_inicio,
+            tabela_destino=agendamento.tabela_destino,
+            teste=teste,
+        )
+
+        logger.info("Registrando captura bem-sucedida...")
+        # NOTE: necessário registrar a operação de captura em nível de UF,
+        # mesmo que o gatilho na tabela de destino no banco de dados já
+        # registre a captura em nível dos municípios automaticamente quando há
+        # a inserção de uma nova linha
+        requisicao_inserir_historico = capturas_historico.insert(
+            {
+                "operacao_id": operacao_id,
+                "periodo_id": agendamento.periodo_id,
+                "unidade_geografica_id": agendamento.unidade_geografica_id,
+            }
+        )
+        conector = sessao.connection()
+        conector.execute(requisicao_inserir_historico)
+        if teste:
+            sessao.rollback()
+            break
+        sessao.commit()
+        logger.info("OK.")
 
 
 @logger.catch
