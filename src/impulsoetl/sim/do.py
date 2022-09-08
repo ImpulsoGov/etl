@@ -469,6 +469,23 @@ def transformar_do(
                 + "}"
             ),
         )
+        # Processar identificadores que podem ser IBGE ou SUS - antes de 2008,
+        # alguns desses campos utilizavam identificadores de municípios do
+        # IBGE (7 dígitos); depois passaram a usar identificadores SUS (6 
+        # dígitos).
+        .transform_columns(
+            [
+                "svo_iml_municipio_id_sus",
+                "unidade_geografica_id_sus",
+                "usuario_nascimento_municipio_id_sus",
+                "usuario_residencia_municipio_id_sus",
+            ],
+            function=lambda id_ibge_ou_sus: (
+                id_ibge_ou_sus[0:min(6, len(id_ibge_ou_sus))]
+                if id_ibge_ou_sus
+                else np.nan
+            ),
+        )
         # tratar como NA colunas com valores nulos
         .replace("", np.nan)
         .transform_columns(
