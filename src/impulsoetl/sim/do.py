@@ -17,12 +17,11 @@ import janitor  # noqa: F401  # nopycln: import
 import numpy as np
 import pandas as pd
 from frozendict import frozendict
-from pandas.api.types import is_datetime64_any_dtype
 from sqlalchemy.orm import Session
 from uuid6 import uuid7
 
 from impulsoetl.comum.condicoes_saude import e_cid10, remover_ponto_cid10
-from impulsoetl.comum.datas import agora_gmt_menos3, periodo_por_data
+from impulsoetl.comum.datas import agora_gmt_menos3
 from impulsoetl.comum.geografias import id_sus_para_id_impulso
 from impulsoetl.loggers import logger
 from impulsoetl.utilitarios.bd import carregar_dataframe
@@ -306,6 +305,7 @@ def extrair_do(
 def transformar_do(
     sessao: Session,
     do: pd.DataFrame,
+    periodo_id: str,
     condicoes: str | None = None,
 ) -> pd.DataFrame:
     """Transforma um `DataFrame` de Declarações de Óbito obtidos do DataSUS.
@@ -528,15 +528,7 @@ def transformar_do(
         .add_column("id", str())
         .transform_column("id", function=lambda _: uuid7().hex)
         # adicionar id do periodo
-        .transform_column(
-            "ocorrencia_data",
-            function=lambda dt: periodo_por_data(
-                sessao=sessao,
-                data=dt,
-                tipo_periodo="anual",
-            ).id,
-            dest_column_name="periodo_id",
-        )
+        .assign(periodo_id=periodo_id)
         # adicionar id da unidade geografica
         .transform_column(
             "unidade_geografica_id_sus",
@@ -570,6 +562,7 @@ def transformar_do(
 def obter_do(
     sessao: Session,
     uf_sigla: str,
+    periodo_id: str,
     periodo_data_inicio: date,
     tabela_destino: str,
     teste: bool = False,
@@ -582,6 +575,8 @@ def obter_do(
             acessar a base de dados da ImpulsoGov.
         uf_sigla: Sigla da Unidade Federativa cujas Declarações de Óbito se
             pretende obter.
+        periodo_id: Identificador único do período de referência da Declaração
+            de Óbito no banco de dados da Impulso Gov.
         periodo_data_inicio: Dia de início da competência desejada,
             representado como um objeto [`datetime.date`][].
         tabela_destino: nome da tabela de destino, qualificado com o nome do
@@ -622,6 +617,7 @@ def obter_do(
         do_transformada = transformar_do(
             sessao=sessao,
             do=do_lote,
+            periodo_id=periodo_id,
             condicoes=kwargs.get("condicoes"),
         )
 

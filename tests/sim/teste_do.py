@@ -5,6 +5,8 @@
 """Casos de teste para o ETL de Declarações de Óbito."""
 
 
+from __future__ import annotations
+
 import re
 from datetime import date
 
@@ -25,14 +27,23 @@ from impulsoetl.sim.do import (
 from impulsoetl.utilitarios.bd import carregar_dataframe
 
 
+PERIODOS_IDS: dict[str, str] = {
+    "AP1996": "06308e37-6f75-7632-8e6a-62d3bb6b69dd",
+    "AC2002": "06308e37-6f76-7988-8baa-6631d4c1f831",
+    "RR2008": "06308e37-6f76-7988-8baa-6631d4c1f831",
+    "AP2014": "06308e37-6f78-7b69-aa16-18555c9f2440",
+    "RR2020": "06308e37-6f7a-76df-9b4e-cc1b394219a6",
+}
+
+
 @pytest.fixture(
     scope="function",
     name="do",
     params=("AP1996", "AC2002", "RR2008", "AP2014", "RR2020"),
 )
-def _do(request):
+def _do(request) -> tuple[pd.DataFrame, str]:
     caminho_arquivo = "tests/sim/SIM_DO{}_.parquet".format(request.param)
-    return pd.read_parquet(caminho_arquivo)
+    return pd.read_parquet(caminho_arquivo), PERIODOS_IDS[request.param]
 
 
 @pytest.fixture(scope="module")
@@ -67,6 +78,8 @@ def tabela_teste(sessao):
 
 def teste_de_para(do):
     """Testa se todas as colunas no arquivo de origem estão no De-Para."""
+
+    do, _ = do
 
     colunas_origem = [col.strip().upper() for col in do.columns]
     colunas_de = list(DE_PARA_DO.keys())
@@ -103,7 +116,10 @@ def teste_tipos():
 
 
 def teste_colunas_datas():
-    assert all(col in TIPOS_DO.keys() for col in COLUNAS_DATA_DDMMAAAA)
+    assert all(
+        col in TIPOS_DO or col in TIPOS_DO_ADICIONAIS
+        for col in COLUNAS_DATA_DDMMAAAA
+    )
 
 
 @pytest.mark.parametrize(
@@ -134,9 +150,13 @@ def teste_extrair_do(uf_sigla, periodo_data_inicio):
     ],
 )
 def teste_transformar_do(sessao, do, condicoes):
+
+    do, periodo_id = do
+
     do_transformada = transformar_do(
         sessao=sessao,
         do=do,
+        periodo_id=periodo_id,
         condicoes=condicoes,
     )
 

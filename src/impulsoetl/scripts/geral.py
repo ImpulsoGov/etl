@@ -82,6 +82,7 @@ def obitos_disseminacao(
         obter_do(
             sessao=sessao,
             uf_sigla=agendamento.uf_sigla,
+            periodo_id=agendamento.periodo_id,
             periodo_data_inicio=agendamento.periodo_data_inicio,
             tabela_destino=agendamento.tabela_destino,
             teste=teste,
