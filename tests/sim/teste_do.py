@@ -149,7 +149,7 @@ def teste_extrair_do(uf_sigla, periodo_data_inicio):
         None,  # Sem filtros
     ],
 )
-def teste_transformar_do(sessao, do, condicoes):
+def teste_transformar_do(sessao, do, condicoes, tabela_teste):
 
     do, periodo_id = do
 
@@ -164,7 +164,7 @@ def teste_transformar_do(sessao, do, condicoes):
     assert len(do_transformada) > 1
 
     colunas_processadas = do_transformada.columns
-    colunas_esperadas = list(TIPOS_DO.keys())
+    colunas_esperadas = list(tabelas[tabela_teste].columns.keys())
     for col in colunas_processadas:
         assert re.match(
             "[a-z_]+", col
