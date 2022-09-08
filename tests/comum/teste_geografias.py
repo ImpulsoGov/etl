@@ -12,6 +12,7 @@ import pytest
 
 from impulsoetl.comum.geografias import (
     id_impulso_para_id_sus,
+    id_sim_para_id_impulso,
     id_sus_para_id_impulso,
     uf_id_ibge_para_sigla,
 )
@@ -34,6 +35,18 @@ def teste_uf_id_ibge_para_sigla(id_ibge, sigla_esperada, sessao):
 def teste_id_sus_para_id_impulso(id_sus, id_esperado, sessao):
     """Testa converter identificador SUS para o usado no banco da Impulso."""
     id_impulso = id_sus_para_id_impulso(id_sus=id_sus, sessao=sessao)
+    assert id_impulso
+    assert isinstance(id_impulso, str)
+    assert id_impulso == id_esperado
+
+
+@pytest.mark.parametrize(
+    "id_sim,id_esperado",
+    [("539914", "0630e740-d46f-7dca-a009-6f1232e66823")],  # Planaltina-DF
+)
+def teste_id_sim_para_id_impulso(id_sim, id_esperado, sessao):
+    """Testa converter identificador SIM para o usado no banco da Impulso."""
+    id_impulso = id_sim_para_id_impulso(id_sim=id_sim, sessao=sessao)
     assert id_impulso
     assert isinstance(id_impulso, str)
     assert id_impulso == id_esperado

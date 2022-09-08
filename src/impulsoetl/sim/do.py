@@ -22,7 +22,7 @@ from uuid6 import uuid7
 
 from impulsoetl.comum.condicoes_saude import e_cid10, remover_ponto_cid10
 from impulsoetl.comum.datas import agora_gmt_menos3
-from impulsoetl.comum.geografias import id_sus_para_id_impulso
+from impulsoetl.comum.geografias import id_sim_para_id_impulso
 from impulsoetl.loggers import logger
 from impulsoetl.utilitarios.bd import carregar_dataframe
 from impulsoetl.utilitarios.datasus_ftp import extrair_dbc_lotes
@@ -40,9 +40,9 @@ DE_PARA_DO: Final[frozendict] = frozendict(
         "ESTCIV": "usuario_estado_civil_id_sim",
         "ESC": "usuario_escolaridade_id_sim1996",
         "OCUP": "usuario_ocupacao_id_cbo2002",
-        "CODMUNRES": "usuario_residencia_municipio_id_sus",
+        "CODMUNRES": "usuario_residencia_municipio_id_sim",
         "LOCOCOR": "local_ocorrencia_id_sim",
-        "CODMUNOCOR": "unidade_geografica_id_sus",
+        "CODMUNOCOR": "unidade_geografica_id_sim",
         "IDADEMAE": "mae_idade",
         "ESCMAE": "mae_escolaridade_id_sim1996",
         "OCUPMAE": "mae_ocupacao_id_cbo2002",
@@ -74,7 +74,7 @@ DE_PARA_DO: Final[frozendict] = frozendict(
 DE_PARA_DO_ADICIONAIS: Final[frozendict] = frozendict({
     "ORIGEM": "origem_id_sim",
     "HORAOBITO": "ocorrencia_hora",
-    "CODMUNNATU": "usuario_nascimento_municipio_id_sus",
+    "CODMUNNATU": "usuario_nascimento_municipio_id_sim",
     "ESC2010": "usuario_escolaridade_id_sim2010",
     "SERIESCFAL": "usuario_escolaridade_serie",
     "CODESTAB": "estabelecimento_id_scnes",
@@ -84,7 +84,7 @@ DE_PARA_DO_ADICIONAIS: Final[frozendict] = frozendict({
     "SEMAGESTAC": "gestacao_semanas",
     "TPMORTEOCO": "gestacao_situacao_id_sim2012",
     "CB_PRE": "causa_basica_resselecao_antes_localidade_id_cid10",
-    "COMUNSVOIM": "svo_iml_municipio_id_sus",
+    "COMUNSVOIM": "svo_iml_municipio_id_sim",
     "DTATESTADO": "atestado_data",
     "NUMEROLOTE": "lote_id_sim",
     "TPPOS": "investigacao_houve",
@@ -143,9 +143,9 @@ TIPOS_DO: Final[frozendict] = frozendict(
         "usuario_estado_civil_id_sim": "object",
         "usuario_escolaridade_id_sim1996": "object",
         "usuario_ocupacao_id_cbo2002": "object",
-        "usuario_residencia_municipio_id_sus": "object",
+        "usuario_residencia_municipio_id_sim": "object",
         "local_ocorrencia_id_sim": "object",
-        "unidade_geografica_id_sus": "object",
+        "unidade_geografica_id_sim": "object",
         "mae_idade": "Int64",
         "mae_escolaridade_id_sim1996": "object",
         "mae_ocupacao_id_cbo2002": "object",
@@ -180,7 +180,7 @@ TIPOS_DO_ADICIONAIS: Final(frozendict) = frozendict({
     "origem_id_sim": "object",
     "ocorrencia_hora": "object",  # pandas não tem tipo apropriado p/ hora
     "atestado_atestante_id_crm": "object",
-    "usuario_nascimento_municipio_id_sus": "object",
+    "usuario_nascimento_municipio_id_sim": "object",
     "usuario_escolaridade_id_sim2010": "object",
     "usuario_escolaridade_serie": "object",
     "estabelecimento_id_scnes": "object",
@@ -190,7 +190,7 @@ TIPOS_DO_ADICIONAIS: Final(frozendict) = frozendict({
     "gestacao_semanas": "Int64",
     "gestacao_situacao_id_sim2012": "object",
     "causa_basica_resselecao_antes_localidade_id_cid10": "object",
-    "svo_iml_municipio_id_sus": "object",
+    "svo_iml_municipio_id_sim": "object",
     "atestado_data": "datetime64[ns]",
     "lote_id_sim": "object",
     "investigacao_houve": "boolean",
@@ -474,10 +474,10 @@ def transformar_do(
         # dígitos).
         .transform_columns(
             [
-                "svo_iml_municipio_id_sus",
-                "unidade_geografica_id_sus",
-                "usuario_nascimento_municipio_id_sus",
-                "usuario_residencia_municipio_id_sus",
+                "svo_iml_municipio_id_sim",
+                "unidade_geografica_id_sim",
+                "usuario_nascimento_municipio_id_sim",
+                "usuario_residencia_municipio_id_sim",
             ],
             function=lambda id_ibge_ou_sus: (
                 id_ibge_ou_sus[0:min(6, len(id_ibge_ou_sus))]
@@ -493,18 +493,18 @@ def transformar_do(
                 "tipo_id_sim",
                 "ocorrencia_hora",
                 "usuario_nascimento_pais_uf_id_sus",
-                "usuario_nascimento_municipio_id_sus",
+                "usuario_nascimento_municipio_id_sim",
                 "usuario_sexo_id_sim",
                 "usuario_raca_cor_id_sim",
                 "usuario_estado_civil_id_sim",
                 "usuario_escolaridade_id_sim1996",
                 "usuario_escolaridade_serie",
                 "usuario_ocupacao_id_cbo2002",
-                "usuario_residencia_municipio_id_sus",
+                "usuario_residencia_municipio_id_sim",
                 "local_ocorrencia_id_sim",
                 "estabelecimento_id_scnes",
                 "_nao_documentado_estabdescr",
-                "unidade_geografica_id_sus",
+                "unidade_geografica_id_sim",
                 "mae_escolaridade_id_sim1996",
                 "mae_escolaridade_serie",
                 "mae_ocupacao_id_cbo2002",
@@ -515,7 +515,7 @@ def transformar_do(
                 "gestacao_situacao_id_sim2012",
                 "causa_basica_resselecao_apos_id_cid10",
                 "causa_basica_resselecao_antes_localidade_id_cid10",
-                "svo_iml_municipio_id_sus",
+                "svo_iml_municipio_id_sim",
                 "circunstancia_id_sim",
                 "circunstancia_fonte_id_sim",
                 "lote_id_sim",
@@ -547,10 +547,10 @@ def transformar_do(
         .assign(periodo_id=periodo_id)
         # adicionar id da unidade geografica
         .transform_column(
-            "unidade_geografica_id_sus",
-            function=lambda id_sus: id_sus_para_id_impulso(
+            "unidade_geografica_id_sim",
+            function=lambda id_sim: id_sim_para_id_impulso(
                 sessao=sessao,
-                id_sus=id_sus,
+                id_sim=id_sim,
             ),
             dest_column_name="unidade_geografica_id",
         )
