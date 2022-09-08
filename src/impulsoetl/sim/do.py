@@ -463,8 +463,7 @@ def transformar_do(
                 "{"
                 + ",".join([
                     cid for cid in re.split("[^a-zA-Z0-9]", cids)
-                    if len(cid) > 0  # remove campos com CIDs vazios
-                    and e_cid10(cid)  # remove texto que não é um CID10 válido
+                    if e_cid10(cid)  # remove texto que não é um CID10 válido
                 ])
                 + "}"
             ),

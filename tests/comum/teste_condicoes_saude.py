@@ -24,7 +24,7 @@ def teste_e_cid10_sim(texto):
 
 @pytest.mark.parametrize(
     "texto",
-    ["F9X", "foo", "98U", "P3"],
+    ["F9X", "foo", "98U", "P3", "N189I500"],
 )
 def teste_e_cid10_nao(texto):
     """Testa identificar que um texto é um CID10 válido."""

@@ -21,7 +21,7 @@ CID10: Final[re.Pattern] = re.compile(
 
 def e_cid10(texto: str) -> bool:
     """Indica se um texto fornecido é compatível com o padrão da CID-10."""
-    return bool(CID10.match(texto))
+    return bool(len(texto) > 2 and len(texto) < 8 and CID10.match(texto))
 
 
 def remover_ponto_cid10(texto: str) -> bool:
