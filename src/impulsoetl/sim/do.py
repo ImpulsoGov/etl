@@ -126,6 +126,7 @@ DE_PARA_DO_ADICIONAIS: Final[frozendict] = frozendict({
     "UFINFORM": "uf_id_ibge",
     "CODBAIOCOR": "ocorrencia_bairro_id_sim",
     "TPASSINA": "_nao_documentado_tpassina",
+    "NUMERODN": "usuario_id_declaracao_nascido_vivo",
 })
 
 TIPOS_DO: Final[frozendict] = frozendict(
@@ -231,6 +232,7 @@ TIPOS_DO_ADICIONAIS: Final(frozendict) = frozendict({
     "uf_id_ibge": "object",
     "ocorrencia_bairro_id_sim": "object",
     "_nao_documentado_tpassina": "object",
+    "usuario_id_declaracao_nascido_vivo": "object",
 })
 
 COLUNAS_DATA_DDMMAAAA: Final[list[str]] = [
