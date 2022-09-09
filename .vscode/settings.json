@@ -37,6 +37,7 @@
   "conventionalCommits.scopes": [
     "impulsoetl",
     "impulsoprevine",
+    "sim",
     "sisab",
     "sia",
     "sih",
@@ -45,7 +46,6 @@
   "cSpell.diagnosticLevel": "Hint",
 
   "cSpell.language": "en,pt,pt_BR","cSpell.languageSettings": [
-    // This one works with python
     {
         "languageId": "python",
         "ignoreRegExpList": [

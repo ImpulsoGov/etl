@@ -53,7 +53,7 @@ BR_UFS: FrozenList[str] = FrozenList(
 
 
 ufs = tabelas["listas_de_codigos.ufs"]
-municipios = tabelas["listas_de_codigos.municipios"]
+unidades_geograficas = tabelas["listas_de_codigos.unidades_geograficas"]
 
 
 @lru_cache(27)
@@ -84,7 +84,7 @@ def id_sus_para_id_impulso(sessao: Session, id_sus: str | int) -> str:
     Argumentos:
         sessao: objeto [`sqlalchemy.orm.session.Session`][] que permite
             acessar a base de dados da ImpulsoGov.
-        id_sus: Código de sete dígitos utilizado para identificar o município
+        id_sus: Código de seis dígitos utilizado para identificar o município
             nos sistemas do SUS.
 
     Retorna:
@@ -93,8 +93,30 @@ def id_sus_para_id_impulso(sessao: Session, id_sus: str | int) -> str:
     [`sqlalchemy.orm.session.Session`]: https://docs.sqlalchemy.org/en/14/orm/session_api.html#sqlalchemy.orm.Session
     """
     return (
-        sessao.query(municipios.c.id)
-        .filter(municipios.c.id_sus == str(id_sus))
+        sessao.query(unidades_geograficas.c.id)
+        .filter(unidades_geograficas.c.id_sus == str(id_sus))
+        .one()[0]
+    )
+
+
+@lru_cache(5570)
+def id_sim_para_id_impulso(sessao: Session, id_sim: str | int) -> str:
+    """Converte identificador SUS do município para o usado no BD da Impulso.
+
+    Argumentos:
+        sessao: objeto [`sqlalchemy.orm.session.Session`][] que permite
+            acessar a base de dados da ImpulsoGov.
+        id_sim: Código de seis dígitos utilizado para identificar o município
+            no Sistema de Informação sobre Mortalidade do SUS (SIM).
+
+    Retorna:
+        Identificador único do município no banco de dados da ImpulsoGov.
+
+    [`sqlalchemy.orm.session.Session`]: https://docs.sqlalchemy.org/en/14/orm/session_api.html#sqlalchemy.orm.Session
+    """
+    return (
+        sessao.query(unidades_geograficas.c.id)
+        .filter(unidades_geograficas.c.id_sim == str(id_sim))
         .one()[0]
     )
 
@@ -116,7 +138,7 @@ def id_impulso_para_id_sus(sessao: Session, id_impulso: str) -> str:
     [`sqlalchemy.orm.session.Session`]: https://docs.sqlalchemy.org/en/14/orm/session_api.html#sqlalchemy.orm.Session
     """
     return (
-        sessao.query(municipios.c.id_sus)
-        .filter(municipios.c.id == str(id_impulso))
+        sessao.query(unidades_geograficas.c.id_sus)
+        .filter(unidades_geograficas.c.id == str(unidades_geograficas))
         .one()[0]
     )

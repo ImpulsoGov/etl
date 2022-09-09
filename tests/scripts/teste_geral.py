@@ -11,6 +11,7 @@ import pytest
 from impulsoetl.scripts.geral import (
     ceps,
     habilitacoes_disseminacao,
+    obitos_disseminacao,
     vinculos_disseminacao,
 )
 
@@ -25,6 +26,12 @@ def teste_habilitacoes_disseminacao(sessao):
 def teste_vinculos_disseminacao(sessao):
     """Testa obter vínculos profissionais do SCNES."""
     vinculos_disseminacao(sessao=sessao, teste=True)
+
+
+@pytest.mark.integracao
+def teste_obitos_disseminacao(sessao):
+    """Testa obter declarações de óbito do SIM."""
+    obitos_disseminacao(sessao=sessao, teste=True)
 
 
 @pytest.mark.integracao
