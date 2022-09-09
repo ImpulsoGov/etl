@@ -127,6 +127,12 @@ DE_PARA_DO_ADICIONAIS: Final[frozendict] = frozendict({
     "CODBAIOCOR": "ocorrencia_bairro_id_sim",
     "TPASSINA": "_nao_documentado_tpassina",
     "NUMERODN": "usuario_id_declaracao_nascido_vivo",
+    "DTRECORIG": "recebimento_original_data_tratamento",
+    "CODMUNCART": "cartorio_municipio_id_sim",
+    "CODCART": "_nao_documentado_codcart",
+    "NUMREGCART": "_nao_documentado_numregcart",
+    "DTREGCART": "_nao_documentado_dtregcart",
+    "EXPDIFDATA": "_nao_documentado_expdifdata",
 })
 
 TIPOS_DO: Final[frozendict] = frozendict(
@@ -207,6 +213,7 @@ TIPOS_DO_ADICIONAIS: Final(frozendict) = frozendict({
     "recebimento_data": "datetime64[ns]",
     "atestado_condicoes_ids_cid10": "object",
     "recebimento_original_data": "datetime64[ns]",
+    "recebimento_original_data_tratamento": "datetime64[ns]",
     "causa_externa_id_cid10": "object",
     "mae_escolaridade_agregada_id_sim": "object",
     "usuario_escolaridade_agregada_id_sim": "object",
@@ -233,6 +240,11 @@ TIPOS_DO_ADICIONAIS: Final(frozendict) = frozendict({
     "ocorrencia_bairro_id_sim": "object",
     "_nao_documentado_tpassina": "object",
     "usuario_id_declaracao_nascido_vivo": "object",
+    "cartorio_municipio_id_sim": "object",
+    "_nao_documentado_codcart": "object",
+    "_nao_documentado_numregcart": "object",
+    "_nao_documentado_dtregcart": "object",
+    "_nao_documentado_expdifdata": "object",
 })
 
 COLUNAS_DATA_DDMMAAAA: Final[list[str]] = [
@@ -243,6 +255,7 @@ COLUNAS_DATA_DDMMAAAA: Final[list[str]] = [
     "cadastro_data",
     "recebimento_data",
     "recebimento_original_data",
+    "recebimento_original_data_tratamento",
     "investigacao_cadastro_data",
     "investigacao_conclusao_data",
     "conclusao_data",
@@ -480,6 +493,7 @@ def transformar_do(
                 "unidade_geografica_id_sim",
                 "usuario_nascimento_municipio_id_sim",
                 "usuario_residencia_municipio_id_sim",
+                "cartorio_municipio_id_sim",
             ],
             function=lambda id_ibge_ou_sus: (
                 id_ibge_ou_sus[0:min(6, len(id_ibge_ou_sus))]
@@ -532,6 +546,7 @@ def transformar_do(
                 "fontes_combinacao_id_sim",
                 "investigacao_desfecho_id_sim",
                 "investigacao_esfera_id_sim",
+                "cartorio_municipio_id_sim",
             ],
             function=lambda elemento: (
                 np.nan

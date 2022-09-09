@@ -172,7 +172,7 @@ def teste_transformar_do(sessao, do, condicoes, tabela_teste):
         assert (
             col in colunas_esperadas
         ), "Coluna '{}' não definida na tabela de destino.".format(col)
-        if "data" in col:
+        if "data" in col and not col.startswith("_nao_documentado"):
             assert (
                 str(do_transformada[col].dtype) == "datetime64[ns]"
             ), "Coluna de data com tipo incorreto: '{}'".format(col)
