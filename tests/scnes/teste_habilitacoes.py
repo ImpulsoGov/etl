@@ -2,7 +2,8 @@
 #
 # SPDX-License-Identifier: MIT
 
-"""Casos de teste para o ETL de procedimentos ambulatoriais."""
+
+"""Casos de teste para o ETL de habilitações de estabelecimentos no SCNES."""
 
 
 import re
@@ -12,131 +13,124 @@ import pandas as pd
 import pytest
 
 from impulsoetl.bd import tabelas
-from impulsoetl.siasus.procedimentos import (
+from impulsoetl.scnes.habilitacoes import (
     COLUNAS_DATA_AAAAMM,
-    DE_PARA_PA,
-    TIPOS_PA,
-    extrair_pa,
-    obter_pa,
-    transformar_pa,
+    DE_PARA_HABILITACOES,
+    TIPOS_HABILITACOES,
+    extrair_habilitacoes,
+    obter_habilitacoes,
+    transformar_habilitacoes,
 )
 from impulsoetl.utilitarios.bd import carregar_dataframe
 
 
 @pytest.fixture(scope="module")
-def _pa():
-    return pd.read_parquet("tests/siasus/SIA_PASE2108_.parquet")
+def _habilitacoes():
+    return pd.read_parquet("CNES_HBSE2111_.parquet")
 
 
 @pytest.fixture(scope="function")
-def pa(_pa):
-    return _pa.copy()
+def habilitacoes(_habilitacoes):
+    return _habilitacoes.copy()
 
 
 @pytest.fixture(scope="module")
-def _pa_transformada():
-    return pd.read_parquet("tests/siasus/pa_transformada.parquet")
+def _habilitacoes_transformado():
+    return pd.read_parquet("tests/scnes/habilitacoes_transformado.parquet")
 
 
 @pytest.fixture(scope="function")
-def pa_transformada(_pa_transformada):
-    return _pa_transformada.copy()
+def habilitacoes_transformado(_habilitacoes_transformado):
+    return _habilitacoes_transformado.copy()
 
 
 @pytest.fixture(scope="function")
 def tabela_teste(sessao):
     try:
         # copiar estrutura da tabela original
+        # DUVIDA: __scnes_habilitacoes_disseminacao já existe?
         sessao.execute(
-            "create table dados_publicos.__siasus_procedimentos_ambulatoriais ("
-            + "like dados_publicos._siasus_procedimentos_ambulatoriais "
+            "create table "
+            + "dados_publicos.__scnes_habilitacoes_disseminacao ("
+            + "like dados_publicos.scnes_habilitacoes_disseminacao "
             + "including all"
             + ");",
         )
         sessao.commit()
-        yield "dados_publicos.__siasus_procedimentos_ambulatoriais"
+        yield "dados_publicos.__scnes_habilitacoes_disseminacao"
     finally:
         sessao.rollback()
         sessao.execute(
             "drop table if exists "
-            + "dados_publicos.__siasus_procedimentos_ambulatoriais;",
+            + "dados_publicos.__scnes_habilitacoes_disseminacao;",
         )
         sessao.commit()
 
 
-def teste_de_para(pa):
-    colunas_origem = [col.strip() for col in pa.columns]
-    colunas_de = list(DE_PARA_PA.keys())
+def teste_de_para(habilitacoes):
+    colunas_origem = [col.strip() for col in habilitacoes.columns]
+    colunas_de = list(DE_PARA_HABILITACOES.keys())
 
     for col in colunas_de:
         assert col in colunas_origem, (
-            "Coluna no De-Para não existe no arquivo de procedimentos: "
+            "Coluna no De-Para não existe no arquivo de habilitações: "
             + "'{}'".format(col)
         )
     for col in colunas_origem:
         assert col in colunas_de, (
-            "Coluna existente no arquivo de procedimentos não encontrada no "
+            "Coluna existente no arquivo de habilitações não encontrada no "
             + "De-Para: '{}'".format(col)
         )
 
 
-def teste_tipos(pa):
-    tabela_destino = tabelas[
-        "dados_publicos._siasus_procedimentos_ambulatoriais"
-    ]
+def teste_tipos(habilitacoes):
+    tabela_destino = tabelas["dados_publicos.scnes_habilitacoes_disseminacao"]
     colunas_destino = tabela_destino.columns
 
-    for col in TIPOS_PA.keys():
+    for col in TIPOS_HABILITACOES.keys():
         assert (
             col in colunas_destino
         ), "Coluna inexistente na tabela de destino: '{}'".format(col)
     for col in colunas_destino.keys():
-        assert col in TIPOS_PA, "Coluna sem tipo definido: '{}'".format(col)
+        assert (
+            col in TIPOS_HABILITACOES
+        ), "Coluna sem tipo definido: '{}'".format(col)
 
 
 def teste_colunas_datas():
-    assert all(col in TIPOS_PA.keys() for col in COLUNAS_DATA_AAAAMM)
+    assert all(col in TIPOS_HABILITACOES.keys() for col in COLUNAS_DATA_AAAAMM)
 
 
 @pytest.mark.parametrize(
     "uf_sigla,periodo_data_inicio",
-    [
-        ("SE", date(2021, 8, 1)),
-        ("SP", date(2017, 1, 1)),
-    ],
+    [("SE", date(2021, 8, 1))],
 )
 def teste_extrair_pa(uf_sigla, periodo_data_inicio, passo):
-    iterador_registros_procedimentos = extrair_pa(
-        uf_sigla=uf_sigla,
-        periodo_data_inicio=periodo_data_inicio,
-        passo=passo,
+    iterador_registros_procedimentos = extrair_habilitacoes(
+        uf_sigla=uf_sigla, periodo_data_inicio=periodo_data_inicio, passo=passo
     )
     lote_1 = next(iterador_registros_procedimentos)
     assert isinstance(lote_1, pd.DataFrame)
     assert len(lote_1) == passo
-    for coluna in DE_PARA_PA.keys():
+    for coluna in DE_PARA_HABILITACOES.keys():
         assert coluna in lote_1
     lote_2 = next(iterador_registros_procedimentos)
     assert isinstance(lote_2, pd.DataFrame)
     assert len(lote_2) > 0
 
 
-@pytest.mark.parametrize(
-    "condicoes",
-    ["PA_UFMUN == '280030'", None],
-)
-def teste_transformar_pa(sessao, pa, condicoes):
-    pa_transformada = transformar_pa(
+@pytest.mark.integracao
+def teste_transformar_habilitacoes(sessao, habilitacoes):
+    habilitacoes_transformado = transformar_habilitacoes(
         sessao=sessao,
-        pa=pa,
-        condicoes=condicoes,
+        habilitacoes=habilitacoes,
     )
 
-    assert isinstance(pa_transformada, pd.DataFrame)
-    assert len(pa_transformada) > 1
+    assert isinstance(habilitacoes_transformado, pd.DataFrame)
+    assert len(habilitacoes_transformado) > 1
 
-    colunas_processadas = pa_transformada.columns
-    colunas_esperadas = list(TIPOS_PA.keys())
+    colunas_processadas = habilitacoes_transformado.columns
+    colunas_esperadas = list(TIPOS_HABILITACOES.keys())
     for col in colunas_processadas:
         assert re.match(
             "[a-z_]+", col
@@ -146,7 +140,7 @@ def teste_transformar_pa(sessao, pa, condicoes):
         ), "Coluna '{}' não definida na tabela de destino.".format(col)
         if "data" in col:
             assert (
-                str(pa_transformada[col].dtype) == "datetime64[ns]"
+                str(habilitacoes_transformado[col].dtype) == "datetime64[ns]"
             ), "Coluna de data com tipo incorreto: '{}'".format(col)
 
     for col in colunas_esperadas:
@@ -155,16 +149,22 @@ def teste_transformar_pa(sessao, pa, condicoes):
         )
 
 
-def teste_carregar_pa(sessao, pa_transformada, caplog, tabela_teste, passo):
-    codigo_saida = carregar_dataframe(
+def teste_carregar_habilitacoes(
+    sessao,
+    habilitacoes_transformado,
+    tabela_teste,
+    passo,
+    caplog,
+):
+    carregamento_status = carregar_dataframe(
         sessao=sessao,
-        df=pa_transformada.iloc[:10],
+        df=habilitacoes_transformado.iloc[:10],
         tabela_destino=tabela_teste,
         passo=passo,
         teste=True,
     )
 
-    assert codigo_saida == 0
+    assert carregamento_status == 0
 
     logs = caplog.text
     assert "Carregamento concluído" in logs
@@ -175,25 +175,19 @@ def teste_carregar_pa(sessao, pa_transformada, caplog, tabela_teste, passo):
     "uf_sigla,periodo_data_inicio",
     [("SE", date(2021, 8, 1))],
 )
-@pytest.mark.parametrize(
-    "parametros",
-    [{"condicoes": "PA_UFMUN == '280030'"}, {}],
-)
-def teste_obter_pa(
+def teste_obter_habilitacoes(
     sessao,
     uf_sigla,
     periodo_data_inicio,
-    caplog,
     tabela_teste,
-    parametros,
+    caplog,
 ):
-    obter_pa(
+    obter_habilitacoes(
         sessao=sessao,
         uf_sigla=uf_sigla,
         periodo_data_inicio=periodo_data_inicio,
         tabela_destino=tabela_teste,
         teste=True,
-        **parametros,
     )
 
     logs = caplog.text

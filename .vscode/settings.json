@@ -37,7 +37,11 @@
   "conventionalCommits.scopes": [
     "impulsoetl",
     "impulsoprevine",
-    "sim"
+    "sim",
+    "sisab",
+    "sia",
+    "sih",
+    "scnes"
   ],
   "cSpell.diagnosticLevel": "Hint",
 

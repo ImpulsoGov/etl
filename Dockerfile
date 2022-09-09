@@ -8,7 +8,7 @@ ENV LANG C.UTF-8
 ENV LC_ALL C.UTF-8
 ENV PYTHONDONTWRITEBYTECODE 1
 ENV PYTHONFAULTHANDLER 1
-ENV POETRY_VIRTUALENVS_CREATE 0
+ENV POETRY_VIRTUALENVS_CREATE 1
 ENV POETRY_VIRTUALENVS_IN_PROJECT 0
 ENV IMPULSOETL_AMBIENTE "producao"
 
@@ -47,4 +47,4 @@ COPY src ./src
 RUN poetry install --no-dev
 
 # Executar o ponto de entrada contendo os scripts
-CMD [ "python3", "src/impulsoetl/__main__.py"]
+CMD [ "poetry", "run", "python3", "-m", "impulsoetl"]

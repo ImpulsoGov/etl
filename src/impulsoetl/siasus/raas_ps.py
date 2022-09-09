@@ -18,7 +18,11 @@ from frozendict import frozendict
 from sqlalchemy.orm import Session
 from uuid6 import uuid7
 
-from impulsoetl.comum.datas import agora_gmt_menos3, periodo_por_data
+from impulsoetl.comum.datas import (
+    agora_gmt_menos3,
+    de_aaaammdd_para_timestamp,
+    periodo_por_data,
+)
 from impulsoetl.comum.geografias import id_sus_para_id_impulso
 from impulsoetl.loggers import logger
 from impulsoetl.utilitarios.bd import carregar_dataframe
@@ -233,7 +237,7 @@ def transformar_raas_ps(
     if condicoes:
         raas_ps = raas_ps.query(condicoes, engine="python")
         logger.info(
-            "Registros após aplicar confições de filtragem: {num_registros}.",
+            "Registros após aplicar condições de filtragem: {num_registros}.",
             num_registros=len(raas_ps),
         )
 
@@ -253,11 +257,7 @@ def transformar_raas_ps(
         )
         .transform_columns(
             COLUNAS_DATA_AAAAMMDD,
-            function=lambda dt: pd.to_datetime(
-                dt,
-                format="%Y%m%d",  # noqa: WPS323
-                errors="coerce",
-            ),
+            function=lambda dt: de_aaaammdd_para_timestamp(dt, erros="coerce"),
         )
         # processar colunas lógicas
         .transform_column(

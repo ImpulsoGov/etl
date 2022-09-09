@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: MIT
 
 
-"""Ferramentas para obter dados de vínculos profissionais a partir do SCNES."""
+"""Ferramentas para obter habilitações dos estabelecimentos no SCNES."""
 
 
 from __future__ import annotations
@@ -27,7 +27,7 @@ from impulsoetl.loggers import logger
 from impulsoetl.utilitarios.bd import carregar_dataframe
 from impulsoetl.utilitarios.datasus_ftp import extrair_dbc_lotes
 
-DE_PARA_VINCULOS: Final[frozendict] = frozendict(
+DE_PARA_HABILITACOES: Final[frozendict] = frozendict(
     {
         "CNES": "estabelecimento_id_scnes",
         "CODUFMUN": "estabelecimento_municipio_id_sus",
@@ -49,30 +49,22 @@ DE_PARA_VINCULOS: Final[frozendict] = frozendict(
         "TURNO_AT": "estabelecimento_turno_id_scnes",
         "NIV_HIER": "estabelecimento_hierarquia_id_scnes",
         "TERCEIRO": "estabelecimento_terceiro",
-        "CPF_PROF": "profissional_id_cpf_criptografado",
-        "CPFUNICO": "profissional_cpf_unico",
-        "CBO": "ocupacao_id_cbo2002",
-        "CBOUNICO": "ocupacao_cbo_unico",
-        "NOMEPROF": "profissional_nome",
-        "CNS_PROF": "profissional_id_cns",
-        "CONSELHO": "profissional_conselho_tipo_id_scnes",
-        "REGISTRO": "profissional_id_conselho",
-        "VINCULAC": "tipo_id_scnes",
-        "VINCUL_C": "contratado",
-        "VINCUL_A": "autonomo",
-        "VINCUL_N": "sem_vinculo_definido",
-        "PROF_SUS": "atendimento_sus",
-        "PROFNSUS": "atendimento_nao_sus",
-        "HORAOUTR": "atendimento_carga_outras",
-        "HORAHOSP": "atendimento_carga_hospitalar",
-        "HORA_AMB": "atendimento_carga_ambulatorial",
+        "COD_CEP": "estabelecimento_cep",
+        "VINC_SUS": "atendimento_sus",
+        "TP_PREST": "prestador_tipo_id_fca",
+        "SGRUPHAB": "habilitacao_id_scnes",
         "COMPETEN": "periodo_data_inicio",
-        "UFMUNRES": "profissional_residencia_municipio_id_sus",
+        "CMPT_INI": "vigencia_data_inicio",
+        "CMPT_FIM": "vigencia_data_fim",
+        "DTPORTAR": "portaria_data",
+        "PORTARIA": "portaria_nome",
+        "MAPORTAR": "portaria_periodo_data_inicio",
+        "NULEITOS": "leitos_quantidade",
         "NAT_JUR": "estabelecimento_natureza_juridica_id_scnes",
     },
 )
 
-TIPOS_VINCULOS: Final[frozendict] = frozendict(
+TIPOS_HABILITACOES: Final[frozendict] = frozendict(
     {
         "id": "object",
         "unidade_geografica_id": "object",
@@ -89,34 +81,26 @@ TIPOS_VINCULOS: Final[frozendict] = frozendict(
         "estabelecimento_mantido": "boolean",
         "estabelecimento_mantenedora_id_cnpj": "object",
         "estabelecimento_esfera_id_scnes": "object",
-        "estabelecimento_atividade_ensino_id_scnes": "object",
         "estabelecimento_tributos_retencao_id_scnes": "object",
         "estabelecimento_natureza_id_scnes": "object",
-        "estabelecimento_tipo_id_scnes": "object",
         "estabelecimento_fluxo_id_scnes": "object",
+        "estabelecimento_atividade_ensino_id_scnes": "object",
+        "estabelecimento_tipo_id_scnes": "object",
         "estabelecimento_turno_id_scnes": "object",
         "estabelecimento_hierarquia_id_scnes": "object",
         "estabelecimento_terceiro": "boolean",
-        "profissional_id_cpf_criptografado": "object",
-        "profissional_cpf_unico": "object",
-        "ocupacao_id_cbo2002": "object",
-        "ocupacao_cbo_unico": "object",
-        "profissional_nome": "object",
-        "profissional_id_cns": "object",
-        "profissional_conselho_tipo_id_scnes": "object",
-        "profissional_id_conselho": "object",
-        "tipo_id_scnes": "object",
-        "contratado": "boolean",
-        "autonomo": "boolean",
-        "sem_vinculo_definido": "boolean",
         "atendimento_sus": "boolean",
-        "atendimento_nao_sus": "boolean",
-        "atendimento_carga_outras": "int64",
-        "atendimento_carga_hospitalar": "int64",
-        "atendimento_carga_ambulatorial": "int64",
+        "prestador_tipo_id_fca": "object",
+        "habilitacao_id_scnes": "object",
+        "vigencia_data_inicio": "datetime64[ns]",
+        "vigencia_data_fim": "datetime64[ns]",
+        "portaria_data": "datetime64[ns]",
+        "portaria_nome": "object",
+        "portaria_periodo_data_inicio": "datetime64[ns]",
+        "leitos_quantidade": "int64",
         "periodo_data_inicio": "datetime64[ns]",
-        "profissional_residencia_municipio_id_sus": "object",
         "estabelecimento_natureza_juridica_id_scnes": "object",
+        "estabelecimento_cep": "object",
         "criacao_data": "datetime64[ns]",
         "atualizacao_data": "datetime64[ns]",
     },
@@ -126,12 +110,14 @@ COLUNAS_DATA_AAAAMM: Final[list[str]] = [
     "periodo_data_inicio",
     "vigencia_data_inicio",
     "vigencia_data_fim",
-    "portaria_periodo_data_inicio"
+    "portaria_periodo_data_inicio",
 ]
+
+COLUNAS_DATA_AAAAMMDD: Final[list[str]] = ["portaria_data"]
 
 COLUNAS_NUMERICAS: Final[list[str]] = [
     nome_coluna
-    for nome_coluna, tipo_coluna in TIPOS_VINCULOS.items()
+    for nome_coluna, tipo_coluna in TIPOS_HABILITACOES.items()
     if tipo_coluna.lower() == "int64" or tipo_coluna.lower() == "float64"
 ]
 
@@ -155,15 +141,15 @@ def _romano_para_inteiro(texto: str) -> str | float:
         return texto
 
 
-def extrair_vinculos(
+def extrair_habilitacoes(
     uf_sigla: str,
     periodo_data_inicio: date,
     passo: int = 10000,
 ) -> Generator[pd.DataFrame, None, None]:
-    """Extrai registros de vínculos profissionais do FTP do DataSUS.
+    """Extrai registros de habilitações de estabelecimentos do FTP do DataSUS.
 
     Argumentos:
-        uf_sigla: Sigla da Unidade Federativa cujos procedimentos se pretende
+        uf_sigla: Sigla da Unidade Federativa cujos estabelecimentos se pretende
             obter.
         periodo_data_inicio: Dia de início da competência desejada,
             representado como um objeto [`datetime.date`][].
@@ -180,8 +166,8 @@ def extrair_vinculos(
 
     return extrair_dbc_lotes(
         ftp="ftp.datasus.gov.br",
-        caminho_diretorio="/dissemin/publicos/CNES/200508_/Dados/PF",
-        arquivo_nome="PF{uf_sigla}{periodo_data_inicio:%y%m}.dbc".format(
+        caminho_diretorio="/dissemin/publicos/CNES/200508_/Dados/HB",
+        arquivo_nome="HB{uf_sigla}{periodo_data_inicio:%y%m}.dbc".format(
             uf_sigla=uf_sigla,
             periodo_data_inicio=periodo_data_inicio,
         ),
@@ -189,48 +175,59 @@ def extrair_vinculos(
     )
 
 
-def transformar_vinculos(
+def transformar_habilitacoes(
     sessao: Session,
-    vinculos: pd.DataFrame,
+    habilitacoes: pd.DataFrame,
 ) -> pd.DataFrame:
-    """Transforma um `DataFrame` de vínculos do SCNES.
+    """Transforma um `DataFrame` de habilitações do SCNES.
 
-    Argumentos:
-        sessao: objeto [`sqlalchemy.orm.session.Session`][] que permite
-            acessar a base de dados da ImpulsoGov.
-        vinculos: [`DataFrame`][] contendo os dados a serem transformados
-            (conforme retornado pela função
-            [`pysus.online_data.CNES.download()`][] com o argumento
-            `group='PF'`).
+        Argumentos:
+            sessao: objeto [`sqlalchemy.orm.session.Session`][] que permite
+                acessar a base de dados da ImpulsoGov.
+            habilitações: [`DataFrame`][] contendo os dados a serem transformados
+                (conforme retornado pela função
+                [`pysus.online_data.CNES.download()`][] com o argumento
+                `group='PF'`).
+    ß
+        Retorna:
+            Um [`DataFrame`][] com dados de habilitações de estabelecimentos tratados para
+            inserção no banco de dados da ImpulsoGov.
 
-    Retorna:
-        Um [`DataFrame`][] com dados de vínculos profissionais tratados para
-        inserção no banco de dados da ImpulsoGov.
-
-    [`sqlalchemy.orm.session.Session`]: https://docs.sqlalchemy.org/en/14/orm/session_api.html#sqlalchemy.orm.Session
-    [`DataFrame`]: https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html
-    [`pysus.online_data.CNES.download()`]: http://localhost:9090/@https://github.com/AlertaDengue/PySUS/blob/600c61627b7998a1733b71ac163b3de71324cfbe/pysus/online_data/CNES.py#L28
+        [`sqlalchemy.orm.session.Session`]: https://docs.sqlalchemy.org/en/14/orm/session_api.html#sqlalchemy.orm.Session
+        [`DataFrame`]: https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html
+        [`pysus.online_data.CNES.download()`]: http://localhost:9090/@https://github.com/AlertaDengue/PySUS/blob/600c61627b7998a1733b71ac163b3de71324cfbe/pysus/online_data/CNES.py#L28
     """
     logger.info(
-        "Transformando DataFrame com {num_registros} vínculos "
-        + "profissionais do SCNES.",
-        num_registros=len(vinculos),
+        "Transformando DataFrame com {num_registros} habilitações "
+        + "de estabelecimentos do SCNES.",
+        num_registros=len(habilitacoes),
     )
     logger.debug(
         "Memória ocupada pelo DataFrame original:  {memoria_usada:.2f} mB.",
-        memoria_usada=vinculos.memory_usage(deep=True).sum() / 10 ** 6,
+        memoria_usada=habilitacoes.memory_usage(deep=True).sum() / 10**6,
     )
-    vinculos_transformado = (
-        vinculos  # noqa: WPS221  # ignorar linha complexa no pipeline
+    habilitacoes_transformado = (
+        habilitacoes  # noqa: WPS221  # ignorar linha complexa no pipeline
         # renomear colunas
         .rename_columns(function=lambda col: col.strip())
-        .rename_columns(DE_PARA_VINCULOS)
+        .rename_columns(DE_PARA_HABILITACOES)
+        # adicionar datas de inserção e atualização
+        .add_column("criacao_data", agora_gmt_menos3())
+        .add_column("atualizacao_data", agora_gmt_menos3())
         # processar colunas com datas
         .transform_columns(
             COLUNAS_DATA_AAAAMM,
             function=lambda dt: pd.to_datetime(
                 dt,
                 format="%Y%m",
+                errors="coerce",
+            ),
+        )
+        .transform_columns(
+            COLUNAS_DATA_AAAAMMDD,
+            function=lambda dt: pd.to_datetime(
+                dt,
+                format="%d/%m/%Y",
                 errors="coerce",
             ),
         )
@@ -257,15 +254,6 @@ def transformar_vinculos(
             "estabelecimento_microrregiao_saude_id_sus",
             lambda id_sus: (id_sus.zfill(6) if pd.notna(id_sus) else np.nan),
         )
-        # limpar registros no conselho profissional
-        .transform_column(
-            "profissional_id_conselho",
-            lambda id_conselho: (
-                re.sub("[^0-9]", "", id_conselho)
-                if pd.notna(id_conselho)
-                else np.nan
-            ),
-        )
         # tratar como NA colunas com valores nulos
         .replace("", np.nan)
         .transform_columns(
@@ -276,8 +264,6 @@ def transformar_vinculos(
                 "estabelecimento_distrito_administrativo_id_sus",
                 "estabelecimento_id_cpf_cnpj",
                 "estabelecimento_mantenedora_id_cnpj",
-                "profissional_id_conselho",
-                "profissional_residencia_municipio_id_sus",
             ],
             function=lambda elemento: (
                 np.nan
@@ -294,11 +280,7 @@ def transformar_vinculos(
         .transform_columns(
             [
                 "estabelecimento_terceiro",
-                "contratado",
-                "autonomo",
-                "sem_vinculo_definido",
                 "atendimento_sus",
-                "atendimento_nao_sus",
             ],
             function=_para_booleano,
         )
@@ -320,27 +302,24 @@ def transformar_vinculos(
             ),
             dest_column_name="unidade_geografica_id",
         )
-        # adicionar datas de inserção e atualização
-        .add_column("criacao_data", agora_gmt_menos3())
-        .add_column("atualizacao_data", agora_gmt_menos3())
         # garantir tipos
         .change_type(
             # HACK: ver https://github.com/pandas-dev/pandas/issues/25472
             COLUNAS_NUMERICAS,
             "float",
         )
-        .astype(TIPOS_VINCULOS)
+        .astype(TIPOS_HABILITACOES)
     )
     logger.debug(
         "Memória ocupada pelo DataFrame transformado: {memoria_usada:.2f} mB.",
         memoria_usada=(
-            vinculos_transformado.memory_usage(deep=True).sum() / 10 ** 6
+            habilitacoes_transformado.memory_usage(deep=True).sum() / 10**6
         ),
     )
-    return vinculos_transformado
+    return habilitacoes_transformado
 
 
-def obter_vinculos(
+def obter_habilitacoes(
     sessao: Session,
     uf_sigla: str,
     periodo_data_inicio: date,
@@ -348,13 +327,13 @@ def obter_vinculos(
     teste: bool = False,
     **kwargs,
 ) -> None:
-    """Baixa, transforma e carrega dados de vinculos profissionais.
+    """Baixa, transforma e carrega dados de habilitações.
 
     Argumentos:
         sessao: objeto [`sqlalchemy.orm.session.Session`][] que permite
             acessar a base de dados da ImpulsoGov.
-        uf_sigla: Sigla da Unidade Federativa cujos vínculos profissionais se
-            pretende obter.
+        uf_sigla: Sigla da Unidade Federativa onde se encontram os 
+            estabelecimentos cujas habilitações se pretende obter.
         periodo_data_inicio: Dia de início da competência desejada,
             representado como um objeto [`datetime.date`][].
         tabela_destino: nome da tabela de destino, qualificado com o nome do
@@ -370,7 +349,7 @@ def obter_vinculos(
     [`datetime.date`]: https://docs.python.org/3/library/datetime.html#date-objects
     """
     logger.info(
-        "Iniciando captura de vínculos profissionais para Unidade "
+        "Iniciando captura de habilitacoes da Unidade "
         + "Federativa '{}' na competencia de {:%m/%Y}.",
         uf_sigla,
         periodo_data_inicio,
@@ -379,22 +358,22 @@ def obter_vinculos(
     # obter tamanho do lote de processamento
     passo = int(os.getenv("IMPULSOETL_LOTE_TAMANHO", 100000))
 
-    vinculos_lotes = extrair_vinculos(
+    habilitacoes_lotes = extrair_habilitacoes(
         uf_sigla=uf_sigla,
         periodo_data_inicio=periodo_data_inicio,
         passo=passo,
     )
 
     contador = 0
-    for vinculos_lote in vinculos_lotes:
-        vinculos_transformada = transformar_vinculos(
+    for habilitacoes_lote in habilitacoes_lotes:
+        habilitacoes_transformada = transformar_habilitacoes(
             sessao=sessao,
-            vinculos=vinculos_lote,
+            habilitacoes=habilitacoes_lote,
         )
 
         carregamento_status = carregar_dataframe(
             sessao=sessao,
-            df=vinculos_transformada,
+            df=habilitacoes_transformada,
             tabela_destino=tabela_destino,
             passo=None,
             teste=teste,
@@ -404,7 +383,7 @@ def obter_vinculos(
                 "Execução interrompida em razão de um erro no "
                 + "carregamento."
             )
-        contador += len(vinculos_transformada)
+        contador += len(habilitacoes_transformada)
         if teste and contador > 1000:
             logger.info("Execução interrompida para fins de teste.")
             break
