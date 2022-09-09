@@ -170,7 +170,7 @@ def bpa_i_disseminacao(
     )
     operacao_ids = [
         "50d46e1c-7fb3-4fbb-b495-825ff1f397d9",
-        "063000e1-93e2-7c23-9bd0-1f0e7cf59178"
+        "063000e1-93e2-7c23-9bd0-1f0e7cf59178",
     ]
     agendamentos_bpa_i = (
         sessao.query(agendamentos)

@@ -75,7 +75,7 @@ def teste_de_para(aih_rd):
             "Coluna no De-Para não existe no arquivo de internações: "
             + "'{}'".format(col)
         )
-    
+
     colunas_de += list(DE_PARA_AIH_RD_ADICIONAIS.keys())
     for col in colunas_origem:
         assert col in colunas_de, (
@@ -123,9 +123,8 @@ def teste_extrair_aih_rd(uf_sigla, periodo_data_inicio, passo):
     for coluna in DE_PARA_AIH_RD.keys():
         assert coluna in lote_1
     for coluna in lote_1.columns:
-        assert (
-            (coluna in DE_PARA_AIH_RD)
-            or (coluna in DE_PARA_AIH_RD_ADICIONAIS)
+        assert (coluna in DE_PARA_AIH_RD) or (
+            coluna in DE_PARA_AIH_RD_ADICIONAIS
         )
     lote_2 = next(iterador_registros_procedimentos)
     assert isinstance(lote_2, pd.DataFrame)
