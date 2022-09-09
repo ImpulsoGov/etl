@@ -27,7 +27,6 @@ from impulsoetl.loggers import logger
 from impulsoetl.utilitarios.bd import carregar_dataframe
 from impulsoetl.utilitarios.datasus_ftp import extrair_dbc_lotes
 
-
 DE_PARA_DO: Final[frozendict] = frozendict(
     {
         "TIPOBITO": "tipo_id_sim",
@@ -71,69 +70,71 @@ DE_PARA_DO: Final[frozendict] = frozendict(
     },
 )
 
-DE_PARA_DO_ADICIONAIS: Final[frozendict] = frozendict({
-    "ORIGEM": "origem_id_sim",
-    "HORAOBITO": "ocorrencia_hora",
-    "CODMUNNATU": "usuario_nascimento_municipio_id_sim",
-    "ESC2010": "usuario_escolaridade_id_sim2010",
-    "SERIESCFAL": "usuario_escolaridade_serie",
-    "CODESTAB": "estabelecimento_id_scnes",
-    "ESTABDESCR": "_nao_documentado_estabdescr",
-    "ESCMAE2010": "mae_escolaridade_id_sim2010",
-    "SERIESCMAE": "mae_escolaridade_serie",
-    "SEMAGESTAC": "gestacao_semanas",
-    "TPMORTEOCO": "gestacao_situacao_id_sim2012",
-    "CB_PRE": "causa_basica_resselecao_antes_localidade_id_cid10",
-    "COMUNSVOIM": "svo_iml_municipio_id_sim",
-    "DTATESTADO": "atestado_data",
-    "NUMEROLOTE": "lote_id_sim",
-    "TPPOS": "investigacao_houve",
-    "DTINVESTIG": "investigacao_data",
-    "CAUSABAS_O": "causa_basica_resselecao_antes_id_cid10",
-    "DTCADASTRO": "cadastro_data",
-    "ATESTANTE": "atestado_atestante_tipo_id_sim",
-    "STCODIFICA": "sistema_instalacao_codificadora",
-    "CODIFICADO": "declaracao_codificada",
-    "VERSAOSIST": "sistema_versao",
-    "VERSAOSCB": "causa_basica_seletor_versao",
-    "FONTEINV": "investigacao_fonte_id_sim",
-    "DTRECEBIM": "recebimento_data",
-    "ATESTADO": "atestado_condicoes_ids_cid10",
-    "DTRECORIGA": "recebimento_original_data",
-    "CAUSAMAT": "causa_externa_id_cid10",
-    "ESCMAEAGR1": "mae_escolaridade_agregada_id_sim",
-    "ESCFALAGR1": "usuario_escolaridade_agregada_id_sim",
-    "STDOEPIDEM": "declaracao_modelo_epidemiologica",
-    "STDONOVA": "declaracao_modelo_novo",
-    "DIFDATA": "recebimento_original_intervalo",
-    "NUDIASOBCO": "investigacao_duracao",
-    "NUDIASOBIN": "_nao_documentado_nudiasobin",
-    "DTCADINV": "investigacao_cadastro_data",
-    "TPOBITOCOR": "gestacao_situacao_id_sim2009",
-    "DTCONINV": "investigacao_conclusao_data",
-    "FONTES": "fontes_combinacao_id_sim",
-    "TPRESGINFO": "investigacao_desfecho_id_sim",
-    "TPNIVELINV": "investigacao_esfera_id_sim",
-    "NUDIASINF": "_nao_documentado_nudiasinf",
-    "DTCADINF": "_nao_documentado_dtcadinf",
-    "MORTEPARTO": "_nao_documentado_morteparto",
-    "DTCONCASO": "conclusao_data",
-    "FONTESINF": "_nao_documentado_fontesinf",
-    "ALTCAUSA": "investigacao_gerou_alteracao",
-    "CONTADOR": "_nao_documentado_contador",
-    "CRM": "atestado_atestante_id_crm",
-    "CODBAIRES": "usuario_residencia_bairro_id_sim",
-    "UFINFORM": "uf_id_ibge",
-    "CODBAIOCOR": "ocorrencia_bairro_id_sim",
-    "TPASSINA": "_nao_documentado_tpassina",
-    "NUMERODN": "usuario_id_declaracao_nascido_vivo",
-    "DTRECORIG": "recebimento_original_data_tratamento",
-    "CODMUNCART": "cartorio_municipio_id_sim",
-    "CODCART": "_nao_documentado_codcart",
-    "NUMREGCART": "_nao_documentado_numregcart",
-    "DTREGCART": "_nao_documentado_dtregcart",
-    "EXPDIFDATA": "_nao_documentado_expdifdata",
-})
+DE_PARA_DO_ADICIONAIS: Final[frozendict] = frozendict(
+    {
+        "ORIGEM": "origem_id_sim",
+        "HORAOBITO": "ocorrencia_hora",
+        "CODMUNNATU": "usuario_nascimento_municipio_id_sim",
+        "ESC2010": "usuario_escolaridade_id_sim2010",
+        "SERIESCFAL": "usuario_escolaridade_serie",
+        "CODESTAB": "estabelecimento_id_scnes",
+        "ESTABDESCR": "_nao_documentado_estabdescr",
+        "ESCMAE2010": "mae_escolaridade_id_sim2010",
+        "SERIESCMAE": "mae_escolaridade_serie",
+        "SEMAGESTAC": "gestacao_semanas",
+        "TPMORTEOCO": "gestacao_situacao_id_sim2012",
+        "CB_PRE": "causa_basica_resselecao_antes_localidade_id_cid10",
+        "COMUNSVOIM": "svo_iml_municipio_id_sim",
+        "DTATESTADO": "atestado_data",
+        "NUMEROLOTE": "lote_id_sim",
+        "TPPOS": "investigacao_houve",
+        "DTINVESTIG": "investigacao_data",
+        "CAUSABAS_O": "causa_basica_resselecao_antes_id_cid10",
+        "DTCADASTRO": "cadastro_data",
+        "ATESTANTE": "atestado_atestante_tipo_id_sim",
+        "STCODIFICA": "sistema_instalacao_codificadora",
+        "CODIFICADO": "declaracao_codificada",
+        "VERSAOSIST": "sistema_versao",
+        "VERSAOSCB": "causa_basica_seletor_versao",
+        "FONTEINV": "investigacao_fonte_id_sim",
+        "DTRECEBIM": "recebimento_data",
+        "ATESTADO": "atestado_condicoes_ids_cid10",
+        "DTRECORIGA": "recebimento_original_data",
+        "CAUSAMAT": "causa_externa_id_cid10",
+        "ESCMAEAGR1": "mae_escolaridade_agregada_id_sim",
+        "ESCFALAGR1": "usuario_escolaridade_agregada_id_sim",
+        "STDOEPIDEM": "declaracao_modelo_epidemiologica",
+        "STDONOVA": "declaracao_modelo_novo",
+        "DIFDATA": "recebimento_original_intervalo",
+        "NUDIASOBCO": "investigacao_duracao",
+        "NUDIASOBIN": "_nao_documentado_nudiasobin",
+        "DTCADINV": "investigacao_cadastro_data",
+        "TPOBITOCOR": "gestacao_situacao_id_sim2009",
+        "DTCONINV": "investigacao_conclusao_data",
+        "FONTES": "fontes_combinacao_id_sim",
+        "TPRESGINFO": "investigacao_desfecho_id_sim",
+        "TPNIVELINV": "investigacao_esfera_id_sim",
+        "NUDIASINF": "_nao_documentado_nudiasinf",
+        "DTCADINF": "_nao_documentado_dtcadinf",
+        "MORTEPARTO": "_nao_documentado_morteparto",
+        "DTCONCASO": "conclusao_data",
+        "FONTESINF": "_nao_documentado_fontesinf",
+        "ALTCAUSA": "investigacao_gerou_alteracao",
+        "CONTADOR": "_nao_documentado_contador",
+        "CRM": "atestado_atestante_id_crm",
+        "CODBAIRES": "usuario_residencia_bairro_id_sim",
+        "UFINFORM": "uf_id_ibge",
+        "CODBAIOCOR": "ocorrencia_bairro_id_sim",
+        "TPASSINA": "_nao_documentado_tpassina",
+        "NUMERODN": "usuario_id_declaracao_nascido_vivo",
+        "DTRECORIG": "recebimento_original_data_tratamento",
+        "CODMUNCART": "cartorio_municipio_id_sim",
+        "CODCART": "_nao_documentado_codcart",
+        "NUMREGCART": "_nao_documentado_numregcart",
+        "DTREGCART": "_nao_documentado_dtregcart",
+        "EXPDIFDATA": "_nao_documentado_expdifdata",
+    }
+)
 
 TIPOS_DO: Final[frozendict] = frozendict(
     {
@@ -183,69 +184,71 @@ TIPOS_DO: Final[frozendict] = frozendict(
     },
 )
 
-TIPOS_DO_ADICIONAIS: Final(frozendict) = frozendict({
-    "origem_id_sim": "object",
-    "ocorrencia_hora": "object",  # pandas não tem tipo apropriado p/ hora
-    "atestado_atestante_id_crm": "object",
-    "usuario_nascimento_municipio_id_sim": "object",
-    "usuario_escolaridade_id_sim2010": "object",
-    "usuario_escolaridade_serie": "object",
-    "estabelecimento_id_scnes": "object",
-    "_nao_documentado_estabdescr": "object",
-    "mae_escolaridade_id_sim2010": "object",
-    "mae_escolaridade_serie": "object",
-    "gestacao_semanas": "Int64",
-    "gestacao_situacao_id_sim2012": "object",
-    "causa_basica_resselecao_antes_localidade_id_cid10": "object",
-    "svo_iml_municipio_id_sim": "object",
-    "atestado_data": "datetime64[ns]",
-    "lote_id_sim": "object",
-    "investigacao_houve": "boolean",
-    "investigacao_data": "datetime64[ns]",
-    "causa_basica_resselecao_antes_id_cid10": "object",
-    "cadastro_data": "datetime64[ns]",
-    "atestado_atestante_tipo_id_sim": "object",
-    "sistema_instalacao_codificadora": "boolean",
-    "declaracao_codificada": "boolean",
-    "sistema_versao": "object",
-    "causa_basica_seletor_versao": "object",
-    "investigacao_fonte_id_sim": "object",
-    "recebimento_data": "datetime64[ns]",
-    "atestado_condicoes_ids_cid10": "object",
-    "recebimento_original_data": "datetime64[ns]",
-    "recebimento_original_data_tratamento": "datetime64[ns]",
-    "causa_externa_id_cid10": "object",
-    "mae_escolaridade_agregada_id_sim": "object",
-    "usuario_escolaridade_agregada_id_sim": "object",
-    "declaracao_modelo_epidemiologica": "boolean",
-    "declaracao_modelo_novo": "boolean",
-    "recebimento_original_intervalo": "object",  # intervalo
-    "investigacao_duracao": "object",  # intervalo
-    "_nao_documentado_nudiasobin": "object",
-    "investigacao_cadastro_data": "datetime64[ns]",
-    "gestacao_situacao_id_sim2009": "object",
-    "investigacao_conclusao_data": "datetime64[ns]",
-    "fontes_combinacao_id_sim": "object",
-    "investigacao_desfecho_id_sim": "object",
-    "investigacao_esfera_id_sim": "object",
-    "_nao_documentado_nudiasinf": "object",
-    "_nao_documentado_dtcadinf": "object",
-    "_nao_documentado_morteparto": "object",
-    "conclusao_data": "datetime64[ns]",
-    "_nao_documentado_fontesinf": "object",
-    "investigacao_gerou_alteracao": "boolean",
-    "_nao_documentado_contador": "object",
-    "usuario_residencia_bairro_id_sim": "object",
-    "uf_id_ibge": "object",
-    "ocorrencia_bairro_id_sim": "object",
-    "_nao_documentado_tpassina": "object",
-    "usuario_id_declaracao_nascido_vivo": "object",
-    "cartorio_municipio_id_sim": "object",
-    "_nao_documentado_codcart": "object",
-    "_nao_documentado_numregcart": "object",
-    "_nao_documentado_dtregcart": "object",
-    "_nao_documentado_expdifdata": "object",
-})
+TIPOS_DO_ADICIONAIS: Final[frozendict] = frozendict(
+    {
+        "origem_id_sim": "object",
+        "ocorrencia_hora": "object",  # pandas não tem tipo apropriado p/ hora
+        "atestado_atestante_id_crm": "object",
+        "usuario_nascimento_municipio_id_sim": "object",
+        "usuario_escolaridade_id_sim2010": "object",
+        "usuario_escolaridade_serie": "object",
+        "estabelecimento_id_scnes": "object",
+        "_nao_documentado_estabdescr": "object",
+        "mae_escolaridade_id_sim2010": "object",
+        "mae_escolaridade_serie": "object",
+        "gestacao_semanas": "Int64",
+        "gestacao_situacao_id_sim2012": "object",
+        "causa_basica_resselecao_antes_localidade_id_cid10": "object",
+        "svo_iml_municipio_id_sim": "object",
+        "atestado_data": "datetime64[ns]",
+        "lote_id_sim": "object",
+        "investigacao_houve": "boolean",
+        "investigacao_data": "datetime64[ns]",
+        "causa_basica_resselecao_antes_id_cid10": "object",
+        "cadastro_data": "datetime64[ns]",
+        "atestado_atestante_tipo_id_sim": "object",
+        "sistema_instalacao_codificadora": "boolean",
+        "declaracao_codificada": "boolean",
+        "sistema_versao": "object",
+        "causa_basica_seletor_versao": "object",
+        "investigacao_fonte_id_sim": "object",
+        "recebimento_data": "datetime64[ns]",
+        "atestado_condicoes_ids_cid10": "object",
+        "recebimento_original_data": "datetime64[ns]",
+        "recebimento_original_data_tratamento": "datetime64[ns]",
+        "causa_externa_id_cid10": "object",
+        "mae_escolaridade_agregada_id_sim": "object",
+        "usuario_escolaridade_agregada_id_sim": "object",
+        "declaracao_modelo_epidemiologica": "boolean",
+        "declaracao_modelo_novo": "boolean",
+        "recebimento_original_intervalo": "object",  # intervalo
+        "investigacao_duracao": "object",  # intervalo
+        "_nao_documentado_nudiasobin": "object",
+        "investigacao_cadastro_data": "datetime64[ns]",
+        "gestacao_situacao_id_sim2009": "object",
+        "investigacao_conclusao_data": "datetime64[ns]",
+        "fontes_combinacao_id_sim": "object",
+        "investigacao_desfecho_id_sim": "object",
+        "investigacao_esfera_id_sim": "object",
+        "_nao_documentado_nudiasinf": "object",
+        "_nao_documentado_dtcadinf": "object",
+        "_nao_documentado_morteparto": "object",
+        "conclusao_data": "datetime64[ns]",
+        "_nao_documentado_fontesinf": "object",
+        "investigacao_gerou_alteracao": "boolean",
+        "_nao_documentado_contador": "object",
+        "usuario_residencia_bairro_id_sim": "object",
+        "uf_id_ibge": "object",
+        "ocorrencia_bairro_id_sim": "object",
+        "_nao_documentado_tpassina": "object",
+        "usuario_id_declaracao_nascido_vivo": "object",
+        "cartorio_municipio_id_sim": "object",
+        "_nao_documentado_codcart": "object",
+        "_nao_documentado_numregcart": "object",
+        "_nao_documentado_dtregcart": "object",
+        "_nao_documentado_expdifdata": "object",
+    }
+)
 
 COLUNAS_DATA_DDMMAAAA: Final[list[str]] = [
     "ocorrencia_data",
@@ -357,7 +360,7 @@ def transformar_do(
     )
     logger.debug(
         "Memória ocupada pelo DataFrame original:  {memoria_usada:.2f} mB.",
-        memoria_usada=do.memory_usage(deep=True).sum() / 10 ** 6,
+        memoria_usada=do.memory_usage(deep=True).sum() / 10**6,
     )
 
     # aplica condições de filtragem dos registros
@@ -378,11 +381,13 @@ def transformar_do(
     do_transformada = (
         do  # noqa: WPS221  # ignorar linha complexa no pipeline
         # adicionar colunas faltantes, com valores vazios
-        .add_columns(**{
-            coluna: ""
-            for coluna in DE_PARA_DO_ADICIONAIS.keys()
-            if not (coluna in do.columns)
-        })
+        .add_columns(
+            **{
+                coluna: ""
+                for coluna in DE_PARA_DO_ADICIONAIS.keys()
+                if not (coluna in do.columns)
+            }
+        )
         # renomear colunas
         .rename_columns(de_para)
         # processar colunas com datas
@@ -454,7 +459,7 @@ def transformar_do(
                 "causa_basica_resselecao_antes_localidade_id_cid10",
                 "causa_externa_id_cid10",
             ],
-            function=lambda cids: cids.strip("*/ ")
+            function=lambda cids: cids.strip("*/ "),
         )
         .transform_columns(
             [
@@ -476,16 +481,21 @@ def transformar_do(
             ],
             function=lambda cids: (
                 "{"
-                + ",".join([
-                    cid for cid in re.split("[^a-zA-Z0-9]", cids)
-                    if e_cid10(cid)  # remove texto que não é um CID10 válido
-                ])
+                + ",".join(
+                    [
+                        cid
+                        for cid in re.split("[^a-zA-Z0-9]", cids)
+                        if e_cid10(
+                            cid
+                        )  # remove texto que não é um CID10 válido
+                    ]
+                )
                 + "}"
             ),
         )
         # Processar identificadores que podem ser IBGE ou SUS - antes de 2008,
         # alguns desses campos utilizavam identificadores de municípios do
-        # IBGE (7 dígitos); depois passaram a usar identificadores SUS (6 
+        # IBGE (7 dígitos); depois passaram a usar identificadores SUS (6
         # dígitos).
         .transform_columns(
             [
@@ -496,7 +506,7 @@ def transformar_do(
                 "cartorio_municipio_id_sim",
             ],
             function=lambda id_ibge_ou_sus: (
-                id_ibge_ou_sus[0:min(6, len(id_ibge_ou_sus))]
+                id_ibge_ou_sus[0 : min(6, len(id_ibge_ou_sus))]
                 if id_ibge_ou_sus
                 else np.nan
             ),
@@ -586,7 +596,7 @@ def transformar_do(
     logger.debug(
         "Memória ocupada pelo DataFrame transformado: {memoria_usada:.2f} mB.",
         memoria_usada=(
-            do_transformada.memory_usage(deep=True).sum() / 10 ** 6
+            do_transformada.memory_usage(deep=True).sum() / 10**6
         ),
     )
     return do_transformada

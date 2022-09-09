@@ -26,7 +26,6 @@ from impulsoetl.sim.do import (
 )
 from impulsoetl.utilitarios.bd import carregar_dataframe
 
-
 PERIODOS_IDS: dict[str, str] = {
     "AP1996": "06308e37-6f75-7632-8e6a-62d3bb6b69dd",
     "AC2002": "06308e37-6f76-7988-8baa-6631d4c1f831",
@@ -89,7 +88,7 @@ def teste_de_para(do):
             "Coluna no De-Para não existe no arquivo de Declarações de Óbito: "
             + "'{}'".format(col)
         )
-    
+
     colunas_de += list(DE_PARA_DO_ADICIONAIS.keys())
     for col in colunas_origem:
         assert col in colunas_de, (
