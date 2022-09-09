@@ -200,8 +200,8 @@ def teste_carregar_do(sessao, do_transformada, caplog, tabela_teste, passo):
 
 @pytest.mark.integracao
 @pytest.mark.parametrize(
-    "uf_sigla,periodo_data_inicio",
-    [("RR", date(2020, 1, 1))],
+    "uf_sigla,periodo_data_inicio,periodo_id",
+    [("RR", date(2020, 1, 1), "06308e37-6f7a-76df-9b4e-cc1b394219a6")],
 )
 @pytest.mark.parametrize(
     "parametros",
@@ -214,6 +214,7 @@ def teste_obter_do(
     sessao,
     uf_sigla,
     periodo_data_inicio,
+    periodo_id,
     caplog,
     tabela_teste,
     parametros,
@@ -222,6 +223,7 @@ def teste_obter_do(
         sessao=sessao,
         uf_sigla=uf_sigla,
         periodo_data_inicio=periodo_data_inicio,
+        periodo_id=periodo_id,
         tabela_destino=tabela_teste,
         teste=True,
         **parametros,
