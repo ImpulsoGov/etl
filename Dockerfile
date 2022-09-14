@@ -13,7 +13,10 @@ ENV POETRY_VIRTUALENVS_IN_PROJECT 0
 ENV IMPULSOETL_AMBIENTE "producao"
 
 # atualizar repositórios
-RUN apt-get update -yqq && apt-get upgrade -yqq
+RUN apt-get clean all -qq
+RUN apt-get update -yqq
+RUN apt-get dist-upgrade -yqq
+RUN apt-get autoremove -yqq
 RUN python3 -m pip install --upgrade pip
 
 # Instalar Geckodriver e Firefox-ESR
@@ -21,7 +24,7 @@ RUN apt-get install -yqq curl
 RUN curl -s -L \
     https://github.com/mozilla/geckodriver/releases/download/v0.31.0/geckodriver-v0.31.0-linux64.tar.gz \
     | tar xz -C /usr/local/bin/
-RUN apt-get install -yqq firefox-esr:amd64=91.11.0esr-1~deb11u1
+RUN apt-get install -yqq firefox-esr:amd64=91.13.0esr-1~deb11u1	
 
 # instalar dependências
 RUN apt-get install -yqq git build-essential libssl-dev libffi-dev python3-dev cargo
