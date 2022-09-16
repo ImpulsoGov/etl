@@ -16,6 +16,7 @@ from impulsoetl.siasus.bpa_i import obter_bpa_i
 from impulsoetl.siasus.procedimentos import obter_pa
 from impulsoetl.siasus.raas_ps import obter_raas_ps
 from impulsoetl.sihsus.aih_rd import obter_aih_rd
+from impulsoetl.sinan.violencia import obter_agravos_violencia
 from impulsoetl.sisab.producao import obter_relatorio_producao
 
 agendamentos = tabelas["configuracoes.capturas_agendamentos"]
@@ -297,6 +298,51 @@ def aih_reduzida_disseminacao(
         logger.info("OK.")
 
 
+@logger.catch
+def agravos_violencia(
+    sessao: Session,
+    teste: bool = False,
+) -> None:
+    logger.info("Capturando notificações de agravos de violência do SINAN.")
+
+    operacao_ids = [
+        "06324f18-aefd-770a-aa8b-9b4ca7681070",
+    ]
+    agendamentos_agravos_violencia = (
+        sessao.query(agendamentos)
+        .filter(agendamentos.c.operacao_id.in_(operacao_ids))
+        .all()
+    )
+    for agendamento in agendamentos_agravos_violencia:
+        obter_agravos_violencia(
+            sessao=sessao,
+            periodo_id=agendamento.periodo_id,
+            periodo_data_inicio=agendamento.periodo_data_inicio,
+            tabela_destino=agendamento.tabela_destino,
+            teste=teste,
+            **agendamento.parametros,
+        )
+        if teste:
+            break
+
+        logger.info("Registrando captura bem-sucedida...")
+        # NOTE: necessário registrar a operação de captura em nível de país,
+        # mesmo que o gatilho na tabela de destino no banco de dados já
+        # registre a captura em nível dos municípios automaticamente quando há
+        # a inserção de uma nova linha
+        requisicao_inserir_historico = capturas_historico.insert(
+            {
+                "operacao_id": agendamento.operacao_id,
+                "periodo_id": agendamento.periodo_id,
+                "unidade_geografica_id": agendamento.unidade_geografica_id,
+            }
+        )
+        conector = sessao.connection()
+        conector.execute(requisicao_inserir_historico)
+        sessao.commit()
+        logger.info("OK.")
+
+
 def principal(sessao: Session, teste: bool = False) -> None:
     """Executa todos os scripts de captura de dados de saúde mental.
 
@@ -317,6 +363,7 @@ def principal(sessao: Session, teste: bool = False) -> None:
     bpa_i_disseminacao(sessao=sessao, teste=teste)
     procedimentos_disseminacao(sessao=sessao, teste=teste)
     tipo_equipe_por_tipo_producao(sessao=sessao, teste=teste)
+    agravos_violencia(sessao=sessao, teste=teste)
     aih_reduzida_disseminacao(sessao=sessao, teste=teste)
     # outros scripts de saúde mental aqui...
 

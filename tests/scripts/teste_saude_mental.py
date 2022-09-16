@@ -7,6 +7,7 @@
 
 
 from impulsoetl.scripts.saude_mental import (
+    agravos_violencia,
     aih_reduzida_disseminacao,
     bpa_i_disseminacao,
     procedimentos_disseminacao,
@@ -33,6 +34,11 @@ def teste_bpa_i_disseminacao(sessao):
 def teste_procedimentos_disseminacao(sessao):
     """Testa obter procedimentos ambulatoriais."""
     procedimentos_disseminacao(sessao=sessao, teste=True)
+
+
+def teste_agravos_violencia(sessao):
+    """Testa obter notificações de agravos de violência."""
+    agravos_violencia(sessao=sessao, teste=True)
 
 
 def teste_aih_reduzida_disseminacao(sessao):
