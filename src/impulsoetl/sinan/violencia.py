@@ -442,7 +442,7 @@ def extrair_agravos_violencia(
     """
 
     try:
-        return extrair_dbc_lotes(
+        yield from extrair_dbc_lotes(
             ftp="ftp.datasus.gov.br",
             caminho_diretorio="/dissemin/publicos/SINAN/DADOS/FINAIS/",
             arquivo_nome="VIOLBR{periodo_data_inicio:%y}.dbc".format(
@@ -451,7 +451,8 @@ def extrair_agravos_violencia(
             passo=passo,
         )
     except (error_perm, URLError):
-        return extrair_dbc_lotes(
+        logger.info("Buscando no diretório de arquivos preliminares...")
+        yield from extrair_dbc_lotes(
             ftp="ftp.datasus.gov.br",
             caminho_diretorio="/dissemin/publicos/SINAN/DADOS/PRELIM/",
             arquivo_nome="VIOLBR{periodo_data_inicio:%y}.dbc".format(
