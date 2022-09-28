@@ -68,20 +68,20 @@ def _listar_arquivos(
     arquivo_nome_ou_padrao: str | re.Pattern,
 ) -> list[str]:
     """Busca em um diretório FTP um ou mais arquivos pelo nome ou padrão.
-    
+
     Argumentos:
         cliente_ftp: Instância de conexão com o servidor FTP, já no diretório
             onde se deseja buscar os arquivos.
         arquivo_nome_ou_padrao: Nome do arquivo desejado, incluindo a
             extensão; ou expressão regular a ser comparada com os nomes de
             arquivos disponíveis no servidor FTP.
-    
+
     Retorna:
-        Uma lista de nomes de arquivos compatíveis com o nome ou padrão 
+        Uma lista de nomes de arquivos compatíveis com o nome ou padrão
         informados no diretório FTP.
-    
+
     Exceções:
-        Levanta um erro [`ftplib.error_perm`][] se nenhum arquivo 
+        Levanta um erro [`ftplib.error_perm`][] se nenhum arquivo
         correspondente for encontrado.
 
     [`ftplib.error_perm`]: https://docs.python.org/3/library/ftplib.html#ftplib.error_perm
@@ -189,7 +189,7 @@ def extrair_dbc_lotes(
 
             logger.info(
                 "Iniciando download do arquivo `{}`...",
-                arquivo_compativel_nome
+                arquivo_compativel_nome,
             )
             with closing(urlopen(url)) as resposta:  # nosec: B310
                 with open(arquivo_dbc, "wb") as arquivo:
