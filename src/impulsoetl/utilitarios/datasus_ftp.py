@@ -18,11 +18,19 @@ from typing import Generator, cast
 from urllib.request import urlopen
 
 import pandas as pd
-from dbfread import DBF
+from dbfread import DBF, FieldParser
 from more_itertools import ichunked
 from pysus.utilities.readdbc import dbc2dbf
 
 from impulsoetl.loggers import logger
+
+
+class LeitorCamposDBF(FieldParser):
+    def parseD(self, field, data):
+        # lê datas como strings
+        # VER: https://dbfread.readthedocs.io/en/latest
+        # /introduction.html#custom-field-types
+        return self.parseC(field, data)
 
 
 def _checar_arquivo_corrompido(
@@ -60,20 +68,20 @@ def _listar_arquivos(
     arquivo_nome_ou_padrao: str | re.Pattern,
 ) -> list[str]:
     """Busca em um diretório FTP um ou mais arquivos pelo nome ou padrão.
-    
+
     Argumentos:
         cliente_ftp: Instância de conexão com o servidor FTP, já no diretório
             onde se deseja buscar os arquivos.
         arquivo_nome_ou_padrao: Nome do arquivo desejado, incluindo a
             extensão; ou expressão regular a ser comparada com os nomes de
             arquivos disponíveis no servidor FTP.
-    
+
     Retorna:
-        Uma lista de nomes de arquivos compatíveis com o nome ou padrão 
+        Uma lista de nomes de arquivos compatíveis com o nome ou padrão
         informados no diretório FTP.
-    
+
     Exceções:
-        Levanta um erro [`ftplib.error_perm`][] se nenhum arquivo 
+        Levanta um erro [`ftplib.error_perm`][] se nenhum arquivo
         correspondente for encontrado.
 
     [`ftplib.error_perm`]: https://docs.python.org/3/library/ftplib.html#ftplib.error_perm
@@ -115,6 +123,7 @@ def extrair_dbc_lotes(
     caminho_diretorio: str,
     arquivo_nome: str | re.Pattern,
     passo: int = 10000,
+    **kwargs,
 ) -> Generator[pd.DataFrame, None, None]:
     """Extrai dados de um arquivo .dbc do FTP do DataSUS e retorna DataFrames.
 
@@ -132,6 +141,10 @@ def extrair_dbc_lotes(
             arquivos disponíveis no servidor FTP.
         passo: Número de registros que devem ser convertidos em DataFrame a
             cada iteração.
+        \*\*kwargs: Argumentos adicionais a serem passados para o construtor
+            da classe
+            [`dbfread.DBF`](https://dbfread.readthedocs.io/en/latest/dbf_objects.html#dbf-objects)
+            ao instanciar a representação do arquivo DBF lido.
 
     Gera:
         A cada iteração, devolve um objeto [`pandas.DataFrames`][] com um
@@ -176,7 +189,7 @@ def extrair_dbc_lotes(
 
             logger.info(
                 "Iniciando download do arquivo `{}`...",
-                arquivo_compativel_nome
+                arquivo_compativel_nome,
             )
             with closing(urlopen(url)) as resposta:  # nosec: B310
                 with open(arquivo_dbc, "wb") as arquivo:
@@ -206,6 +219,8 @@ def extrair_dbc_lotes(
                 arquivo_dbf_caminho,
                 encoding="iso-8859-1",
                 load=False,
+                parserclass=LeitorCamposDBF,
+                **kwargs,
             )
             arquivo_dbf_fatias = ichunked(arquivo_dbf, passo)
 
