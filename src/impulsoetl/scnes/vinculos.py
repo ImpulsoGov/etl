@@ -124,9 +124,6 @@ TIPOS_VINCULOS: Final[frozendict] = frozendict(
 
 COLUNAS_DATA_AAAAMM: Final[list[str]] = [
     "periodo_data_inicio",
-    "vigencia_data_inicio",
-    "vigencia_data_fim",
-    "portaria_periodo_data_inicio"
 ]
 
 COLUNAS_NUMERICAS: Final[list[str]] = [
