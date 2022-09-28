@@ -24,7 +24,7 @@ from uuid6 import uuid7
 
 from impulsoetl.comum.condicoes_saude import e_cid10, remover_ponto_cid10
 from impulsoetl.comum.datas import agora_gmt_menos3
-from impulsoetl.comum.geografias import id_sus_para_id_impulso
+from impulsoetl.comum.geografias import id_sim_para_id_impulso
 from impulsoetl.loggers import logger
 from impulsoetl.utilitarios.bd import carregar_dataframe
 from impulsoetl.utilitarios.datasus_ftp import extrair_dbc_lotes
@@ -195,6 +195,18 @@ DE_PARA_AGRAVOS_VIOLENCIA: Final[frozendict] = frozendict(
 DE_PARA_AGRAVOS_VIOLENCIA_ADICIONAIS: Final[frozendict] = frozendict(
     {
         "NU_NOTIFIC": "id_sinan",
+        "ZONA": "usuario_residencia_tipologia_id_sinan",
+        "ZONA_OCOR": "ocorrencia_tipologia_id_sinan",
+        "DT_DIGITA": "_nao_documentado_dt_digita",
+        "DT_TRANSUS": "_nao_documentado_dt_transus",
+        "DT_TRANSDM": "_nao_documentado_dt_transdm",
+        "DT_TRANSSM": "_nao_documentado_dt_transsm",
+        "DT_TRANSRM": "_nao_documentado_dt_transrm",
+        "DT_TRANSRS": "_nao_documentado_dt_transrs",
+        "DT_TRANSSE": "_nao_documentado_dt_transse",
+        "NU_LOTE_V": "_nao_documentado_nu_lote_v",
+        "NU_LOTE_H": "_nao_documentado_nu_lote_h",
+        "IDENT_MICR": "_nao_documentado_ident_micr",
     }
 )
 
@@ -364,6 +376,18 @@ TIPOS_AGRAVOS_VIOLENCIA: Final[frozendict] = frozendict(
         "unidade_geografica_id": "object",
         "criacao_data": "datetime64[ns]",
         "atualizacao_data": "datetime64[ns]",
+        "usuario_residencia_tipologia_id_sinan": "object",
+        "ocorrencia_tipologia_id_sinan": "object",
+        "_nao_documentado_dt_digita": "object",
+        "_nao_documentado_dt_transus": "object",
+        "_nao_documentado_dt_transdm": "object",
+        "_nao_documentado_dt_transsm": "object",
+        "_nao_documentado_dt_transrm": "object",
+        "_nao_documentado_dt_transrs": "object",
+        "_nao_documentado_dt_transse": "object",
+        "_nao_documentado_nu_lote_v": "object",
+        "_nao_documentado_nu_lote_h": "object",
+        "_nao_documentado_ident_micr": "object",
     },
 )
 
@@ -563,9 +587,9 @@ def transformar_agravos_violencia(
         # adicionar id da unidade geografica
         .transform_column(
             "notificacao_municipio_id_sus",
-            function=lambda id_sus: id_sus_para_id_impulso(
+            function=lambda id_sim: id_sim_para_id_impulso(
                 sessao=sessao,
-                id_sus=id_sus,
+                id_sim=id_sim,
             ),
             dest_column_name="unidade_geografica_id",
         )

@@ -18,11 +18,19 @@ from typing import Generator, cast
 from urllib.request import urlopen
 
 import pandas as pd
-from dbfread import DBF
+from dbfread import DBF, FieldParser
 from more_itertools import ichunked
 from pysus.utilities.readdbc import dbc2dbf
 
 from impulsoetl.loggers import logger
+
+
+class LeitorCamposDBF(FieldParser):
+    def parseD(self, field, data):
+        # lê datas como strings
+        # VER: https://dbfread.readthedocs.io/en/latest
+        # /introduction.html#custom-field-types
+        return self.parseC(field, data)
 
 
 def _checar_arquivo_corrompido(
@@ -115,6 +123,7 @@ def extrair_dbc_lotes(
     caminho_diretorio: str,
     arquivo_nome: str | re.Pattern,
     passo: int = 10000,
+    **kwargs,
 ) -> Generator[pd.DataFrame, None, None]:
     """Extrai dados de um arquivo .dbc do FTP do DataSUS e retorna DataFrames.
 
@@ -132,6 +141,10 @@ def extrair_dbc_lotes(
             arquivos disponíveis no servidor FTP.
         passo: Número de registros que devem ser convertidos em DataFrame a
             cada iteração.
+        \*\*kwargs: Argumentos adicionais a serem passados para o construtor
+            da classe
+            [`dbfread.DBF`](https://dbfread.readthedocs.io/en/latest/dbf_objects.html#dbf-objects)
+            ao instanciar a representação do arquivo DBF lido.
 
     Gera:
         A cada iteração, devolve um objeto [`pandas.DataFrames`][] com um
@@ -206,6 +219,8 @@ def extrair_dbc_lotes(
                 arquivo_dbf_caminho,
                 encoding="iso-8859-1",
                 load=False,
+                parserclass=LeitorCamposDBF,
+                **kwargs,
             )
             arquivo_dbf_fatias = ichunked(arquivo_dbf, passo)
 
