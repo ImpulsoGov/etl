@@ -31,4 +31,4 @@ if botaoDownload !=NULL:
     print("Botão encontrado")
     driver.implicitly_wait(30000)
 else:
-    print("botão não encontrado")
+    print("Botão não encontrado")
