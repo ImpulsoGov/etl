@@ -12,6 +12,8 @@ from sqlalchemy.orm import Session
 from frozendict import frozendict
 import pandas as pd
 
+import sys
+sys.path.append(r'C:\Users\maira\Impulso\etl\src')
 from impulsoetl.comum.geografias import id_sus_para_id_impulso
 
 TIPOS_EGESTOR_FINANCIAMENTO: Final[frozendict] = frozendict(
@@ -380,12 +382,21 @@ def renomeia_colunas_repetidas(
         )
     return df_extraido
 
+def garantir_tipos_dados(
+    df_extraido: pd.DataFrame
+)-> pd.DataFrame:
+
+    for coluna in TIPOS_EGESTOR_FINANCIAMENTO:
+        if coluna in df_extraido.columns:
+            df_tipos = dict(zip([coluna], [TIPOS_EGESTOR_FINANCIAMENTO[coluna]]))
+            df_extraido = df_extraido.astype(df_tipos)
+    return df_extraido
 
 def tratamento_dados(
     sessao: Session,
     df_extraido: pd.DataFrame,
     aba: str,
-    periodo_competencia: date,
+    periodo_competencia: str,
     periodo_id: str,
 )-> pd.DataFrame:
 
@@ -405,6 +416,11 @@ def tratamento_dados(
             sessao=sessao, id_sus=municipio_id_sus
         )
     )
-    # df_extraido = df_extraido.astype(TIPOS_ACADEMIA_SAUDE)
+    
+    # checa e transforma o tipo de dado de cada coluna
+    df_extraido = garantir_tipos_dados(df_extraido=df_extraido)
+
     df_extraido.reset_index(drop=True, inplace=True)
     return df_extraido
+
+
