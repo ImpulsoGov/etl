@@ -141,6 +141,7 @@ EGESTOR_FINANCIAMENTO_COLUNAS: Final[dict[str, str]] = {
     "MUNICÍPIOS": "municipio_nome",
     "MUNICÍPIO": "municipio_nome",
     "Municípios": "municipio_nome",
+    "Município": "municipio_nome",
     "IBGE": "municipio_id_sus",
     "Parcela": "periodo_data_inicio",
     "Quadrimestre de Referência": "periodo_quadrimestre",
@@ -297,6 +298,7 @@ COLUNAS_NUMERICAS_DECIMAIS = [
     "pagamento_ajuste_adicional",
     "pagamento_adicional_100_meta",
     "pagamento_equipes_novas",
+    "pagamento_extra"
 ]
 
 
