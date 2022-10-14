@@ -24,7 +24,7 @@ sys.path.append(r'C:\Users\maira\Impulso\etl\src')
 from impulsoetl.navegadores import listar_downloads
 
 def extracao(periodo_mes:str)->str:
-    # Cria um um WebDriver 
+    # Cria um um WebDriver  com Chrome
     driver = webdriver.Chrome(ChromeDriverManager().install())
     driver.maximize_window()
 
@@ -50,7 +50,16 @@ def extracao(periodo_mes:str)->str:
     # Baixa o relatório clicando no botão download
     botaoDownload = driver.find_element(By.CLASS_NAME,'btn-app')
     driver.execute_script("arguments[0].click();", botaoDownload)
-    time.sleep(80) # espera para concluir o download do relatório
+
+    # Espera e verifica se o download foi concluído
+    contador = 0
+    ESPERA_MAX = 300
+    while contador < ESPERA_MAX:
+            time.sleep(1)            
+            if not os.path.exists(r'C:\Users\maira\Downloads\pagamento_aps.xls'):
+                contador += 1
+            else:
+                break
 
     arquivos_baixados = r'C:\Users\maira\Downloads\pagamento_aps.xls'
     if arquivos_baixados:
