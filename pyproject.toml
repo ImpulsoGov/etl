@@ -38,7 +38,7 @@ more-itertools = "^8.12.0"
 uuid6 = "^2022.6.25"
 
 
-[tool.poetry.dev-dependencies]
+[tool.poetry.group.dev.dependencies]
 
 bandit = "1.7.1"
 black = "==20.8b1"
@@ -56,6 +56,13 @@ reuse = "0.13.0"
 safety = "1.10.3"
 wemake-python-styleguide="0.0.1"
 pytest-testmon = "^1.2.3"
+
+[tool.poetry.group.prefect]
+optional = true
+
+[tool.poetry.group.prefect.dependencies]
+prefect = { git = "https://github.com/bcbernardo/prefect", branch = "fix-deployment-exception-import" }  # Usado até resolver issue https://github.com/PrefectHQ/prefect/issues/7359 
+# prefect = ">2.6.4, <3.0"  # descomentar uma vez que o PR #7360 for aceito
 
 
 [tool.poetry.extras]
