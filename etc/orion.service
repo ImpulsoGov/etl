@@ -1,0 +1,24 @@
+# SPDX-FileCopyrightText: 2022 ImpulsoGov <contato@impulsogov.org>
+#
+# SPDX-License-Identifier: MIT
+
+
+# mova este arquivo para o diretório /etc/systemd/system/
+
+
+[Unit]
+After=network.target
+Wants=network-online.target systemd-networkd-wait-online.service
+
+StartLimitIntervalSec=500
+StartLimitBurst=5
+
+[Service]
+Restart=on-failure
+RestartSec=5
+
+ExecStart=/home/prefect/orion-start.sh
+
+[Install]
+WantedBy=default.target
+
