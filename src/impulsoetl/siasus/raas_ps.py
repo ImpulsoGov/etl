@@ -145,6 +145,7 @@ COLUNAS_DATA_AAAAMMDD: Final[list[str]] = [
     "raas_data_fim",
     "data_inicio",
     "data_fim",
+    "desfecho_data",
 ]
 
 COLUNAS_DATA_AAAAMM: Final[list[str]] = [
