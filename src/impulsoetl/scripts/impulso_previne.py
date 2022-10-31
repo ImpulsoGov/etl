@@ -20,6 +20,8 @@ from impulsoetl.sisab.relatorio_validacao_producao.principal import (
     obter_validacao_producao,
 )
 
+from impulsoetl.egestor.relatorio_financiamento.principal import obter_relatorio_financiamento
+
 agendamentos = tabelas["configuracoes.capturas_agendamentos"]
 capturas_historico = tabelas["configuracoes.capturas_historico"]
 
@@ -646,7 +648,6 @@ def indicadores_municipios_equipe_todas(
         sessao.commit()
         logger.info("OK.")
 
-
 @logger.catch
 def validacao_producao(
     sessao: Session,
@@ -697,6 +698,55 @@ def validacao_producao(
         sessao.commit()
         logger.info("OK.")
 
+@logger.catch
+def egestor_financiamento(
+    sessao: Session,
+    teste: bool = False,
+) -> None:
+
+    operacao_id = "063519ff-066c-7cc4-8e5a-2089ebc51d23"
+
+    # Ler agendamentos e rodar ETL para cada agendamento pendente
+    # ...
+    agendamentos = tabelas["configuracoes.capturas_agendamentos"]
+    agendamentos_relatorio_egestor = (
+        sessao.query(agendamentos)
+        .filter(agendamentos.c.operacao_id == operacao_id)
+        .all()
+    )
+    sessao.commit()
+
+    logger.info("Leitura dos Agendamentos ok!")
+
+    for agendamento in agendamentos_relatorio_egestor:
+        obter_relatorio_financiamento(
+            sessao=sessao,
+            periodo_competencia=agendamento.periodo_competencia,
+            periodo_id=agendamento.periodo_id,
+            tabela_destino=agendamento.tabela_destino,
+            periodo_mes=agendamento.periodo_data_inicio
+        )
+
+        if teste:  # evitar rodar muitas iterações
+            break
+
+        logger.info("Registrando captura bem-sucedida...")
+        # NOTE: necessário registrar a operação de captura em nível de UF,
+        # mesmo que o gatilho na tabela de destino no banco de dados já
+        # registre a captura em nível dos municípios automaticamente quando há
+        # a inserção de uma nova linha
+        requisicao_inserir_historico = capturas_historico.insert(
+            {
+                "operacao_id": operacao_id,
+                "periodo_id": agendamento.periodo_id,
+                "unidade_geografica_id": agendamento.unidade_geografica_id,
+            }
+        )
+        conector = sessao.connection()
+        conector.execute(requisicao_inserir_historico)
+        sessao.commit()
+        logger.info("OK.")
+
 
 def principal(sessao: Session, teste: bool = False) -> None:
     """Executa todos os scripts de captura de dados do Impulso Previne.
@@ -724,6 +774,7 @@ def principal(sessao: Session, teste: bool = False) -> None:
     validacao_producao(sessao=sessao, teste=teste)
 
     # outros scripts do Impulso Previne aqui...
+
 
 
 if __name__ == "__main__":
