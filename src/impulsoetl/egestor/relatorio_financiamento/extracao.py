@@ -2,109 +2,230 @@
 #
 # SPDX-License-Identifier: MIT
 
-""" Extrai relatório de financiamento a partir do egestor"""
-import os
-import time
-from datetime import date, datetime
-from pathlib import Path
-from typing import Final
-from pyparsing import NotAny
 
-from selenium.webdriver.support.select import Select
-from selenium.webdriver.common.by import By
+""" Extrai relatório de financiamento a partir do e-Gestor."""
 
-import sys
-#sys.path.append(r'C:\Users\maira\Impulso\etl\src')
-from impulsoetl.navegadores import criar_geckodriver, diretorio_downloads, listar_downloads
-from impulsoetl.navegadores import criar_chromedriver
-from impulsoetl.loggers import logger
 
+from __future__ import annotations
+
+from datetime import date
 from functools import lru_cache
 
-meses = ['JAN','FEV','MAR','ABR','MAI','JUN','JUL','AGO','SET','OUT','NOV','DEZ']
+import requests
+from bs4 import BeautifulSoup
+from frozenlist import FrozenList
 
-@lru_cache(1)
-def extracao(periodo_mes:date)->str:
+from impulsoetl.loggers import logger
+
+
+MESES: FrozenList[str] = FrozenList([
+    "JAN",
+    "FEV",
+    "MAR",
+    "ABR",
+    "MAI",
+    "JUN",
+    "JUL",
+    "AGO",
+    "SET",
+    "OUT",
+    "NOV",
+    "DEZ",
+])
+
+URL_BASE = "https://egestorab.saude.gov.br"
+
+
+@lru_cache(12)
+def extrair(periodo_mes: date) -> bytes:
     logger.info(
-        "Iniciando a captura dos relatórios de financiamento do e-Gestor ",
-        "para o mês {:%m/%Y}",
+        "Iniciando extração de dados de financiamento para o mês de {:%m/%Y}",
         periodo_mes,
     )
+    pagina_consulta_caminho = "/gestaoaps/relFinanciamentoParcela.xhtml"
+    cabecalhos = {
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8",
+        "Accept-Encoding": "gzip, deflate, br",
+        "Accept-Language": "pt-BR,pt;q=0.9",
+        "Connection": "keep-alive",
+        "Host": "egestorab.saude.gov.br",
+        "Sec-Fetch-Dest": "document",
+        "Sec-Fetch-Mode": "navigate",
+        "Sec-Fetch-Site": "none",
+        "Sec-Fetch-User": "?1",
+        "Sec-GPC": "1",
+        "Upgrade-Insecure-Requests": "1",
+        "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/104.0.5112.102 Safari/537.36",
+    }
 
-    mes = meses[periodo_mes.month-1]
-    ano = str(periodo_mes.year)
-    competencia_por_extenso = mes + '/' + ano
+    logger.info("Iniciando sessão do e-Gestor...")
+    with requests.Session() as sessao:
+        sessao.headers=cabecalhos
+        url_consulta = URL_BASE + pagina_consulta_caminho
+        pagina_consulta = sessao.get(url_consulta)
 
-    logger.info(
-        "Definindo destino para downloads e apagando versões pré-existentes..."
-    )
-    resultado_caminho = (diretorio_downloads / "pagamento_aps.xls")
-    resultado_caminho.unlink(missing_ok=True)
-
-    logger.info("Inicializando instância do navegador web...")
-    with criar_geckodriver() as driver:
-
-        logger.info("Acessando o site do e-Gestor...")
-        egestorFinanciamento = 'https://egestorab.saude.gov.br/gestaoaps/relFinanciamentoParcela.xhtml'
-        driver.get(egestorFinanciamento)
-        logger.debug(driver.log_file.read())
-
-        logger.info("Selecionando a unidade federativa de referência...")
-        selectUF = driver.find_element(By.CSS_SELECTOR,'#j_idt58\:uf')
-        Select(selectUF).select_by_visible_text('** TODOS **')  
-        time.sleep(5)  # esperar um pouco pela resposta do servidor
-        logger.info("Todas as unidades federativas selecionadas!")
-        logger.debug(driver.log_file.read())
-
-        logger.info("Selecionando o ano de referência...")
-        selectAno = driver.find_element(By.CSS_SELECTOR,'#j_idt58\:ano')
-        Select(selectAno).select_by_visible_text(ano)
-        time.sleep(5)
-        logger.info("Selecionado o ano de {} como referência!", ano)
-        logger.debug(driver.log_file.read())
-
-        logger.info("Selecionando o mês de referência...")
-        selectParcela = driver.find_element(By.CSS_SELECTOR,'#j_idt58\:compInicio')
-        Select(selectParcela).select_by_visible_text(competencia_por_extenso)
-        time.sleep(5)
-        logger.info(
-            "Selecionado o ano de {} como referência!",
-            competencia_por_extenso,
+        logger.info("Lendo o formulário de definição do relatório...")
+        pagina_consulta_processada = BeautifulSoup(
+            pagina_consulta.text,
+            "lxml",
         )
-        logger.debug(driver.log_file.read())
+        formulario = pagina_consulta_processada.find("form", id="j_idt58")
+        javax_view_state = formulario.find(
+            "input",
+            id="javax.faces.ViewState",
+        )["value"]
 
-        logger.info("Solicitando início do download ao servidor...")
-        botaoDownload = driver.find_element(By.CLASS_NAME,'btn-app')
-        download_iniciado = False
-        driver.execute_script("arguments[0].click();", botaoDownload)
-        logger.debug(driver.log_file.read())
-
-        # Espera e verifica se o download foi concluído
-        contador = 0
-        ESPERA_MAX: Final[int] = int(os.getenv("IMPULSOETL_ESPERA_MAX", 300))
-        while contador < ESPERA_MAX:
-            downloads = listar_downloads()
-            if resultado_caminho.is_file():  # download já começou?
-                if download_iniciado:  # informa andamento
-                    logger.debug(
-                        "Baixados {} bytes...",
-                        resultado_caminho.stat.st_size,
-                    )
-                else:  # avisa que o download acabou de começar
-                    download_iniciado = True
-                    logger.info("Download iniciado!")
-                # checa se não há arquivo indicando que o download ainda é
-                # parcial
-                if not any(caminho.match('*.part') for caminho in downloads):
-                    # se não houver, é porque o download acabou!
-                    return resultado_caminho
-
-            # se download ainda não começou ou não finalizou, imprime logs e
-            # espera
-            logger.debug(driver.log_file.read())
-            contador += 1
-            time.sleep(1)
-
-        raise TimeoutError(
-            "O download demorou mais tempo do que o aceito para ser concluído."
+        logger.info("Selecionando UFs...")
+        payload = {
+            "j_idt58": "j_idt58",
+            "javax.faces.ViewState": javax_view_state,
+            "j_idt58:uf": "00",
+            "j_idt58:municipio": "99",
+            "j_idt58:ano": "99",
+            "j_idt58:compInicio": "99",
+            "j_idt58:compFim": "99",
+            "javax.faces.source": "j_idt58:uf",
+            "javax.faces.partial.event": "change",
+            "javax.faces.partial.execute": "j_idt58:uf j_idt58:uf",
+            "javax.faces.partial.render": (
+                "j_idt58:municipio j_idt58:tela j_idt58:compInicio "
+                + "j_idt58:competenciaFim j_idt58:ano"
+            ),
+            "javax.faces.behavior.event": "valueChange",
+            "javax.faces.partial.ajax": "true",
+        }
+        sessao.headers.update({
+            "Accept": "*/*",
+            "Faces-Request": "partial/ajax",
+            "Origin": URL_BASE,
+            "Referer": url_consulta,
+            "Cache-Control": "max-age=0",
+            "Sec-Fetch-Dest": "empty",
+            "Sec-Fetch-Mode": "cors",
+            "Sec-Fetch-Site": "same-origin",
+            "Sec-GPC": "1",
+        })
+        del sessao.headers["Sec-Fetch-User"]
+        del sessao.headers["Upgrade-Insecure-Requests"]
+        relatorio_caminho = URL_BASE + formulario["action"]
+        requisicao_selecionar_uf = requests.Request(
+            "POST",
+            relatorio_caminho,
+            data=payload,
         )
+        requisicao_selecionar_uf_preparada = sessao.prepare_request(
+            requisicao_selecionar_uf,
+        )
+        requisicao_selecionar_uf_resposta = sessao.send(
+            requisicao_selecionar_uf_preparada,
+        )
+        formulario = BeautifulSoup(
+            requisicao_selecionar_uf_resposta.text,
+            "xml",
+        )
+        javax_view_state = formulario.find(id="javax.faces.ViewState").text
+
+        logger.info("Selecionando municípios e ano de referência...")
+        payload.update({
+            "javax.faces.ViewState": javax_view_state,
+            "j_idt58:municipio": "00",
+            "j_idt58:ano": "{:%Y}".format(periodo_mes),
+            "javax.faces.source": "j_idt58:ano",
+            "javax.faces.partial.execute": "j_idt58:ano j_idt58:ano",
+            "javax.faces.partial.render": (
+                "j_idt58:compInicio j_idt58:compFim j_idt58:visualizacao"
+            ),
+        })
+        del payload["j_idt58:compFim"]
+        requisicao_selecionar_municipio = requests.Request(
+            "POST",
+            relatorio_caminho,
+            data=payload,
+        )
+        requisicao_selecionar_municipio_preparada = sessao.prepare_request(
+            requisicao_selecionar_municipio,
+        )
+        requisicao_selecionar_municipio_resposta = sessao.send(
+            requisicao_selecionar_municipio_preparada,
+        )
+        formulario = BeautifulSoup(
+            requisicao_selecionar_municipio_resposta.text,
+            "xml",
+        )
+        javax_view_state = formulario.find(id="javax.faces.ViewState").text
+
+        logger.info("Selecionando competência de referência...")
+        payload.update({
+            "javax.faces.ViewState": javax_view_state,
+            "j_idt58:compInicio": "{:%Y%m}".format(periodo_mes),
+            "javax.faces.partial.execute": (
+                "j_idt58:compInicio j_idt58:compInicio"
+            ),
+            "javax.faces.partial.render": "j_idt58:compFim",
+        })
+        requisicao_selecionar_competencia = requests.Request(
+            "POST",
+            relatorio_caminho,
+            data=payload,
+        )
+        requisicao_selecionar_competencia_preparada = sessao.prepare_request(
+            requisicao_selecionar_competencia,
+        )
+        requisicao_selecionar_competencia_resposta = sessao.send(
+            requisicao_selecionar_competencia_preparada,
+        )
+        formulario = BeautifulSoup(
+            requisicao_selecionar_competencia_resposta.text,
+            "xml",
+        )
+        javax_view_state = formulario.find(id="javax.faces.ViewState").text
+
+        logger.info("Iniciando o download do relatório...")
+        payload.update({
+            "javax.faces.ViewState": javax_view_state,
+            "j_idt58:Download20": "Download",
+        })
+        del payload["javax.faces.source"]
+        del payload["javax.faces.partial.event"]
+        del payload["javax.faces.partial.execute"]
+        del payload["javax.faces.partial.render"]
+        del payload["javax.faces.behavior.event"]
+        del payload["javax.faces.partial.ajax"]
+        sessao.headers.update({
+            "Accept": (
+                "text/html,application/xhtml+xml,application/xml;q=0.9,"
+                + "image/avif,image/webp,image/apng,*/*;q=0.8"
+            ),
+            "Sec-Fetch-Dest": "document",
+            "Sec-Fetch-Mode": "navigate",
+            "Sec-Fetch-Site": "none",
+            "Sec-Fetch-User": "?1",
+            "Upgrade-Insecure-Requests": "1",
+        })
+        del sessao.headers["Faces-Request"]
+        requisicao_relatorio = requests.Request(
+            "POST",
+            relatorio_caminho,
+            data=payload,
+        )
+        requisicao_relatorio_preparada = sessao.prepare_request(
+            requisicao_relatorio,
+        )
+        requisicao_relatorio_resposta = sessao.send(
+            requisicao_relatorio_preparada,
+        )
+        if requisicao_relatorio_resposta.ok:
+            logger.info(
+                "Download do relatório de financiamento concluído com "
+                + "sucesso!",
+            )
+        else:
+            logger.error(
+                "Erro ao obter o relatório de financiamento do e-Gestor: "
+                + "{codigo} - {motivo}.",
+                codigo=requisicao_relatorio_resposta.status_code,
+                motivo=requisicao_relatorio_resposta.reason,
+            )
+            requisicao_relatorio_resposta.raise_for_status()
+
+        return requisicao_relatorio_resposta.content
