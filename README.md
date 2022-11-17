@@ -29,7 +29,7 @@ Nesse documento você encontrará informações sobre o contexto de uso desses d
 
 ## :rocket: Contexto
 
-Um dos propósitos da ImpulsoGov, enquanto organização, é transformar dados da saúde pública do Brasil em informações que ofereçam oferecer suporte de decisão aos gestores de saúde pública em todo o Brasil. Embora o SUS tenha uma riqueza de dados há muitas dificuldades para reunir, coletar e analisar dados em diferentes sistemas de informação. O projeto de ETL de dados públicos surgiu para automatizar a extração desses dados de diferentes fontes através de raspagem de dados, estruturação e integração em nosso próprio banco de dados. Hoje o projeto sustenta a base de dados que alimenta nossas ferramentas gratuítas disponíveis em nossas plataformas como o [Impulso Previne](https://www.impulsoprevine.org/) e o [Saúde Mental](https://saudemental.impulsogov.org/).
+Um dos propósitos da ImpulsoGov, enquanto organização, é transformar dados da saúde pública do Brasil em informações que ofereçam oferecer suporte de decisão aos gestores de saúde pública em todo o Brasil. Embora o SUS tenha uma riqueza de dados há muitas dificuldades para reunir, coletar e analisar dados em diferentes sistemas de informação. O projeto de ETL de dados públicos surgiu para automatizar a extração desses dados de diferentes fontes através de raspagem de dados, estruturação e integração em nosso próprio banco de dados. Hoje o projeto sustenta a base de dados que alimenta nossas ferramentas gratuítas disponíveis em nossas plataformas como o [Impulso Previne](https://www.impulsoprevine.org/) e a de Indicadores de Saúde Mental.
 
 *******
   
