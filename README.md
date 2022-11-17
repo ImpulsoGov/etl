@@ -9,7 +9,7 @@ SPDX-License-Identifier: MIT
 # ETL de dados públicos para o banco de dados da ImpulsoGov
 
 Extração, tratamento e caregamento de dados públicos direta ou indiretamente relacionados ao Sistema Único de Saúde brasileiro, tendo como destino o banco de dados da [Impulso Gov](https://impulsogov.org/).
-Nesse documento você encontrará informações sobre o contexto de uso desses dados e orientações sobre funcioanmento, instalação, licença de uso e glossário de termos.
+Nesse documento você encontrará informações sobre o contexto de uso desses dados e orientações sobre funcionamento, instalação, licença de uso e glossário de termos.
 
 *******
 ## :mag_right: Índice
