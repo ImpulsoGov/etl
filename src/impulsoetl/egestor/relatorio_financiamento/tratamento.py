@@ -6,15 +6,13 @@
 
 from __future__ import annotations
 
-from datetime import date
 from typing import Final
 from sqlalchemy.orm import Session
 from frozendict import frozendict
 import pandas as pd
 
-import sys
-sys.path.append(r'C:\Users\maira\Impulso\etl\src')
 from impulsoetl.comum.geografias import id_sus_para_id_impulso
+from impulsoetl.loggers import logger
 
 TIPOS_EGESTOR_FINANCIAMENTO: Final[frozendict] = frozendict(
     {
@@ -298,13 +296,13 @@ COLUNAS_NUMERICAS_DECIMAIS = [
     "pagamento_ajuste_adicional",
     "pagamento_adicional_100_meta",
     "pagamento_equipes_novas",
-    "pagamento_extra"
+    "pagamento_extra",
 ]
 
 
 def formata_valores_monetarios(
     df_extraido: pd.DataFrame,
-)-> pd.DataFrame:
+) -> pd.DataFrame:
 
     for coluna in COLUNAS_NUMERICAS_DECIMAIS:
         df_coluna = []
@@ -322,8 +320,7 @@ def formata_valores_monetarios(
 
 
 def renomeia_colunas_repetidas(
-    df_extraido: pd.DataFrame, 
-    aba: str
+    df_extraido: pd.DataFrame, aba: str
 ) -> pd.DataFrame:
 
     if aba in ["Ações Est. - SB"]:
@@ -384,32 +381,59 @@ def renomeia_colunas_repetidas(
         )
     return df_extraido
 
-def garantir_tipos_dados(
-    df_extraido: pd.DataFrame
-)-> pd.DataFrame:
+
+def garantir_tipos_dados(df_extraido: pd.DataFrame) -> pd.DataFrame:
 
     for coluna in TIPOS_EGESTOR_FINANCIAMENTO:
         if coluna in df_extraido.columns:
-            df_tipos = dict(zip([coluna], [TIPOS_EGESTOR_FINANCIAMENTO[coluna]]))
+            df_tipos = dict(
+                zip([coluna], [TIPOS_EGESTOR_FINANCIAMENTO[coluna]])
+            )
             df_extraido = df_extraido.astype(df_tipos)
     return df_extraido
+
 
 def tratamento_dados(
     sessao: Session,
     df_extraido: pd.DataFrame,
     aba: str,
-    periodo_competencia: str,
+    periodo_data_inicio: str,
     periodo_id: str,
-)-> pd.DataFrame:
+) -> pd.DataFrame:
+    """Trata dados capturados do relatório de financiamento APS do egestor
 
+    Argumentos:
+        sessao: objeto [`sqlalchemy.orm.session.Session`][] que permite
+            acessar a base de dados da ImpulsoGov.
+        df_extraido: [`DataFrame`][] contendo os dados capturados no relatório de Indicadores do Sisab
+        (conforme retornado pela função
+            [`extrair_dados()`][]).
+        aba: Nome da aba do relatório
+        periodo_data_inicio: Data do mês da competência em referência
+        periodo_id: Código de identificação do período
+
+    Retorna:
+        Objeto [`pandas.DataFrame`] com os dados enriquecidos e tratados.
+
+            [`sqlalchemy.orm.session.Session`]: https://docs.sqlalchemy.org/en/14/orm/session_api.html#sqlalchemy.orm.Session
+            [`pandas.DataFrame`]: https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html
+    """
+
+    logger.info("Iniciando o tratamento dos dados...")
     df_extraido.drop(df_extraido.index[0], inplace=True)
+
+    logger.info("Renomeando colunas para padrão do banco...")
     df_extraido = renomeia_colunas_repetidas(df_extraido=df_extraido, aba=aba)
     df_extraido.rename(
         EGESTOR_FINANCIAMENTO_COLUNAS, axis="columns", inplace=True
     )
     df_extraido.drop(columns=["Unnamed: 0"], inplace=True)
+
+    logger.info("Formantando campos númericos...")
     df_extraido = formata_valores_monetarios(df_extraido=df_extraido)
-    df_extraido["periodo_data_inicio"] = periodo_competencia
+
+    logger.info("Enriquecendo tabela...")
+    df_extraido["periodo_data_inicio"] = periodo_data_inicio
     df_extraido["periodo_id"] = periodo_id
     df_extraido["unidade_geografica_id"] = df_extraido[
         "municipio_id_sus"
@@ -418,11 +442,11 @@ def tratamento_dados(
             sessao=sessao, id_sus=municipio_id_sus
         )
     )
-    
-    # checa e transforma o tipo de dado de cada coluna
+
+    logger.info("Checa os tipos dos dados ...")
     df_extraido = garantir_tipos_dados(df_extraido=df_extraido)
 
     df_extraido.reset_index(drop=True, inplace=True)
+    logger.info("Dados transformados ...")
+
     return df_extraido
-
-

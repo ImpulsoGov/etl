@@ -8,7 +8,6 @@
 
 
 from sqlalchemy.orm import Session
-
 from impulsoetl.bd import Sessao, tabelas
 from impulsoetl.loggers import logger
 from impulsoetl.sisab.cadastros_individuais import obter_cadastros_individuais
@@ -19,8 +18,9 @@ from impulsoetl.sisab.parametros_cadastro.principal import obter_parametros
 from impulsoetl.sisab.relatorio_validacao_producao.principal import (
     obter_validacao_producao,
 )
-
-from impulsoetl.egestor.relatorio_financiamento.principal import obter_relatorio_financiamento
+from impulsoetl.egestor.relatorio_financiamento.principal import (
+    obter_relatorio_financiamento,
+)
 
 agendamentos = tabelas["configuracoes.capturas_agendamentos"]
 capturas_historico = tabelas["configuracoes.capturas_historico"]
@@ -648,6 +648,7 @@ def indicadores_municipios_equipe_todas(
         sessao.commit()
         logger.info("OK.")
 
+
 @logger.catch
 def validacao_producao(
     sessao: Session,
@@ -698,54 +699,66 @@ def validacao_producao(
         sessao.commit()
         logger.info("OK.")
 
+
 @logger.catch
 def egestor_financiamento(
     sessao: Session,
     teste: bool = False,
 ) -> None:
 
-    operacao_id = "063519ff-066c-7cc4-8e5a-2089ebc51d23"
+    operacoes_id = [
+        "0635c378-835f-70a2-a82a-0cb13ade9559",
+        "0635c378-85f3-7711-8c9c-7e6ee68ed0ed",
+        "0635c378-8856-7e8b-819c-9accfc29b0d1",
+        "0635c385-56ca-7fc4-b39c-81c84fcd790e",
+        "0635c385-5943-7a54-880d-193384d2447c",
+        "0635c385-5bb1-7bce-8eb4-83ad9d234726",
+        "0635c38b-df79-7b13-865e-db5334aab8c6",
+        "0635c342-d850-7ecb-b083-6170d49abd02",
+        "0635c342-dffb-7e98-8c37-0e2896127d80",
+        "063519ff-066c-7cc4-8e5a-2089ebc51d23",
+        "0635c366-300c-7d96-9802-344915cddb63",
+    ]
 
     # Ler agendamentos e rodar ETL para cada agendamento pendente
     # ...
-    agendamentos = tabelas["configuracoes.capturas_agendamentos"]
-    agendamentos_relatorio_egestor = (
-        sessao.query(agendamentos)
-        .filter(agendamentos.c.operacao_id == operacao_id)
-        .all()
-    )
-    sessao.commit()
-
-    logger.info("Leitura dos Agendamentos ok!")
-
-    for agendamento in agendamentos_relatorio_egestor:
-        obter_relatorio_financiamento(
-            sessao=sessao,
-            periodo_competencia=agendamento.periodo_competencia,
-            periodo_id=agendamento.periodo_id,
-            tabela_destino=agendamento.tabela_destino,
-            periodo_mes=agendamento.periodo_data_inicio
+    for operacao_id in operacoes_id:
+        agendamentos = tabelas["configuracoes.capturas_agendamentos"]
+        agendamentos_relatorio_egestor = (
+            sessao.query(agendamentos)
+            .filter(agendamentos.c.operacao_id == operacao_id)
+            .all()
         )
-
-        if teste:  # evitar rodar muitas iterações
-            break
-
-        logger.info("Registrando captura bem-sucedida...")
-        # NOTE: necessário registrar a operação de captura em nível de UF,
-        # mesmo que o gatilho na tabela de destino no banco de dados já
-        # registre a captura em nível dos municípios automaticamente quando há
-        # a inserção de uma nova linha
-        requisicao_inserir_historico = capturas_historico.insert(
-            {
-                "operacao_id": operacao_id,
-                "periodo_id": agendamento.periodo_id,
-                "unidade_geografica_id": agendamento.unidade_geografica_id,
-            }
-        )
-        conector = sessao.connection()
-        conector.execute(requisicao_inserir_historico)
         sessao.commit()
-        logger.info("OK.")
+
+        logger.info("Leitura dos Agendamentos ok!")
+        for agendamento in agendamentos_relatorio_egestor:
+            obter_relatorio_financiamento(
+                sessao=sessao,
+                periodo_id=agendamento.periodo_id,
+                tabela_destino=agendamento.tabela_destino,
+                periodo_mes=agendamento.periodo_data_inicio,
+            )
+
+            if teste:  # evitar rodar muitas iterações
+                break
+
+            logger.info("Registrando captura bem-sucedida...")
+            # NOTE: necessário registrar a operação de captura em nível de UF,
+            # mesmo que o gatilho na tabela de destino no banco de dados já
+            # registre a captura em nível dos municípios automaticamente quando há
+            # a inserção de uma nova linha
+            requisicao_inserir_historico = capturas_historico.insert(
+                {
+                    "operacao_id": operacao_id,
+                    "periodo_id": agendamento.periodo_id,
+                    "unidade_geografica_id": agendamento.unidade_geografica_id,
+                }
+            )
+            conector = sessao.connection()
+            conector.execute(requisicao_inserir_historico)
+            sessao.commit()
+            logger.info("OK.")
 
 
 def principal(sessao: Session, teste: bool = False) -> None:
@@ -772,9 +785,9 @@ def principal(sessao: Session, teste: bool = False) -> None:
     indicadores_municipios_equipes_homologadas(sessao=sessao, teste=teste)
     indicadores_municipios_equipe_todas(sessao=sessao, teste=teste)
     validacao_producao(sessao=sessao, teste=teste)
+    egestor_financiamento(sessao=sessao, teste=teste)
 
     # outros scripts do Impulso Previne aqui...
-
 
 
 if __name__ == "__main__":

@@ -18,26 +18,35 @@ from frozenlist import FrozenList
 from impulsoetl.loggers import logger
 
 
-MESES: FrozenList[str] = FrozenList([
-    "JAN",
-    "FEV",
-    "MAR",
-    "ABR",
-    "MAI",
-    "JUN",
-    "JUL",
-    "AGO",
-    "SET",
-    "OUT",
-    "NOV",
-    "DEZ",
-])
+MESES: FrozenList[str] = FrozenList(
+    [
+        "JAN",
+        "FEV",
+        "MAR",
+        "ABR",
+        "MAI",
+        "JUN",
+        "JUL",
+        "AGO",
+        "SET",
+        "OUT",
+        "NOV",
+        "DEZ",
+    ]
+)
 
 URL_BASE = "https://egestorab.saude.gov.br"
 
 
 @lru_cache(12)
 def extrair(periodo_mes: date) -> bytes:
+    """
+    Extrai dados do relatório de financiamento APS do egestor
+    Argumentos:
+        periodo_mes: Data do mês da competência em referência
+    Retorna:
+        Objeto [`bytes`] com os dados extraidos.
+    """
     logger.info(
         "Iniciando extração de dados de financiamento para o mês de {:%m/%Y}",
         periodo_mes,
@@ -60,7 +69,7 @@ def extrair(periodo_mes: date) -> bytes:
 
     logger.info("Iniciando sessão do e-Gestor...")
     with requests.Session() as sessao:
-        sessao.headers=cabecalhos
+        sessao.headers = cabecalhos
         url_consulta = URL_BASE + pagina_consulta_caminho
         pagina_consulta = sessao.get(url_consulta)
 
@@ -94,17 +103,19 @@ def extrair(periodo_mes: date) -> bytes:
             "javax.faces.behavior.event": "valueChange",
             "javax.faces.partial.ajax": "true",
         }
-        sessao.headers.update({
-            "Accept": "*/*",
-            "Faces-Request": "partial/ajax",
-            "Origin": URL_BASE,
-            "Referer": url_consulta,
-            "Cache-Control": "max-age=0",
-            "Sec-Fetch-Dest": "empty",
-            "Sec-Fetch-Mode": "cors",
-            "Sec-Fetch-Site": "same-origin",
-            "Sec-GPC": "1",
-        })
+        sessao.headers.update(
+            {
+                "Accept": "*/*",
+                "Faces-Request": "partial/ajax",
+                "Origin": URL_BASE,
+                "Referer": url_consulta,
+                "Cache-Control": "max-age=0",
+                "Sec-Fetch-Dest": "empty",
+                "Sec-Fetch-Mode": "cors",
+                "Sec-Fetch-Site": "same-origin",
+                "Sec-GPC": "1",
+            }
+        )
         del sessao.headers["Sec-Fetch-User"]
         del sessao.headers["Upgrade-Insecure-Requests"]
         relatorio_caminho = URL_BASE + formulario["action"]
@@ -126,16 +137,18 @@ def extrair(periodo_mes: date) -> bytes:
         javax_view_state = formulario.find(id="javax.faces.ViewState").text
 
         logger.info("Selecionando municípios e ano de referência...")
-        payload.update({
-            "javax.faces.ViewState": javax_view_state,
-            "j_idt58:municipio": "00",
-            "j_idt58:ano": "{:%Y}".format(periodo_mes),
-            "javax.faces.source": "j_idt58:ano",
-            "javax.faces.partial.execute": "j_idt58:ano j_idt58:ano",
-            "javax.faces.partial.render": (
-                "j_idt58:compInicio j_idt58:compFim j_idt58:visualizacao"
-            ),
-        })
+        payload.update(
+            {
+                "javax.faces.ViewState": javax_view_state,
+                "j_idt58:municipio": "00",
+                "j_idt58:ano": "{:%Y}".format(periodo_mes),
+                "javax.faces.source": "j_idt58:ano",
+                "javax.faces.partial.execute": "j_idt58:ano j_idt58:ano",
+                "javax.faces.partial.render": (
+                    "j_idt58:compInicio j_idt58:compFim j_idt58:visualizacao"
+                ),
+            }
+        )
         del payload["j_idt58:compFim"]
         requisicao_selecionar_municipio = requests.Request(
             "POST",
@@ -155,14 +168,16 @@ def extrair(periodo_mes: date) -> bytes:
         javax_view_state = formulario.find(id="javax.faces.ViewState").text
 
         logger.info("Selecionando competência de referência...")
-        payload.update({
-            "javax.faces.ViewState": javax_view_state,
-            "j_idt58:compInicio": "{:%Y%m}".format(periodo_mes),
-            "javax.faces.partial.execute": (
-                "j_idt58:compInicio j_idt58:compInicio"
-            ),
-            "javax.faces.partial.render": "j_idt58:compFim",
-        })
+        payload.update(
+            {
+                "javax.faces.ViewState": javax_view_state,
+                "j_idt58:compInicio": "{:%Y%m}".format(periodo_mes),
+                "javax.faces.partial.execute": (
+                    "j_idt58:compInicio j_idt58:compInicio"
+                ),
+                "javax.faces.partial.render": "j_idt58:compFim",
+            }
+        )
         requisicao_selecionar_competencia = requests.Request(
             "POST",
             relatorio_caminho,
@@ -181,27 +196,31 @@ def extrair(periodo_mes: date) -> bytes:
         javax_view_state = formulario.find(id="javax.faces.ViewState").text
 
         logger.info("Iniciando o download do relatório...")
-        payload.update({
-            "javax.faces.ViewState": javax_view_state,
-            "j_idt58:Download20": "Download",
-        })
+        payload.update(
+            {
+                "javax.faces.ViewState": javax_view_state,
+                "j_idt58:Download20": "Download",
+            }
+        )
         del payload["javax.faces.source"]
         del payload["javax.faces.partial.event"]
         del payload["javax.faces.partial.execute"]
         del payload["javax.faces.partial.render"]
         del payload["javax.faces.behavior.event"]
         del payload["javax.faces.partial.ajax"]
-        sessao.headers.update({
-            "Accept": (
-                "text/html,application/xhtml+xml,application/xml;q=0.9,"
-                + "image/avif,image/webp,image/apng,*/*;q=0.8"
-            ),
-            "Sec-Fetch-Dest": "document",
-            "Sec-Fetch-Mode": "navigate",
-            "Sec-Fetch-Site": "none",
-            "Sec-Fetch-User": "?1",
-            "Upgrade-Insecure-Requests": "1",
-        })
+        sessao.headers.update(
+            {
+                "Accept": (
+                    "text/html,application/xhtml+xml,application/xml;q=0.9,"
+                    + "image/avif,image/webp,image/apng,*/*;q=0.8"
+                ),
+                "Sec-Fetch-Dest": "document",
+                "Sec-Fetch-Mode": "navigate",
+                "Sec-Fetch-Site": "none",
+                "Sec-Fetch-User": "?1",
+                "Upgrade-Insecure-Requests": "1",
+            }
+        )
         del sessao.headers["Faces-Request"]
         requisicao_relatorio = requests.Request(
             "POST",
