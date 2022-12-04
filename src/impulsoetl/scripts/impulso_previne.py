@@ -718,6 +718,7 @@ def egestor_financiamento(
         "0635c342-dffb-7e98-8c37-0e2896127d80",
         "063519ff-066c-7cc4-8e5a-2089ebc51d23",
         "0635c366-300c-7d96-9802-344915cddb63",
+        "0638d2de-1264-7cf9-a6e1-e414b1f89271",
     ]
 
     # Ler agendamentos e rodar ETL para cada agendamento pendente
