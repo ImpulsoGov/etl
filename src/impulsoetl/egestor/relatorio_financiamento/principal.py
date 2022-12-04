@@ -8,8 +8,10 @@
 from __future__ import annotations
 
 from datetime import date
+from sqlite3 import Date
 from typing import Final
 import pandas as pd
+from requests import session
 from sqlalchemy.orm import Session
 from io import BytesIO
 
@@ -17,6 +19,8 @@ from impulsoetl.egestor.relatorio_financiamento.extracao import extrair
 from impulsoetl.egestor.relatorio_financiamento.tratamento import tratamento_dados 
 from impulsoetl.egestor.relatorio_financiamento.verificacao import verificar_relatorio_egestor 
 from impulsoetl.egestor.relatorio_financiamento.carregamento import carregar_dados 
+from impulsoetl.bd import Sessao
+from impulsoetl.loggers import logger
 
 
 ABAS_NOMES : Final[dict[str, str]] = {
@@ -31,6 +35,7 @@ ABAS_NOMES : Final[dict[str, str]] = {
     "dados_publicos.egestor_financiamento_acoes_estrategicas_acs":"ACS",
     "dados_publicos.egestor_financiamento_acoes_estrategicas_informatiza_aps":"Informatização",
     "dados_publicos.egestor_financiamento_desempenho_isf":"Desempenho ISF",
+    "dados_publicos.egestor_financiamento_capitacao_ponderada":"Capitação Ponderada",
     }
 
 def obter_relatorio_financiamento(
@@ -43,7 +48,7 @@ def obter_relatorio_financiamento(
             Extrai, transforma e carrega os dados do relatório de financiamento APS do egestor.
             Argumentos:
                 sessao: objeto [`sqlalchemy.orm.session.Session`][] que permite acessar a base de dados da ImpulsoGov.
-                periodo_id: Código de identificação do período do mês em referência.
+                periodo_id: Código de identificação do período .
                 tabela_destino: Nome da tabela de destino a ser carregada com os dados extraidos e tratados.
                 periodo_mes: Data do mês em referência.
         """
@@ -54,7 +59,7 @@ def obter_relatorio_financiamento(
         df_tratado=tratamento_dados(
             sessao=sessao,
             df_extraido=df_extraido,
-            aba=ABAS_NOMES[tabela_destino],
+            aba=ABAS_NOMES[tabela_destino], 
             periodo_data_inicio=periodo_mes,
             periodo_id=periodo_id
             )
@@ -70,3 +75,5 @@ def obter_relatorio_financiamento(
             tabela_destino=tabela_destino
         )
 
+
+        

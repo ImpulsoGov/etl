@@ -130,6 +130,64 @@ TIPOS_EGESTOR_FINANCIAMENTO: Final[frozendict] = frozendict(
         "esf_novas": "int64",
         "eap_30h_novas": "int64",
         "eap_20h_novas": "int64",
+        "competencia_cnes": str,
+        "municipio_tipologia": str,
+        "municipio_populacao": "int64",
+        "esf_credenciadas": "int64",
+        "eap_credenciadas": "int64",
+        "esf_homologadas": "int64",
+        "eap_homologadas": "int64",
+        "esf_pagas": "int64",
+        "eap_20h_pagas": "int64",
+        "eap_30h_pagas": "int64",
+        "cadastro_esf_por_eap": "int64",
+        "cadastro_potencial": "int64",
+        "esf_quadrimestre": "int64",
+        "eap_20h_quadrimestre": "int64",
+        "eap_30h_quadrimestre": "int64",
+        "populacao_vulneravel": "int64",
+        "populacao_nao_vulneravel": "int64",
+        "cadastro_pagamento": "int64",
+        "valor_ponto_vulneravel": float,
+        "valor_ponto_nao_vulneravel": float,
+        "valor_ponto_por_equipe": float,
+        "esf_completas": "int64",
+        "esf_75_incompletas": "int64",
+        "esf_50_incompletas": "int64",
+        "esf_25_incompletas": "int64",
+        "eap_20h_completas": "int64",
+        "eap_20h_incompletas": "int64",
+        "eap_30h_completas": "int64",
+        "eap_30h_incompletas": "int64",
+        "pagamento_total_equipes": float,
+        "esf_novas_completas": "int64",
+        "esf_novas_75_incompletas": "int64",
+        "esf_novas_50_incompletas": "int64",
+        "esf_novas_25_incompletas": "int64",
+        "eap_20h_novas_completas": "int64",
+        "eap_20h_novas_incompletas": "int64",
+        "eap_30h_novas_completas": "int64",
+        "eap_30h_novas_incompletas": "int64",
+        "cadastro_potencial_equipes_novas": "int64",
+        "pagamento_por_equipe": float,
+        "pagamento_total_equipes_novas": float,
+        "ecr": "int64",
+        "ecr_cadastros": "int64",
+        "ecr_ponto": float,
+        "ecr_pagamento": float,
+        "eapp": "int64",
+        "eapp_cadastros": "int64",
+        "eapp_ponto": float,
+        "eapp_pagamento": float,
+        "esfr": "int64",
+        "easfr_cadastro_vulneravel": "int64",
+        "easfr_cadastro_nao_vulneravel": "int64",
+        "easfr_ponto_vulneravel": float,
+        "easfr_ponto_nao_vulneravel": float,
+        "easfr_pagamento_vulneravel": float,
+        "easfr_pagamento_nao_vulneravel": float,
+        "pagamento_capitacao_ponderada": float,
+        "pagamento_complementacao_financeira": float
     },
 )
 
@@ -250,6 +308,60 @@ EGESTOR_FINANCIAMENTO_COLUNAS: Final[dict[str, str]] = {
     "Quantitativo de equipes novas* homologadas e validas no SCNES na competência": "esf_novas",
     "VALOR PAGAMENTO POR DESEMPENHO - EQUIPES NOVAS*": "pagamento_equipes_novas",
     "VALOR TOTAL": "pagamento_total",
+    "Comp. CNES": "competencia_cnes",
+    "Tipologia": "municipio_tipologia",
+    "População": "municipio_populacao",
+    "Nº de equipes CREDENCIADAS": "esf_credenciadas",
+    "Nº de equipes HOMOLOGADAS": "esf_homologadas",
+    "Nº de equipes PAGAS": "esf_pagas",
+    "Cálculo Quadrimestre": "cadastro_esf_por_eap",
+    "Unnamed: 18": "eap_20h_quadrimestre",
+    "Unnamed: 21": "populacao_nao_vulneravel",
+    "Unnamed: 22": "cadastro_pagamento",
+    "Unnamed: 23": "valor_ponto_vulneravel",
+    "Unnamed: 24": "valor_ponto_nao_vulneravel",
+    "Unnamed: 25": "valor_ponto_por_equipe",
+    "Unnamed: 26": "pagamento_por_equipe_quadrimestre",
+    "Composição das equipes para pagamento na competência": "esf_completas",
+    "Unnamed: 28": "esf_75_incompletas",
+    "Unnamed: 29": "esf_50_incompletas",
+    "Unnamed: 30": "esf_25_incompletas",
+    "Unnamed: 31": "eap_20h_completas",
+    "Unnamed: 32": "eap_20h_incompletas",
+    "Unnamed: 33": "eap_30h_completas",
+    "Unnamed: 34": "eap_30h_incompletas",
+    "Unnamed: 35": "pagamento_total_equipes",
+    """Equipes Novas*
+*no caso de cadastro de eSF ou eAP no SCNES ref""": "esf_novas_completas",
+    "Equipes Novas* \n*no caso de cadastro de eSF ou eAP no SCNES referente a um novo credenciamento, o incentivo financeiro do pagamento da capitação será transferido mensalmente até o 2º recálculo, considerando o resultado de 100%  do alcance dos indicadores, conforme parágrafo único do art. 12-E do Título II da Pt Consolidação n6/2017.": "esf_novas_completas",
+    "Unnamed: 37": "esf_novas_75_incompletas",
+    "Unnamed: 38": "esf_novas_50_incompletas",
+    "Unnamed: 39": "esf_novas_25_incompletas",
+    "Unnamed: 40": "eap_20h_novas_completas",
+    "Unnamed: 41": "eap_20h_novas_incompletas",
+    "Unnamed: 42": "eap_30h_novas_completas",
+    "Unnamed: 43": "eap_30h_novas_incompletas",
+    "Unnamed: 44": "cadastro_potencial_equipes_novas",
+    "Unnamed: 45": "pagamento_por_equipe",
+    "Unnamed: 46": "pagamento_total_equipes_novas",
+    "Equipes Específicas": "ecr",
+    "Unnamed: 48": "ecr_cadastros",
+    "Unnamed: 49": "ecr_ponto",
+    "Unnamed: 50": "ecr_pagamento",
+    "Unnamed: 51": "eapp",
+    "Unnamed: 52": "eapp_cadastros",
+    "Unnamed: 53": "eapp_ponto",
+    "Unnamed: 54": "eapp_pagamento",
+    "Unnamed: 55": "esfr",
+    "Unnamed: 56": "easfr_cadastro_vulneravel",
+    "Unnamed: 57": "easfr_cadastro_nao_vulneravel",
+    "Unnamed: 58": "easfr_ponto_vulneravel",
+    "Unnamed: 59": "easfr_ponto_nao_vulneravel",
+    "Unnamed: 60": "easfr_pagamento_vulneravel",
+    "Unnamed: 61": "easfr_pagamento_nao_vulneravel",
+    "Valor da Capitação Ponderada": "pagamento_capitacao_ponderada",
+    "Valor da Complementação Financeira": "pagamento_complementacao_financeira",
+    "Unnamed: 65": "pagamento_desconto"
 }
 
 COLUNAS_NUMERICAS_DECIMAIS = [
@@ -297,12 +409,68 @@ COLUNAS_NUMERICAS_DECIMAIS = [
     "pagamento_adicional_100_meta",
     "pagamento_equipes_novas",
     "pagamento_extra",
+    "pagamento_capitacao_ponderada",
+    "pagamento_complementacao_financeira",
+    "easfr_ponto_vulneravel",
+    "easfr_ponto_nao_vulneravel",
+    "easfr_pagamento_vulneravel",
+    "easfr_pagamento_nao_vulneravel",
+    "eapp_ponto",
+    "pagamento_por_equipe",
+    "pagamento_total_equipes_novas",
+    "ecr_ponto",
+    "valor_ponto_vulneravel",
+    "valor_ponto_nao_vulneravel",
+    "valor_ponto_por_equipe",
+    "pagamento_total_equipes",
+    "municipio_populacao",
+    "esf_credenciadas",
+    "eap_credenciadas",
+    "esf_homologadas",
+    "eap_homologadas",
+    "esf_pagas",
+    "eap_20h_pagas",
+    "eap_30h_pagas",
+    "cadastro_esf_por_eap",
+    "cadastro_potencial",
+    "esf_quadrimestre",
+    "eap_20h_quadrimestre",
+    "eap_30h_quadrimestre",
+    "populacao_vulneravel",
+    "populacao_nao_vulneravel",
+    "cadastro_pagamento",
+    "esf_completas",
+    "esf_75_incompletas",
+    "esf_50_incompletas",
+    "esf_25_incompletas",
+    "eap_20h_completas",
+    "eap_20h_incompletas",
+    "eap_30h_completas",
+    "eap_30h_incompletas",
+    "esf_novas_completas",
+    "esf_novas_75_incompletas",
+    "esf_novas_50_incompletas",
+    "esf_novas_25_incompletas",
+    "eap_20h_novas_completas",
+    "eap_20h_novas_incompletas",
+    "eap_30h_novas_completas",
+    "eap_30h_novas_incompletas",
+    "cadastro_potencial_equipes_novas",
+    "ecr",
+    "ecr_cadastros",
+    "ecr_pagamento",
+    "eapp",
+    "eapp_cadastros",
+    "eapp_pagamento",
+    "esfr",
+    "easfr_cadastro_vulneravel",
+    "easfr_cadastro_nao_vulneravel",
 ]
 
 
 def formata_valores_monetarios(
     df_extraido: pd.DataFrame,
-) -> pd.DataFrame:
+)-> pd.DataFrame:
 
     for coluna in COLUNAS_NUMERICAS_DECIMAIS:
         df_coluna = []
@@ -320,7 +488,8 @@ def formata_valores_monetarios(
 
 
 def renomeia_colunas_repetidas(
-    df_extraido: pd.DataFrame, aba: str
+    df_extraido: pd.DataFrame, 
+    aba: str
 ) -> pd.DataFrame:
 
     if aba in ["Ações Est. - SB"]:
@@ -379,19 +548,31 @@ def renomeia_colunas_repetidas(
             },
             inplace=True,
         )
+    elif aba in ["Capitação Ponderada"]:
+        df_extraido.rename(
+            columns={
+                "Unnamed: 9": "eap_credenciadas",
+                "Unnamed: 11": "eap_homologadas",
+                "Unnamed: 13" : "eap_20h_pagas",
+                "Unnamed: 14" : "eap_30h_pagas",
+                "Unnamed: 16" : "cadastro_potencial",
+                "Unnamed: 17" : "esf_quadrimestre",
+                "Unnamed: 19" : "eap_30h_quadrimestre",
+                "Unnamed: 20" : "populacao_vulneravel",
+            },
+            inplace=True,
+        )
     return df_extraido
 
-
-def garantir_tipos_dados(df_extraido: pd.DataFrame) -> pd.DataFrame:
+def garantir_tipos_dados(
+    df_extraido: pd.DataFrame
+)-> pd.DataFrame:
 
     for coluna in TIPOS_EGESTOR_FINANCIAMENTO:
         if coluna in df_extraido.columns:
-            df_tipos = dict(
-                zip([coluna], [TIPOS_EGESTOR_FINANCIAMENTO[coluna]])
-            )
+            df_tipos = dict(zip([coluna], [TIPOS_EGESTOR_FINANCIAMENTO[coluna]]))
             df_extraido = df_extraido.astype(df_tipos)
     return df_extraido
-
 
 def tratamento_dados(
     sessao: Session,
@@ -399,25 +580,25 @@ def tratamento_dados(
     aba: str,
     periodo_data_inicio: str,
     periodo_id: str,
-) -> pd.DataFrame:
+)-> pd.DataFrame:
     """Trata dados capturados do relatório de financiamento APS do egestor
 
-    Argumentos:
-        sessao: objeto [`sqlalchemy.orm.session.Session`][] que permite
-            acessar a base de dados da ImpulsoGov.
-        df_extraido: [`DataFrame`][] contendo os dados capturados no relatório de Indicadores do Sisab
-        (conforme retornado pela função
-            [`extrair_dados()`][]).
-        aba: Nome da aba do relatório
-        periodo_data_inicio: Data do mês da competência em referência
-        periodo_id: Código de identificação do período
+        Argumentos:
+            sessao: objeto [`sqlalchemy.orm.session.Session`][] que permite
+                acessar a base de dados da ImpulsoGov.
+            df_extraido: [`DataFrame`][] contendo os dados capturados no relatório de Indicadores do Sisab
+            (conforme retornado pela função
+                [`extrair_dados()`][]).
+            aba: Nome da aba do relatório
+            periodo_data_inicio: Data do mês da competência em referência
+            periodo_id: Código de identificação do período
 
-    Retorna:
-        Objeto [`pandas.DataFrame`] com os dados enriquecidos e tratados.
+        Retorna:
+            Objeto [`pandas.DataFrame`] com os dados enriquecidos e tratados.
 
-            [`sqlalchemy.orm.session.Session`]: https://docs.sqlalchemy.org/en/14/orm/session_api.html#sqlalchemy.orm.Session
-            [`pandas.DataFrame`]: https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html
-    """
+                [`sqlalchemy.orm.session.Session`]: https://docs.sqlalchemy.org/en/14/orm/session_api.html#sqlalchemy.orm.Session
+                [`pandas.DataFrame`]: https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html
+        """
 
     logger.info("Iniciando o tratamento dos dados...")
     df_extraido.drop(df_extraido.index[0], inplace=True)
@@ -442,7 +623,7 @@ def tratamento_dados(
             sessao=sessao, id_sus=municipio_id_sus
         )
     )
-
+    
     logger.info("Checa os tipos dos dados ...")
     df_extraido = garantir_tipos_dados(df_extraido=df_extraido)
 
@@ -450,3 +631,5 @@ def tratamento_dados(
     logger.info("Dados transformados ...")
 
     return df_extraido
+
+
