@@ -37,6 +37,7 @@ roman = "^3.3"
 types-psycopg2 = "^2.9.11"
 more-itertools = "^8.12.0"
 uuid6 = "^2022.6.25"
+lxml = "^4.9.1"
 
 
 [tool.poetry.dev-dependencies]
