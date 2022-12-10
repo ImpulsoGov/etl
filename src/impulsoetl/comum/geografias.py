@@ -139,6 +139,6 @@ def id_impulso_para_id_sus(sessao: Session, id_impulso: str) -> str:
     """
     return (
         sessao.query(unidades_geograficas.c.id_sus)
-        .filter(unidades_geograficas.c.id == str(unidades_geograficas))
+        .filter(unidades_geograficas.c.id == str(id_impulso))
         .one()[0]
     )
