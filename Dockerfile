@@ -60,9 +60,6 @@ COPY README.md ./README.md
 COPY src ./src
 RUN poetry install -q -n --only-root --no-cache
 
-# Executar o ponto de entrada contendo os scripts
-CMD ["poetry", "run", "python3", "-m", "impulsoetl"]
-
 # Versão do ETL orquestrado com prefect
 FROM fonte as prefect-agent
 

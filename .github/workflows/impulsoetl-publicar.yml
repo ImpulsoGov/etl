@@ -26,15 +26,10 @@ jobs:
         SLACK_WEBHOOK_URL: ${{secrets.SLACK_WEBHOOK_URL}}
       run: docker login -u $DOCKER_USER -p $DOCKER_SENHA
     - name: Construir imagem do ImpulsoETL (sem prefect)
-      run: docker build -t impulsogov/impulsoetl:latest --target etl-comum .
-    - name: Enviar imagem do ImpulsoETL (sem prefect)
-      run: docker push impulsogov/impulsoetl:latest
-    - name: Construir imagem do ImpulsoETL (com prefect)
-      run: >
-        docker build -t impulsogov/impulsoetl:nightly --target prefect-agent .
+      run: docker build -t impulsogov/impulsoetl:latest .
     - name: Implementar blocos e fluxos do Prefect
       env:
-        DOCKER_IMAGEM: impulsogov/impulsoetl:nightly
+        DOCKER_IMAGEM: impulsogov/impulsoetl
         DOCKER_REGISTRO_SENHA: ${{secrets.DOCKER_SENHA}}
         DOCKER_REGISTRO_URL: ${{secrets.DOCKER_REGISTRO_URL}}
         DOCKER_REGISTRO_USUARIO: ${{secrets.DOCKER_USER}}
@@ -56,6 +51,6 @@ jobs:
         -e IMPULSOETL_BD_USUARIO
         -e IMPULSOETL_BD_SENHA
         -e PREFECT_API_URL
-        impulsogov/impulsoetl:nightly poetry run python3 implementar_fluxos.py
-    - name: Enviar imagem do ImpulsoETL (com prefect)
-      run: docker push impulsogov/impulsoetl:nightly
+        impulsogov/impulsoetl:latest poetry run python3 implementar_fluxos.py
+    - name: Enviar imagem do ImpulsoETL
+      run: docker push impulsogov/impulsoetl
