@@ -6,7 +6,7 @@
 [tool.poetry]
 
 name = "impulsoetl"
-version = "0.1.0"
+version = "0.2.0"
 description = "Ingestão, tratamento e caregamento de dados dos serviços de saúde mental do SUS."
 readme = "README.md"
 license = "MIT"
