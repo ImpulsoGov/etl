@@ -6,8 +6,6 @@
 """Funções utilizadas para a extração de todos os relatórios do SISAB."""
 
 
-from __future__ import annotations
-
 import urllib
 
 import requests

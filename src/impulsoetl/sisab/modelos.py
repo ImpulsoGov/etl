@@ -6,8 +6,6 @@
 """Declara representações das tabelas relativas ao SIASUS."""
 
 
-from __future__ import annotations
-
 import sqlalchemy as sa
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.ext.declarative import declared_attr

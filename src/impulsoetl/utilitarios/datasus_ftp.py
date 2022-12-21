@@ -6,8 +6,6 @@
 """Funções e classes úteis para interagir com os repositórios do DataSUS."""
 
 
-from __future__ import annotations
-
 import re
 import shutil
 from contextlib import closing

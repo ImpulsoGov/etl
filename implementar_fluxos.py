@@ -6,8 +6,6 @@
 """Implementa fluxos do Prefect no servidor Orion remoto."""
 
 
-from __future__ import annotations
-
 import os
 from importlib import import_module
 from pathlib import Path
@@ -15,7 +13,6 @@ from typing import Final
 
 from dotenv import load_dotenv
 from prefect.deployments import Deployment
-from prefect.exceptions import ObjectAlreadyExists
 from prefect.flows import Flow
 from prefect.infrastructure.docker import (
     DockerContainer,

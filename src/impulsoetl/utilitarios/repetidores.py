@@ -7,8 +7,6 @@
 """Decoradores para executar múltiplas vezes as funções de ETL."""
 
 
-from __future__ import annotations
-
 from functools import wraps
 from typing import Callable
 
