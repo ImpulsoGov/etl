@@ -7,8 +7,9 @@
 
 
 import pandas as pd
+from prefect import task
 
-from impulsoetl.loggers import logger
+from impulsoetl.loggers import habilitar_suporte_loguru, logger
 
 
 def verifica_diferenca_ctg_municpios(
@@ -62,6 +63,17 @@ def verifica_nulos(df_tratado: pd.DataFrame) -> bool:
     )
 
 
+@task(
+    name="Validar Relatórios de Validação da Produção",
+    description=(
+        "Valida os dados dos relatórios de validação da produção extraídos "
+        + "transformados a partir do portal público do Sistema de Informação "
+        + "em Saúde para a Atenção Básica do SUS."
+    ),
+    tags=["aps", "sisab", "validacao_producao", "validacao"],
+    retries=0,
+    retry_delay_seconds=None,
+)
 def verificar_relatorio_validacao_producao(
     df_extraido: pd.DataFrame, df_tratado: pd.DataFrame
 ) -> None:
@@ -78,6 +90,7 @@ def verificar_relatorio_validacao_producao(
         testadas não é considerada válida.
     [`AssertionError`]: https://docs.python.org/3/library/exceptions.html#AssertionError
     """
+    habilitar_suporte_loguru()
     assert verifica_diferenca_ctg_municpios(df_extraido, df_tratado)
     assert verifica_diferenca_ctg_validacao_tipo(df_extraido, df_tratado)
     assert verifica_diferenca_qtd_validacao_tipo(df_extraido, df_tratado)

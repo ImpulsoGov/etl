@@ -8,11 +8,13 @@
 """Scripts para a obtenção de dados de uso geral entre produtos da Impulso."""
 
 
+from prefect import flow
 from sqlalchemy.orm import Session
 
-from impulsoetl.bd import Sessao, tabelas
+from impulsoetl import __VERSION__
+from impulsoetl.bd import tabelas
 from impulsoetl.brasilapi.cep import obter_cep
-from impulsoetl.loggers import logger
+from impulsoetl.loggers import habilitar_suporte_loguru, logger
 from impulsoetl.scnes.habilitacoes import obter_habilitacoes
 from impulsoetl.scnes.vinculos import obter_vinculos
 from impulsoetl.sim.do import obter_do
@@ -21,13 +23,25 @@ agendamentos = tabelas["configuracoes.capturas_agendamentos"]
 capturas_historico = tabelas["configuracoes.capturas_historico"]
 
 
-@logger.catch
+@flow(
+    name="Tratar Agendamentos de Habilitações do SCNES",
+    description=(
+        "Lê as capturas agendadas para os arquivos de disseminação de "
+        + "habilitações dos estabelecimentos de saúde do Sistema do Cadastro "
+        + "Nacional de Estabelecimentos de Saúde."
+    ),
+    retries=0,
+    retry_delay_seconds=None,
+    version=__VERSION__,
+    validate_parameters=False,
+)
 def habilitacoes_disseminacao(
     sessao: Session,
     teste: bool = False,
 ) -> None:
+    habilitar_suporte_loguru()
     logger.info(
-        "Capturando vínculos profissionais do SCNES.",
+        "Capturando habilitações dos estabelecimentos do SCNES.",
     )
     operacao_id = "06307c18-d268-748c-8cd2-75cd262126c4"
     agendamentos_habilitacoes = (
@@ -65,11 +79,23 @@ def habilitacoes_disseminacao(
         logger.info("OK.")
 
 
-@logger.catch
+@flow(
+    name="Tratar Agendamentos de Vínculos do SCNES",
+    description=(
+        "Lê as capturas agendadas para os arquivos de disseminação de "
+        + "vínculos dos profissionais de saúde do Sistema do Cadastro "
+        + "Nacional de Estabelecimentos de Saúde."
+    ),
+    retries=0,
+    retry_delay_seconds=None,
+    version=__VERSION__,
+    validate_parameters=False,
+)
 def vinculos_disseminacao(
     sessao: Session,
     teste: bool = False,
 ) -> None:
+    habilitar_suporte_loguru()
     logger.info(
         "Capturando vínculos profissionais do SCNES.",
     )
@@ -109,11 +135,23 @@ def vinculos_disseminacao(
         logger.info("OK.")
 
 
-@logger.catch
+@flow(
+    name="Tratar Agendamentos de Declarações de Óbito do SIM",
+    description=(
+        "Lê as capturas agendadas para os arquivos de disseminação de "
+        + "declarações de óbito do Sistema de Informações da Mortalidade do "
+        + "SUS."
+    ),
+    retries=0,
+    retry_delay_seconds=None,
+    version=__VERSION__,
+    validate_parameters=False,
+)
 def obitos_disseminacao(
     sessao: Session,
     teste: bool = False,
 ) -> None:
+    habilitar_suporte_loguru()
     logger.info("Capturando Declarações de Óbito do SIM.")
     operacao_ids = [
         "063091e1-9bf4-782c-95bb-a564713aeaa0",
@@ -154,40 +192,31 @@ def obitos_disseminacao(
         logger.info("OK.")
 
 
-@logger.catch
+@flow(
+    name="Tratar Agendamentos de CEPs",
+    description=(
+        "Lê as capturas agendadas para os Códigos de Endereçamento Postal dos "
+        + "Correios."
+    ),
+    retries=0,
+    retry_delay_seconds=None,
+    version=__VERSION__,
+    validate_parameters=False,
+)
 def ceps(sessao: Session, teste: bool = False) -> None:
+    habilitar_suporte_loguru()
     logger.info(
         "Capturando informações de Códigos de Endereçamento Postal.",
     )
     logger.info("Checando CEPs pendentes...")
 
     tabela_ceps_pendentes = tabelas["configuracoes.ceps_pendentes"]
-    ceps_pendentes = sessao.query(
+
+    ceps_pendentes_query = sessao.query(
         tabela_ceps_pendentes.c.id_cep,
-    ).all()
+    )
+    if teste:
+        ceps_pendentes_query = ceps_pendentes_query.limit(10)
+    ceps_pendentes = ceps_pendentes_query.all()
+
     obter_cep(sessao=sessao, ceps_pendentes=ceps_pendentes, teste=teste)
-
-
-def principal(sessao: Session, teste: bool = False) -> None:
-    """Executa todos os scripts de captura de dados de uso geral.
-
-    Argumentos:
-        sessao: objeto [`sqlalchemy.orm.session.Session`][] que permite
-            acessar a base de dados da ImpulsoGov.
-        teste: Indica se as modificações devem ser de fato escritas no banco de
-            dados (`False`, padrão). Caso seja `True`, as modificações são
-            adicionadas à uma transação, e podem ser revertidas com uma chamada
-            posterior ao método [`Session.rollback()`][] da sessão gerada com o
-            SQLAlchemy.
-
-    [`sqlalchemy.orm.session.Session`]: https://docs.sqlalchemy.org/en/14/orm/session_api.html#sqlalchemy.orm.Session
-    """
-
-    vinculos_disseminacao(sessao=sessao, teste=teste)
-    # ceps(sessao=sessao, teste=teste)
-    # outros scripts de uso geral aqui...
-
-
-if __name__ == "__main__":
-    with Sessao() as sessao:
-        principal(sessao=sessao)

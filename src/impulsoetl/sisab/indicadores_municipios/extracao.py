@@ -5,16 +5,15 @@
 
 """Extrai dados de indicadores de desempenho a partir do SISAB."""
 
-from __future__ import annotations
-
 from datetime import date
 from io import StringIO
 from typing import Final
 
 import pandas as pd
 import requests
+from prefect import task
 
-from impulsoetl.loggers import logger
+from impulsoetl.loggers import habilitar_suporte_loguru, logger
 from impulsoetl.sisab.parametros_requisicao import head
 
 INDICADORES_CODIGOS: Final[dict[str, str]] = {
@@ -44,6 +43,17 @@ def verifica_linhas(df_extraido: pd.DataFrame) -> int:
     return df_extraido.shape[0]
 
 
+@task(
+    name="Extrair Indicadores do Previne Brasil",
+    description=(
+        "Extrai os dados dos relatórios de indicadores do Previne Brasil a "
+        + "partir do portal público do Sistema de Informação em Saúde para a "
+        + "Atenção Básica do SUS."
+    ),
+    tags=["aps", "sisab", "indicadores_municipios", "extracao"],
+    retries=2,
+    retry_delay_seconds=120,
+)
 def extrair_indicadores(
     indicador: str,
     visao_equipe: str,
@@ -63,6 +73,7 @@ def extrair_indicadores(
     Retorna:
         Um objeto `pandas.DataFrame` com dados capturados pela requisição.
     """
+    habilitar_suporte_loguru()
 
     # NOTE: a função `head()` captura cookies da página web do relatório
     hd = head(url)

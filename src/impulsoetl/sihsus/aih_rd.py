@@ -6,8 +6,6 @@
 """Obtém dados de procedimentos ambulatoriais registrados no SIASUS."""
 
 
-from __future__ import annotations
-
 import os
 from datetime import date
 from typing import Final, Generator
@@ -16,16 +14,18 @@ import janitor  # noqa: F401  # nopycln: import
 import numpy as np
 import pandas as pd
 from frozendict import frozendict
+from prefect import flow, task
 from sqlalchemy.orm import Session
 from uuid6 import uuid7
 
+from impulsoetl import __VERSION__
 from impulsoetl.comum.datas import (
     agora_gmt_menos3,
     de_aaaammdd_para_timestamp,
     periodo_por_data,
 )
 from impulsoetl.comum.geografias import id_sus_para_id_impulso
-from impulsoetl.loggers import logger
+from impulsoetl.loggers import habilitar_suporte_loguru, logger
 from impulsoetl.utilitarios.bd import carregar_dataframe
 from impulsoetl.utilitarios.datasus_ftp import extrair_dbc_lotes
 
@@ -41,7 +41,7 @@ DE_PARA_AIH_RD: Final[frozendict] = frozendict(
         "CEP": "usuario_residencia_cep",
         "MUNIC_RES": "usuario_residencia_municipio_id_sus",
         "NASC": "usuario_nascimento_data",
-        "SEXO": "usuario_sexo_id_sigtap",
+        "SEXO": "usuario_sexo_id_sihsus",
         "UTI_MES_TO": "uti_diarias",
         "MARCA_UTI": "uti_tipo_id_sihsus",
         "UTI_INT_TO": "unidade_intermediaria_diarias",
@@ -163,7 +163,7 @@ TIPOS_AIH_RD: Final[frozendict] = frozendict(
         "usuario_residencia_cep": "object",
         "usuario_residencia_municipio_id_sus": "object",
         "usuario_nascimento_data": "datetime64[ns]",
-        "usuario_sexo_id_sigtap": "object",
+        "usuario_sexo_id_sihsus": "object",
         "uti_diarias": "int64",
         "uti_tipo_id_sihsus": "object",
         "unidade_intermediaria_diarias": "int64",
@@ -332,11 +332,23 @@ def extrair_aih_rd(
     )
 
 
+@task(
+    name="Transformar AIH-RD's",
+    description=(
+        "Transforma os dados dos arquivos de disseminação das Autorizações de "
+        + "Internação Hospitalar - reduzidas a partir do repositório "
+        + "público do Sistema de Informações Hospitalares do SUS."
+    ),
+    tags=["saude_mental", "sihsus", "aih_rd", "transformacao"],
+    retries=0,
+    retry_delay_seconds=None,
+)
 def transformar_aih_rd(
     sessao: Session,
     aih_rd: pd.DataFrame,
 ) -> pd.DataFrame:
     """Transforma um `DataFrame` de autorizações de internação do SIHSUS."""
+    habilitar_suporte_loguru()
     logger.info(
         "Transformando DataFrame com {num_registros_aih_rd} procedimentos "
         + "ambulatoriais.",
@@ -470,6 +482,18 @@ def transformar_aih_rd(
     return aih_rd_transformada
 
 
+@flow(
+    name="Obter AIH-RD's",
+    description=(
+        "Extrai, transforma e carrega os dados dos arquivos de disseminação "
+        + "das Autorizações de Internação Hospitalar - reduzidas a partir do "
+        + "repositório público do Sistema de Informações Hospitalares do SUS."
+    ),
+    retries=0,
+    retry_delay_seconds=None,
+    version=__VERSION__,
+    validate_parameters=False,
+)
 def obter_aih_rd(
     sessao: Session,
     uf_sigla: str,
@@ -497,6 +521,7 @@ def obter_aih_rd(
     [`sqlalchemy.orm.session.Session`]: https://docs.sqlalchemy.org/en/14/orm/session_api.html#sqlalchemy.orm.Session
     [`sqlalchemy.engine.Row`]: https://docs.sqlalchemy.org/en/14/core/connections.html#sqlalchemy.engine.Row
     """
+    habilitar_suporte_loguru()
     logger.info(
         "Iniciando captura de autorizações de internações hospitalares para "
         + "Federativa '{}' na competencia de {:%m/%Y}.",
