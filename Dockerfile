@@ -1,7 +1,7 @@
 # SPDX-FileCopyrightText: 2021, 2022 ImpulsoGov <contato@impulsogov.org>
 # SPDX-License-Identifier: MIT
 
-FROM python:3.8.13-slim-bullseye AS base
+FROM python:3.10.8-slim-bullseye AS base
 
 # Configurar variáveis de ambiente
 ENV LANG C.UTF-8
