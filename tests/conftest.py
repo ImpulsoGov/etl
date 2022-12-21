@@ -3,13 +3,11 @@
 # SPDX-License-Identifier: MIT
 
 
-import logging
 import os
 
 import pytest
-from _pytest.logging import caplog as _caplog  # noqa: F401  # nopycln: import
 from dotenv import load_dotenv
-from loguru import logger
+from prefect.testing.utilities import prefect_test_harness
 from sqlalchemy import create_engine
 from sqlalchemy.engine import Engine, URL
 from sqlalchemy.orm import sessionmaker
@@ -19,23 +17,6 @@ from sqlalchemy.orm import sessionmaker
 def carregar_variaveis_ambiente():
     """Buscar arquivo .env e carrega variáveis de ambiente."""
     load_dotenv()
-
-
-@pytest.fixture
-def caplog(_caplog):  # noqa: F811
-    """Propagar logs com Loguru para o módulo logging nativo do Python."""
-
-    # Necessário para analisar a saída dos logs gerados com Loguru. Ver:
-    # https://loguru.readthedocs.io/en/stable/resources/migration.html
-    # #making-things-work-with-pytest-and-caplog
-
-    class PropogateHandler(logging.Handler):
-        def emit(self, record):
-            logging.getLogger(record.name).handle(record)
-
-    handler_id = logger.add(PropogateHandler(), format="{message}")
-    yield _caplog
-    logger.remove(handler_id)
 
 
 @pytest.fixture(scope="session")
@@ -79,3 +60,10 @@ def passo():
         yield 100
     finally:
         os.environ["IMPULSOETL_LOTE_TAMANHO"] = lote_tamanho_original
+
+
+@pytest.fixture(autouse=True, scope="session")
+def prefect_test_fixture():
+    # VER: https://docs.prefect.io/tutorials/testing/#unit-testing-flows
+    with prefect_test_harness():
+        yield

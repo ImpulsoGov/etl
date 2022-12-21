@@ -6,8 +6,6 @@
 """Testes de categorias geográficas utilizadas em vários processos de ETL."""
 
 
-from __future__ import annotations
-
 import pytest
 
 from impulsoetl.comum.geografias import (

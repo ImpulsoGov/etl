@@ -133,7 +133,7 @@ def teste_extrair_aih_rd(uf_sigla, periodo_data_inicio, passo):
 
 @pytest.mark.integracao
 def teste_transformar_aih_rd(sessao, aih_rd):
-    aih_rd_transformada = transformar_aih_rd(
+    aih_rd_transformada = transformar_aih_rd.fn(
         sessao=sessao,
         aih_rd=aih_rd,
     )
@@ -166,9 +166,9 @@ def teste_carregar_aih_rd(
     aih_rd_transformada,
     tabela_teste,
     passo,
-    caplog,
+    capfd,
 ):
-    carregamento_status = carregar_dataframe(
+    carregamento_status = carregar_dataframe.fn(
         sessao=sessao,
         df=aih_rd_transformada.iloc[:10],
         tabela_destino=tabela_teste,
@@ -178,7 +178,7 @@ def teste_carregar_aih_rd(
 
     assert carregamento_status == 0
 
-    logs = caplog.text
+    logs = capfd.readouterr().err
     assert "Carregamento concluído" in logs
 
 
@@ -192,7 +192,7 @@ def teste_obter_aih_rd(
     uf_sigla,
     periodo_data_inicio,
     tabela_teste,
-    caplog,
+    capfd,
 ):
     obter_aih_rd(
         sessao=sessao,
@@ -203,5 +203,5 @@ def teste_obter_aih_rd(
     )
     sessao.commit()
 
-    logs = caplog.text
+    logs = capfd.readouterr().err
     assert "Carregamento concluído" in logs
