@@ -720,7 +720,7 @@ def egestor_financiamento(
     sessao: Session,
     teste: bool = False,
 ) -> None:
-
+    habilitar_suporte_loguru()
     operacoes_id = [
         "0635c378-835f-70a2-a82a-0cb13ade9559",
         "0635c378-85f3-7711-8c9c-7e6ee68ed0ed",
