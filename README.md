@@ -39,7 +39,7 @@ $ git clone https://github.com/ImpulsoGov/etl.git
 $ cd etl
 
 # Instalar pacote e dependências
-$ poetry install -E impulsoetl
+$ poetry install
 ```
 
 ## Instalação e execução locais com Docker
