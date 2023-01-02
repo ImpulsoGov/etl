@@ -23,7 +23,7 @@ capturas_historico = tabelas["configuracoes.capturas_historico"]
 
 
 @flow(
-    name="Tratar Agendamentos de Habilitações do SCNES",
+    name="Rodar Agendamentos de Habilitações do SCNES",
     description=(
         "Lê as capturas agendadas para os arquivos de disseminação de "
         + "habilitações dos estabelecimentos de saúde do Sistema do Cadastro "
@@ -79,7 +79,7 @@ def habilitacoes_disseminacao(
 
 
 @flow(
-    name="Tratar Agendamentos de Vínculos do SCNES",
+    name="Rodar Agendamentos de Vínculos do SCNES",
     description=(
         "Lê as capturas agendadas para os arquivos de disseminação de "
         + "vínculos dos profissionais de saúde do Sistema do Cadastro "
@@ -135,7 +135,7 @@ def vinculos_disseminacao(
 
 
 @flow(
-    name="Tratar Agendamentos de Declarações de Óbito do SIM",
+    name="Rodar Agendamentos de Declarações de Óbito do SIM",
     description=(
         "Lê as capturas agendadas para os arquivos de disseminação de "
         + "declarações de óbito do Sistema de Informações da Mortalidade do "
@@ -193,7 +193,7 @@ def obitos_disseminacao(
 
 
 @flow(
-    name="Tratar Agendamentos de CEPs",
+    name="Rodar Agendamentos de CEPs",
     description=(
         "Lê as capturas agendadas para os Códigos de Endereçamento Postal dos "
         + "Correios."

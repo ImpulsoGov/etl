@@ -465,9 +465,7 @@ def parametros_cnes_ine_equipes_validas(
 
 
 @flow(
-    name=(
-        "Rodar Agendamentos de Indicadores do Previne das Equipes Válidas"
-    ),
+    name=("Rodar Agendamentos de Indicadores do Previne das Equipes Válidas"),
     description=(
         "Lê as capturas agendadas para obter os indicadores do Previne Brasil "
         + "das equipes válidas do Sistema de Informação em Saúde da Atenção "
@@ -590,9 +588,7 @@ def indicadores_municipios_equipes_homologadas(
 
 
 @flow(
-    name=(
-        "Rodar Agendamentos de Indicadores do Previne das Equipes de APS"
-    ),
+    name=("Rodar Agendamentos de Indicadores do Previne das Equipes de APS"),
     description=(
         "Lê as capturas agendadas para obter os indicadores do Previne Brasil "
         + "de todas as equipes de Atenção Primária à Saúde do Sistema de "
@@ -652,9 +648,7 @@ def indicadores_municipios_equipe_todas(
 
 
 @flow(
-    name=(
-        "Rodar Agendamentos de Relatórios de Validação"
-    ),
+    name=("Rodar Agendamentos de Relatórios de Validação"),
     description=(
         "Lê as capturas agendadas para obter os relatórios de validação da "
         + "produção da Atenção Primária à Saúde a partir do Sistema de "
@@ -717,9 +711,7 @@ def validacao_producao(
 
 
 @flow(
-    name=(
-        "Rodar Agendamentos de Relatórios de Financiamento"
-    ),
+    name=("Rodar Agendamentos de Relatórios de Financiamento"),
     description=(
         "Lê as capturas agendadas para obter os relatórios de financiamento "
         + "do eGestor Atenção Básica."
