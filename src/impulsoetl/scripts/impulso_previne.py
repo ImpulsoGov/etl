@@ -8,10 +8,9 @@
 
 
 from prefect import flow
-from sqlalchemy.orm import Session
 
 from impulsoetl import __VERSION__
-from impulsoetl.bd import tabelas
+from impulsoetl.bd import tabelas, Sessao
 from impulsoetl.loggers import habilitar_suporte_loguru, logger
 from impulsoetl.sisab.cadastros_individuais import obter_cadastros_individuais
 from impulsoetl.sisab.indicadores_municipios.principal import (
@@ -41,7 +40,6 @@ capturas_historico = tabelas["configuracoes.capturas_historico"]
     validate_parameters=False,
 )
 def cadastros_municipios_equipe_validas(
-    sessao: Session,
     teste: bool = False,
 ) -> None:
     habilitar_suporte_loguru()
@@ -51,39 +49,41 @@ def cadastros_municipios_equipe_validas(
     # este já é o ID definitivo da operação!
     operacao_id = "da6bf13a-2acd-44c1-a3e2-21ab071fc8a3"
     visao_equipe = "equipes-validas"
-    agendamentos_cadastros = (
-        sessao.query(agendamentos)
-        .filter(agendamentos.c.operacao_id == operacao_id)
-        .all()
-    )
-
-    for agendamento in agendamentos_cadastros:
-        periodo = agendamento.periodo_data_inicio
-        obter_cadastros_individuais(
-            sessao=sessao,
-            visao_equipe=visao_equipe,
-            periodo=periodo,
-            teste=teste,
+    with Sessao() as sessao:
+        agendamentos_cadastros = (
+            sessao.query(agendamentos)
+            .filter(agendamentos.c.operacao_id == operacao_id)
+            .all()
         )
-        if teste:
-            break
 
-        logger.info("Registrando captura bem-sucedida...")
-        # NOTE: necessário registrar a operação de captura em nível de UF,
-        # mesmo que o gatilho na tabela de destino no banco de dados já
-        # registre a captura em nível dos municípios automaticamente quando há
-        # a inserção de uma nova linha
-        requisicao_inserir_historico = capturas_historico.insert(
-            {
-                "operacao_id": operacao_id,
-                "periodo_id": agendamento.periodo_id,
-                "unidade_geografica_id": agendamento.unidade_geografica_id,
-            }
-        )
-        conector = sessao.connection()
-        conector.execute(requisicao_inserir_historico)
-        sessao.commit()
-        logger.info("OK.")
+        for agendamento in agendamentos_cadastros:
+            periodo = agendamento.periodo_data_inicio
+            obter_cadastros_individuais(
+                sessao=sessao,
+                visao_equipe=visao_equipe,
+                periodo=periodo,
+                teste=teste,
+            )
+            if teste:
+                sessao.rollback()
+                break
+
+            logger.info("Registrando captura bem-sucedida...")
+            # NOTE: necessário registrar a operação de captura em nível de UF,
+            # mesmo que o gatilho na tabela de destino no banco de dados já
+            # registre a captura em nível dos municípios automaticamente quando há
+            # a inserção de uma nova linha
+            requisicao_inserir_historico = capturas_historico.insert(
+                {
+                    "operacao_id": operacao_id,
+                    "periodo_id": agendamento.periodo_id,
+                    "unidade_geografica_id": agendamento.unidade_geografica_id,
+                }
+            )
+            conector = sessao.connection()
+            conector.execute(requisicao_inserir_historico)
+            sessao.commit()
+            logger.info("OK.")
 
 
 @flow(
@@ -99,7 +99,6 @@ def cadastros_municipios_equipe_validas(
     validate_parameters=False,
 )
 def cadastros_municipios_equipe_homologada(
-    sessao: Session,
     teste: bool = False,
 ) -> None:
     habilitar_suporte_loguru()
@@ -109,39 +108,41 @@ def cadastros_municipios_equipe_homologada(
 
     operacao_id = "c668a75e-9eeb-4176-874b-98d7553222f2"
     visao_equipe = "equipes-homologadas"
-    agendamentos_cadastros = (
-        sessao.query(agendamentos)
-        .filter(agendamentos.c.operacao_id == operacao_id)
-        .all()
-    )
-
-    for agendamento in agendamentos_cadastros:
-        periodo = agendamento.periodo_data_inicio
-        obter_cadastros_individuais(
-            sessao=sessao,
-            visao_equipe=visao_equipe,
-            periodo=periodo,
-            teste=teste,
+    with Sessao() as sessao:
+        agendamentos_cadastros = (
+            sessao.query(agendamentos)
+            .filter(agendamentos.c.operacao_id == operacao_id)
+            .all()
         )
-        if teste:
-            break
 
-        logger.info("Registrando captura bem-sucedida...")
-        # NOTE: necessário registrar a operação de captura em nível de UF,
-        # mesmo que o gatilho na tabela de destino no banco de dados já
-        # registre a captura em nível dos municípios automaticamente quando há
-        # a inserção de uma nova linha
-        requisicao_inserir_historico = capturas_historico.insert(
-            {
-                "operacao_id": operacao_id,
-                "periodo_id": agendamento.periodo_id,
-                "unidade_geografica_id": agendamento.unidade_geografica_id,
-            }
-        )
-        conector = sessao.connection()
-        conector.execute(requisicao_inserir_historico)
-        sessao.commit()
-        logger.info("OK.")
+        for agendamento in agendamentos_cadastros:
+            periodo = agendamento.periodo_data_inicio
+            obter_cadastros_individuais(
+                sessao=sessao,
+                visao_equipe=visao_equipe,
+                periodo=periodo,
+                teste=teste,
+            )
+            if teste:
+                sessao.rollback()
+                break
+
+            logger.info("Registrando captura bem-sucedida...")
+            # NOTE: necessário registrar a operação de captura em nível de UF,
+            # mesmo que o gatilho na tabela de destino no banco de dados já
+            # registre a captura em nível dos municípios automaticamente quando há
+            # a inserção de uma nova linha
+            requisicao_inserir_historico = capturas_historico.insert(
+                {
+                    "operacao_id": operacao_id,
+                    "periodo_id": agendamento.periodo_id,
+                    "unidade_geografica_id": agendamento.unidade_geografica_id,
+                }
+            )
+            conector = sessao.connection()
+            conector.execute(requisicao_inserir_historico)
+            sessao.commit()
+            logger.info("OK.")
 
 
 @flow(
@@ -157,7 +158,6 @@ def cadastros_municipios_equipe_homologada(
     validate_parameters=False,
 )
 def cadastros_municipios_equipe_todas(
-    sessao: Session,
     teste: bool = False,
 ) -> None:
     habilitar_suporte_loguru()
@@ -167,39 +167,41 @@ def cadastros_municipios_equipe_todas(
 
     operacao_id = "180ae562-2e34-4ae7-bff4-31ded6f0b418"
     visao_equipe = "todas-equipes"
-    agendamentos_cadastros = (
-        sessao.query(agendamentos)
-        .filter(agendamentos.c.operacao_id == operacao_id)
-        .all()
-    )
-
-    for agendamento in agendamentos_cadastros:
-        periodo = agendamento.periodo_data_inicio
-        obter_cadastros_individuais(
-            sessao=sessao,
-            visao_equipe=visao_equipe,
-            periodo=periodo,
-            teste=teste,
+    with Sessao() as sessao:
+        agendamentos_cadastros = (
+            sessao.query(agendamentos)
+            .filter(agendamentos.c.operacao_id == operacao_id)
+            .all()
         )
-        if teste:
-            break
 
-        logger.info("Registrando captura bem-sucedida...")
-        # NOTE: necessário registrar a operação de captura em nível de UF,
-        # mesmo que o gatilho na tabela de destino no banco de dados já
-        # registre a captura em nível dos municípios automaticamente quando há
-        # a inserção de uma nova linha
-        requisicao_inserir_historico = capturas_historico.insert(
-            {
-                "operacao_id": operacao_id,
-                "periodo_id": agendamento.periodo_id,
-                "unidade_geografica_id": agendamento.unidade_geografica_id,
-            }
-        )
-        conector = sessao.connection()
-        conector.execute(requisicao_inserir_historico)
-        sessao.commit()
-        logger.info("OK.")
+        for agendamento in agendamentos_cadastros:
+            periodo = agendamento.periodo_data_inicio
+            obter_cadastros_individuais(
+                sessao=sessao,
+                visao_equipe=visao_equipe,
+                periodo=periodo,
+                teste=teste,
+            )
+            if teste:
+                sessao.rollback()
+                break
+
+            logger.info("Registrando captura bem-sucedida...")
+            # NOTE: necessário registrar a operação de captura em nível de UF,
+            # mesmo que o gatilho na tabela de destino no banco de dados já
+            # registre a captura em nível dos municípios automaticamente quando há
+            # a inserção de uma nova linha
+            requisicao_inserir_historico = capturas_historico.insert(
+                {
+                    "operacao_id": operacao_id,
+                    "periodo_id": agendamento.periodo_id,
+                    "unidade_geografica_id": agendamento.unidade_geografica_id,
+                }
+            )
+            conector = sessao.connection()
+            conector.execute(requisicao_inserir_historico)
+            sessao.commit()
+            logger.info("OK.")
 
 
 @flow(
@@ -218,7 +220,6 @@ def cadastros_municipios_equipe_todas(
     validate_parameters=False,
 )
 def parametros_municipios_equipes_validas(
-    sessao: Session,
     teste: bool = False,
 ) -> None:
     habilitar_suporte_loguru()
@@ -230,40 +231,42 @@ def parametros_municipios_equipes_validas(
     visao_equipe = "equipes-validas"
     nivel_agregacao = "municipios"
 
-    agendamentos_cadastros = (
-        sessao.query(agendamentos)
-        .filter(agendamentos.c.operacao_id == operacao_id)
-        .all()
-    )
-
-    for agendamento in agendamentos_cadastros:
-        periodo = agendamento.periodo_data_inicio
-        obter_parametros(
-            sessao=sessao,
-            visao_equipe=visao_equipe,
-            periodo=periodo,
-            nivel_agregacao=nivel_agregacao,
-            teste=teste,
+    with Sessao() as sessao:
+        agendamentos_cadastros = (
+            sessao.query(agendamentos)
+            .filter(agendamentos.c.operacao_id == operacao_id)
+            .all()
         )
-        if teste:
-            break
 
-        logger.info("Registrando captura bem-sucedida...")
-        # NOTE: necessário registrar a operação de captura em nível de UF,
-        # mesmo que o gatilho na tabela de destino no banco de dados já
-        # registre a captura em nível dos municípios automaticamente quando há
-        # a inserção de uma nova linha
-        requisicao_inserir_historico = capturas_historico.insert(
-            {
-                "operacao_id": operacao_id,
-                "periodo_id": agendamento.periodo_id,
-                "unidade_geografica_id": agendamento.unidade_geografica_id,
-            }
-        )
-        conector = sessao.connection()
-        conector.execute(requisicao_inserir_historico)
-        sessao.commit()
-        logger.info("OK.")
+        for agendamento in agendamentos_cadastros:
+            periodo = agendamento.periodo_data_inicio
+            obter_parametros(
+                sessao=sessao,
+                visao_equipe=visao_equipe,
+                periodo=periodo,
+                nivel_agregacao=nivel_agregacao,
+                teste=teste,
+            )
+            if teste:
+                sessao.rollback()
+                break
+
+            logger.info("Registrando captura bem-sucedida...")
+            # NOTE: necessário registrar a operação de captura em nível de UF,
+            # mesmo que o gatilho na tabela de destino no banco de dados já
+            # registre a captura em nível dos municípios automaticamente quando há
+            # a inserção de uma nova linha
+            requisicao_inserir_historico = capturas_historico.insert(
+                {
+                    "operacao_id": operacao_id,
+                    "periodo_id": agendamento.periodo_id,
+                    "unidade_geografica_id": agendamento.unidade_geografica_id,
+                }
+            )
+            conector = sessao.connection()
+            conector.execute(requisicao_inserir_historico)
+            sessao.commit()
+            logger.info("OK.")
 
 
 @flow(
@@ -282,7 +285,6 @@ def parametros_municipios_equipes_validas(
     validate_parameters=False,
 )
 def parametros_municipios_equipes_homologada(
-    sessao: Session,
     teste: bool = False,
 ) -> None:
     habilitar_suporte_loguru()
@@ -294,40 +296,42 @@ def parametros_municipios_equipes_homologada(
     visao_equipe = "equipes-homologadas"
     nivel_agregacao = "municipios"
 
-    agendamentos_cadastros = (
-        sessao.query(agendamentos)
-        .filter(agendamentos.c.operacao_id == operacao_id)
-        .all()
-    )
-
-    for agendamento in agendamentos_cadastros:
-        periodo = agendamento.periodo_data_inicio
-        obter_parametros(
-            sessao=sessao,
-            visao_equipe=visao_equipe,
-            periodo=periodo,
-            nivel_agregacao=nivel_agregacao,
-            teste=teste,
+    with Sessao() as sessao:
+        agendamentos_cadastros = (
+            sessao.query(agendamentos)
+            .filter(agendamentos.c.operacao_id == operacao_id)
+            .all()
         )
-        if teste:
-            break
 
-        logger.info("Registrando captura bem-sucedida...")
-        # NOTE: necessário registrar a operação de captura em nível de UF,
-        # mesmo que o gatilho na tabela de destino no banco de dados já
-        # registre a captura em nível dos municípios automaticamente quando há
-        # a inserção de uma nova linha
-        requisicao_inserir_historico = capturas_historico.insert(
-            {
-                "operacao_id": operacao_id,
-                "periodo_id": agendamento.periodo_id,
-                "unidade_geografica_id": agendamento.unidade_geografica_id,
-            }
-        )
-        conector = sessao.connection()
-        conector.execute(requisicao_inserir_historico)
-        sessao.commit()
-        logger.info("OK.")
+        for agendamento in agendamentos_cadastros:
+            periodo = agendamento.periodo_data_inicio
+            obter_parametros(
+                sessao=sessao,
+                visao_equipe=visao_equipe,
+                periodo=periodo,
+                nivel_agregacao=nivel_agregacao,
+                teste=teste,
+            )
+            if teste:
+                sessao.rollback()
+                break
+
+            logger.info("Registrando captura bem-sucedida...")
+            # NOTE: necessário registrar a operação de captura em nível de UF,
+            # mesmo que o gatilho na tabela de destino no banco de dados já
+            # registre a captura em nível dos municípios automaticamente quando há
+            # a inserção de uma nova linha
+            requisicao_inserir_historico = capturas_historico.insert(
+                {
+                    "operacao_id": operacao_id,
+                    "periodo_id": agendamento.periodo_id,
+                    "unidade_geografica_id": agendamento.unidade_geografica_id,
+                }
+            )
+            conector = sessao.connection()
+            conector.execute(requisicao_inserir_historico)
+            sessao.commit()
+            logger.info("OK.")
 
 
 @flow(
@@ -346,7 +350,6 @@ def parametros_municipios_equipes_homologada(
     validate_parameters=False,
 )
 def parametros_cne_ine_equipes_homologada(
-    sessao: Session,
     teste: bool = False,
 ) -> None:
     habilitar_suporte_loguru()
@@ -358,40 +361,42 @@ def parametros_cne_ine_equipes_homologada(
     visao_equipe = "equipes-homologadas"
     nivel_agregacao = "estabelecimentos_equipes"
 
-    agendamentos_cadastros = (
-        sessao.query(agendamentos)
-        .filter(agendamentos.c.operacao_id == operacao_id)
-        .all()
-    )
-
-    for agendamento in agendamentos_cadastros:
-        periodo = agendamento.periodo_data_inicio
-        obter_parametros(
-            sessao=sessao,
-            visao_equipe=visao_equipe,
-            periodo=periodo,
-            nivel_agregacao=nivel_agregacao,
-            teste=teste,
+    with Sessao() as sessao:
+        agendamentos_cadastros = (
+            sessao.query(agendamentos)
+            .filter(agendamentos.c.operacao_id == operacao_id)
+            .all()
         )
-        if teste:
-            break
 
-        logger.info("Registrando captura bem-sucedida...")
-        # NOTE: necessário registrar a operação de captura em nível de UF,
-        # mesmo que o gatilho na tabela de destino no banco de dados já
-        # registre a captura em nível dos municípios automaticamente quando há
-        # a inserção de uma nova linha
-        requisicao_inserir_historico = capturas_historico.insert(
-            {
-                "operacao_id": operacao_id,
-                "periodo_id": agendamento.periodo_id,
-                "unidade_geografica_id": agendamento.unidade_geografica_id,
-            }
-        )
-        conector = sessao.connection()
-        conector.execute(requisicao_inserir_historico)
-        sessao.commit()
-        logger.info("OK.")
+        for agendamento in agendamentos_cadastros:
+            periodo = agendamento.periodo_data_inicio
+            obter_parametros(
+                sessao=sessao,
+                visao_equipe=visao_equipe,
+                periodo=periodo,
+                nivel_agregacao=nivel_agregacao,
+                teste=teste,
+            )
+            if teste:
+                sessao.rollback()
+                break
+
+            logger.info("Registrando captura bem-sucedida...")
+            # NOTE: necessário registrar a operação de captura em nível de UF,
+            # mesmo que o gatilho na tabela de destino no banco de dados já
+            # registre a captura em nível dos municípios automaticamente quando há
+            # a inserção de uma nova linha
+            requisicao_inserir_historico = capturas_historico.insert(
+                {
+                    "operacao_id": operacao_id,
+                    "periodo_id": agendamento.periodo_id,
+                    "unidade_geografica_id": agendamento.unidade_geografica_id,
+                }
+            )
+            conector = sessao.connection()
+            conector.execute(requisicao_inserir_historico)
+            sessao.commit()
+            logger.info("OK.")
 
 
 @flow(
@@ -410,7 +415,6 @@ def parametros_cne_ine_equipes_homologada(
     validate_parameters=False,
 )
 def parametros_cnes_ine_equipes_validas(
-    sessao: Session,
     teste: bool = False,
 ) -> None:
     habilitar_suporte_loguru()
@@ -422,40 +426,42 @@ def parametros_cnes_ine_equipes_validas(
     visao_equipe = "equipes-validas"
     nivel_agregacao = "estabelecimentos_equipes"
 
-    agendamentos_cadastros = (
-        sessao.query(agendamentos)
-        .filter(agendamentos.c.operacao_id == operacao_id)
-        .all()
-    )
-
-    for agendamento in agendamentos_cadastros:
-        periodo = agendamento.periodo_data_inicio
-        obter_parametros(
-            sessao=sessao,
-            visao_equipe=visao_equipe,
-            periodo=periodo,
-            nivel_agregacao=nivel_agregacao,
-            teste=teste,
+    with Sessao() as sessao:
+        agendamentos_cadastros = (
+            sessao.query(agendamentos)
+            .filter(agendamentos.c.operacao_id == operacao_id)
+            .all()
         )
-        if teste:
-            break
 
-        logger.info("Registrando captura bem-sucedida...")
-        # NOTE: necessário registrar a operação de captura em nível de UF,
-        # mesmo que o gatilho na tabela de destino no banco de dados já
-        # registre a captura em nível dos municípios automaticamente quando há
-        # a inserção de uma nova linha
-        requisicao_inserir_historico = capturas_historico.insert(
-            {
-                "operacao_id": operacao_id,
-                "periodo_id": agendamento.periodo_id,
-                "unidade_geografica_id": agendamento.unidade_geografica_id,
-            }
-        )
-        conector = sessao.connection()
-        conector.execute(requisicao_inserir_historico)
-        sessao.commit()
-        logger.info("OK.")
+        for agendamento in agendamentos_cadastros:
+            periodo = agendamento.periodo_data_inicio
+            obter_parametros(
+                sessao=sessao,
+                visao_equipe=visao_equipe,
+                periodo=periodo,
+                nivel_agregacao=nivel_agregacao,
+                teste=teste,
+            )
+            if teste:
+                sessao.rollback()
+                break
+
+            logger.info("Registrando captura bem-sucedida...")
+            # NOTE: necessário registrar a operação de captura em nível de UF,
+            # mesmo que o gatilho na tabela de destino no banco de dados já
+            # registre a captura em nível dos municípios automaticamente quando há
+            # a inserção de uma nova linha
+            requisicao_inserir_historico = capturas_historico.insert(
+                {
+                    "operacao_id": operacao_id,
+                    "periodo_id": agendamento.periodo_id,
+                    "unidade_geografica_id": agendamento.unidade_geografica_id,
+                }
+            )
+            conector = sessao.connection()
+            conector.execute(requisicao_inserir_historico)
+            sessao.commit()
+            logger.info("OK.")
 
 
 @flow(
@@ -473,7 +479,6 @@ def parametros_cnes_ine_equipes_validas(
     validate_parameters=False,
 )
 def indicadores_municipios_equipe_validas(
-    sessao: Session,
     teste: bool = False,
 ) -> None:
     habilitar_suporte_loguru()
@@ -484,39 +489,42 @@ def indicadores_municipios_equipe_validas(
     # este já é o ID definitivo da operação!
     operacao_id = "133e8b75-f801-42f5-88de-611c3a1d0aa7"
     visao_equipe = "equipes-validas"
-    agendamentos_cadastros = (
-        sessao.query(agendamentos)
-        .filter(agendamentos.c.operacao_id == operacao_id)
-        .all()
-    )
 
-    for agendamento in agendamentos_cadastros:
-        periodo = agendamento.periodo_data_inicio
-        obter_indicadores_desempenho(
-            sessao=sessao,
-            visao_equipe=visao_equipe,
-            quadrimestre=periodo,
-            teste=teste,
+    with Sessao() as sessao:
+        agendamentos_cadastros = (
+            sessao.query(agendamentos)
+            .filter(agendamentos.c.operacao_id == operacao_id)
+            .all()
         )
-        if teste:
-            break
 
-        logger.info("Registrando captura bem-sucedida...")
-        # NOTE: necessário registrar a operação de captura em nível de UF,
-        # mesmo que o gatilho na tabela de destino no banco de dados já
-        # registre a captura em nível dos municípios automaticamente quando há
-        # a inserção de uma nova linha
-        requisicao_inserir_historico = capturas_historico.insert(
-            {
-                "operacao_id": operacao_id,
-                "periodo_id": agendamento.periodo_id,
-                "unidade_geografica_id": agendamento.unidade_geografica_id,
-            }
-        )
-        conector = sessao.connection()
-        conector.execute(requisicao_inserir_historico)
-        sessao.commit()
-        logger.info("OK.")
+        for agendamento in agendamentos_cadastros:
+            periodo = agendamento.periodo_data_inicio
+            obter_indicadores_desempenho(
+                sessao=sessao,
+                visao_equipe=visao_equipe,
+                quadrimestre=periodo,
+                teste=teste,
+            )
+            if teste:
+                sessao.rollback()
+                break
+
+            logger.info("Registrando captura bem-sucedida...")
+            # NOTE: necessário registrar a operação de captura em nível de UF,
+            # mesmo que o gatilho na tabela de destino no banco de dados já
+            # registre a captura em nível dos municípios automaticamente quando há
+            # a inserção de uma nova linha
+            requisicao_inserir_historico = capturas_historico.insert(
+                {
+                    "operacao_id": operacao_id,
+                    "periodo_id": agendamento.periodo_id,
+                    "unidade_geografica_id": agendamento.unidade_geografica_id,
+                }
+            )
+            conector = sessao.connection()
+            conector.execute(requisicao_inserir_historico)
+            sessao.commit()
+            logger.info("OK.")
 
 
 @flow(
@@ -534,7 +542,6 @@ def indicadores_municipios_equipe_validas(
     validate_parameters=False,
 )
 def indicadores_municipios_equipes_homologadas(
-    sessao: Session,
     teste: bool = False,
 ) -> None:
     habilitar_suporte_loguru()
@@ -544,39 +551,42 @@ def indicadores_municipios_equipes_homologadas(
 
     operacao_id = "584b190b-7a4c-4577-b617-1d847655affc"
     visao_equipe = "equipes-homologadas"
-    agendamentos_cadastros = (
-        sessao.query(agendamentos)
-        .filter(agendamentos.c.operacao_id == operacao_id)
-        .all()
-    )
 
-    for agendamento in agendamentos_cadastros:
-        periodo = agendamento.periodo_data_inicio
-        obter_indicadores_desempenho(
-            sessao=sessao,
-            visao_equipe=visao_equipe,
-            quadrimestre=periodo,
-            teste=teste,
+    with Sessao() as sessao:
+        agendamentos_cadastros = (
+            sessao.query(agendamentos)
+            .filter(agendamentos.c.operacao_id == operacao_id)
+            .all()
         )
-        if teste:
-            break
 
-        logger.info("Registrando captura bem-sucedida...")
-        # NOTE: necessário registrar a operação de captura em nível de UF,
-        # mesmo que o gatilho na tabela de destino no banco de dados já
-        # registre a captura em nível dos municípios automaticamente quando há
-        # a inserção de uma nova linha
-        requisicao_inserir_historico = capturas_historico.insert(
-            {
-                "operacao_id": operacao_id,
-                "periodo_id": agendamento.periodo_id,
-                "unidade_geografica_id": agendamento.unidade_geografica_id,
-            }
-        )
-        conector = sessao.connection()
-        conector.execute(requisicao_inserir_historico)
-        sessao.commit()
-        logger.info("OK.")
+        for agendamento in agendamentos_cadastros:
+            periodo = agendamento.periodo_data_inicio
+            obter_indicadores_desempenho(
+                sessao=sessao,
+                visao_equipe=visao_equipe,
+                quadrimestre=periodo,
+                teste=teste,
+            )
+            if teste:
+                sessao.rollback()
+                break
+
+            logger.info("Registrando captura bem-sucedida...")
+            # NOTE: necessário registrar a operação de captura em nível de UF,
+            # mesmo que o gatilho na tabela de destino no banco de dados já
+            # registre a captura em nível dos municípios automaticamente quando há
+            # a inserção de uma nova linha
+            requisicao_inserir_historico = capturas_historico.insert(
+                {
+                    "operacao_id": operacao_id,
+                    "periodo_id": agendamento.periodo_id,
+                    "unidade_geografica_id": agendamento.unidade_geografica_id,
+                }
+            )
+            conector = sessao.connection()
+            conector.execute(requisicao_inserir_historico)
+            sessao.commit()
+            logger.info("OK.")
 
 
 @flow(
@@ -594,7 +604,6 @@ def indicadores_municipios_equipes_homologadas(
     validate_parameters=False,
 )
 def indicadores_municipios_equipe_todas(
-    sessao: Session,
     teste: bool = False,
 ) -> None:
     habilitar_suporte_loguru()
@@ -604,39 +613,42 @@ def indicadores_municipios_equipe_todas(
 
     operacao_id = "9d6b0b5d-bae7-4785-8c7b-ff55dc4386e0"
     visao_equipe = "todas-equipes"
-    agendamentos_cadastros = (
-        sessao.query(agendamentos)
-        .filter(agendamentos.c.operacao_id == operacao_id)
-        .all()
-    )
 
-    for agendamento in agendamentos_cadastros:
-        periodo = agendamento.periodo_data_inicio
-        obter_indicadores_desempenho(
-            sessao=sessao,
-            visao_equipe=visao_equipe,
-            quadrimestre=periodo,
-            teste=teste,
+    with Sessao() as sessao:
+        agendamentos_cadastros = (
+            sessao.query(agendamentos)
+            .filter(agendamentos.c.operacao_id == operacao_id)
+            .all()
         )
-        if teste:
-            break
 
-        logger.info("Registrando captura bem-sucedida...")
-        # NOTE: necessário registrar a operação de captura em nível de UF,
-        # mesmo que o gatilho na tabela de destino no banco de dados já
-        # registre a captura em nível dos municípios automaticamente quando há
-        # a inserção de uma nova linha
-        requisicao_inserir_historico = capturas_historico.insert(
-            {
-                "operacao_id": operacao_id,
-                "periodo_id": agendamento.periodo_id,
-                "unidade_geografica_id": agendamento.unidade_geografica_id,
-            }
-        )
-        conector = sessao.connection()
-        conector.execute(requisicao_inserir_historico)
-        sessao.commit()
-        logger.info("OK.")
+        for agendamento in agendamentos_cadastros:
+            periodo = agendamento.periodo_data_inicio
+            obter_indicadores_desempenho(
+                sessao=sessao,
+                visao_equipe=visao_equipe,
+                quadrimestre=periodo,
+                teste=teste,
+            )
+            if teste:
+                sessao.rollback()
+                break
+
+            logger.info("Registrando captura bem-sucedida...")
+            # NOTE: necessário registrar a operação de captura em nível de UF,
+            # mesmo que o gatilho na tabela de destino no banco de dados já
+            # registre a captura em nível dos municípios automaticamente quando há
+            # a inserção de uma nova linha
+            requisicao_inserir_historico = capturas_historico.insert(
+                {
+                    "operacao_id": operacao_id,
+                    "periodo_id": agendamento.periodo_id,
+                    "unidade_geografica_id": agendamento.unidade_geografica_id,
+                }
+            )
+            conector = sessao.connection()
+            conector.execute(requisicao_inserir_historico)
+            sessao.commit()
+            logger.info("OK.")
 
 
 @flow(
@@ -654,7 +666,6 @@ def indicadores_municipios_equipe_todas(
     validate_parameters=False,
 )
 def validacao_producao(
-    sessao: Session,
     teste: bool = False,
 ) -> None:
     habilitar_suporte_loguru()
@@ -664,43 +675,45 @@ def validacao_producao(
     # Ler agendamentos e rodar ETL para cada agendamento pendente
     # ...
     agendamentos = tabelas["configuracoes.capturas_agendamentos"]
-    agendamentos_relatorio_validacao = (
-        sessao.query(agendamentos)
-        .filter(agendamentos.c.operacao_id == operacao_id)
-        .all()
-    )
-    sessao.commit()
-
-    logger.info("Leitura dos Agendamentos ok!")
-
-    for agendamento in agendamentos_relatorio_validacao:
-        obter_validacao_producao(
-            sessao=sessao,
-            periodo_competencia=agendamento.periodo_data_inicio,
-            periodo_id=agendamento.periodo_id,
-            periodo_codigo=agendamento.periodo_codigo,
-            tabela_destino=agendamento.tabela_destino,
+    with Sessao() as sessao:
+        agendamentos_relatorio_validacao = (
+            sessao.query(agendamentos)
+            .filter(agendamentos.c.operacao_id == operacao_id)
+            .all()
         )
-
-        if teste:  # evitar rodar muitas iterações
-            break
-
-        logger.info("Registrando captura bem-sucedida...")
-        # NOTE: necessário registrar a operação de captura em nível de UF,
-        # mesmo que o gatilho na tabela de destino no banco de dados já
-        # registre a captura em nível dos municípios automaticamente quando há
-        # a inserção de uma nova linha
-        requisicao_inserir_historico = capturas_historico.insert(
-            {
-                "operacao_id": operacao_id,
-                "periodo_id": agendamento.periodo_id,
-                "unidade_geografica_id": agendamento.unidade_geografica_id,
-            }
-        )
-        conector = sessao.connection()
-        conector.execute(requisicao_inserir_historico)
         sessao.commit()
-        logger.info("OK.")
+
+        logger.info("Leitura dos Agendamentos ok!")
+
+        for agendamento in agendamentos_relatorio_validacao:
+            obter_validacao_producao(
+                sessao=sessao,
+                periodo_competencia=agendamento.periodo_data_inicio,
+                periodo_id=agendamento.periodo_id,
+                periodo_codigo=agendamento.periodo_codigo,
+                tabela_destino=agendamento.tabela_destino,
+            )
+
+            if teste:  # evitar rodar muitas iterações
+                sessao.rollback()
+                break
+
+            logger.info("Registrando captura bem-sucedida...")
+            # NOTE: necessário registrar a operação de captura em nível de UF,
+            # mesmo que o gatilho na tabela de destino no banco de dados já
+            # registre a captura em nível dos municípios automaticamente quando há
+            # a inserção de uma nova linha
+            requisicao_inserir_historico = capturas_historico.insert(
+                {
+                    "operacao_id": operacao_id,
+                    "periodo_id": agendamento.periodo_id,
+                    "unidade_geografica_id": agendamento.unidade_geografica_id,
+                }
+            )
+            conector = sessao.connection()
+            conector.execute(requisicao_inserir_historico)
+            sessao.commit()
+            logger.info("OK.")
 
 
 @flow(
@@ -717,7 +730,6 @@ def validacao_producao(
     validate_parameters=False,
 )
 def egestor_financiamento(
-    sessao: Session,
     teste: bool = False,
 ) -> None:
     habilitar_suporte_loguru()
@@ -738,40 +750,42 @@ def egestor_financiamento(
 
     # Ler agendamentos e rodar ETL para cada agendamento pendente
     # ...
-    for operacao_id in operacoes_id:
-        agendamentos = tabelas["configuracoes.capturas_agendamentos"]
-        agendamentos_relatorio_egestor = (
-            sessao.query(agendamentos)
-            .filter(agendamentos.c.operacao_id == operacao_id)
-            .all()
-        )
-        sessao.commit()
-
-        logger.info("Leitura dos Agendamentos ok!")
-        for agendamento in agendamentos_relatorio_egestor:
-            obter_relatorio_financiamento(
-                sessao=sessao,
-                periodo_id=agendamento.periodo_id,
-                tabela_destino=agendamento.tabela_destino,
-                periodo_mes=agendamento.periodo_data_inicio,
+    with Sessao() as sessao:
+        for operacao_id in operacoes_id:
+            agendamentos = tabelas["configuracoes.capturas_agendamentos"]
+            agendamentos_relatorio_egestor = (
+                sessao.query(agendamentos)
+                .filter(agendamentos.c.operacao_id == operacao_id)
+                .all()
             )
-
-            if teste:  # evitar rodar muitas iterações
-                break
-
-            logger.info("Registrando captura bem-sucedida...")
-            # NOTE: necessário registrar a operação de captura em nível de UF,
-            # mesmo que o gatilho na tabela de destino no banco de dados já
-            # registre a captura em nível dos municípios automaticamente quando há
-            # a inserção de uma nova linha
-            requisicao_inserir_historico = capturas_historico.insert(
-                {
-                    "operacao_id": operacao_id,
-                    "periodo_id": agendamento.periodo_id,
-                    "unidade_geografica_id": agendamento.unidade_geografica_id,
-                }
-            )
-            conector = sessao.connection()
-            conector.execute(requisicao_inserir_historico)
             sessao.commit()
-            logger.info("OK.")
+
+            logger.info("Leitura dos Agendamentos ok!")
+            for agendamento in agendamentos_relatorio_egestor:
+                obter_relatorio_financiamento(
+                    sessao=sessao,
+                    periodo_id=agendamento.periodo_id,
+                    tabela_destino=agendamento.tabela_destino,
+                    periodo_mes=agendamento.periodo_data_inicio,
+                )
+
+                if teste:  # evitar rodar muitas iterações
+                    sessao.rollback()
+                    break
+
+                logger.info("Registrando captura bem-sucedida...")
+                # NOTE: necessário registrar a operação de captura em nível de UF,
+                # mesmo que o gatilho na tabela de destino no banco de dados já
+                # registre a captura em nível dos municípios automaticamente quando há
+                # a inserção de uma nova linha
+                requisicao_inserir_historico = capturas_historico.insert(
+                    {
+                        "operacao_id": operacao_id,
+                        "periodo_id": agendamento.periodo_id,
+                        "unidade_geografica_id": agendamento.unidade_geografica_id,
+                    }
+                )
+                conector = sessao.connection()
+                conector.execute(requisicao_inserir_historico)
+                sessao.commit()
+                logger.info("OK.")
