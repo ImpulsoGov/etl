@@ -7,6 +7,9 @@
 
 
 import pandas as pd
+from prefect import task
+
+from impulsoetl.loggers import habilitar_suporte_loguru
 
 
 def verificar_qtd_municipios(
@@ -91,6 +94,17 @@ def verificar_validade_nota(df_tratado: pd.DataFrame) -> bool:
     )
 
 
+@task(
+    name="Validar Indicadores do Previne Brasil",
+    description=(
+        "Valida os dados dos relatórios de indicadores do Previne Brasil "
+        + "extraídos e transformados a partir do portal público do Sistema de "
+        + "Informação em Saúde para a Atenção Básica do SUS."
+    ),
+    tags=["aps", "sisab", "indicadores_municipios", "validacao"],
+    retries=0,
+    retry_delay_seconds=None,
+)
 def verificar_indicadores_municipios(
     df: pd.DataFrame,
     df_tratado: pd.DataFrame,
@@ -103,6 +117,7 @@ def verificar_indicadores_municipios(
 
     [`AssertionError`]: https://docs.python.org/3/library/exceptions.html#AssertionError
     """
+    habilitar_suporte_loguru()
     assert verificar_qtd_municipios(df, df_tratado)
     assert verificar_diferenca_ctg_municpios(df, df_tratado)
     assert verificar_diferenca_mun_betim(df, df_tratado)

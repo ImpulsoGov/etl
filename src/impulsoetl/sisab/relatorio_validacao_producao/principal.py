@@ -5,15 +5,15 @@
 
 """Junta etapas do fluxo de ETL de validação por ficha por aplicação dos municípios."""
 
-from __future__ import annotations
-
 from datetime import date
 from typing import Final
 
 import pandas as pd
+from prefect import flow
 from sqlalchemy.orm import Session
 
-from impulsoetl.loggers import logger
+from impulsoetl import __VERSION__
+from impulsoetl.loggers import habilitar_suporte_loguru, logger
 from impulsoetl.sisab.relatorio_validacao_producao.carregamento import (
     carregar_dados,
 )
@@ -44,6 +44,18 @@ APLICACAO_CODIGOS: Final[dict[str, str]] = {
 ENVIO_PRAZO = [False, True]
 
 
+@flow(
+    name="Obter Relatórios de Validação da Produção",
+    description=(
+        "Extrai, transforma e carrega os dados dos relatórios de validação da "
+        + "produção do portal público do Sistema de Informação em Saúde para "
+        + "a Atenção Básica do SUS."
+    ),
+    retries=0,
+    retry_delay_seconds=None,
+    version=__VERSION__,
+    validate_parameters=False,
+)
 def obter_validacao_producao(
     sessao: Session,
     periodo_competencia: date,
@@ -57,6 +69,7 @@ def obter_validacao_producao(
         sessao: objeto [`sqlalchemy.orm.session.Session`][] que permite acessar a base de dados da ImpulsoGov.
         periodo_competencia: Data do mês em referência.
     """
+    habilitar_suporte_loguru()
     for envio_prazo in ENVIO_PRAZO:
         df_consolidado = pd.DataFrame()
         for ficha in FICHA_CODIGOS:

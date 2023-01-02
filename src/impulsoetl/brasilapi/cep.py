@@ -6,8 +6,6 @@
 """Obtém dados de CEPs de diversas fontes via BrasilAPI."""
 
 
-from __future__ import annotations
-
 from time import sleep
 from typing import Any, Final, Iterable
 
@@ -15,10 +13,12 @@ import janitor  # noqa: F401  # nopycln: import
 import pandas as pd
 import requests
 from frozendict import frozendict
+from prefect import flow, task
 from sqlalchemy.orm import Session
 
+from impulsoetl import __VERSION__
 from impulsoetl.brasilapi.modelos import ceps as tabela_destino
-from impulsoetl.loggers import logger
+from impulsoetl.loggers import habilitar_suporte_loguru, logger
 
 DE_PARA_CEP: Final[frozendict] = frozendict(
     {
@@ -49,14 +49,37 @@ TIPOS_CEP: Final[frozendict] = frozendict(
 CEP_ENDPOINT_V2: str = "https://brasilapi.com.br/api/cep/v2/{cep}"
 
 
+@task(
+    name="Extrair CEP",
+    description=(
+        "Extrai dados de um Código de Endereçamento Postal a partir de um "
+        + "dos provedores disponíveis para consulta (Correios, ViaCEP e "
+        + "WideNet)."
+    ),
+    tags=["cep", "extracao"],
+    retries=1,
+    retry_delay_seconds=60,
+)
 def extrair_cep(id_cep: str) -> dict[str, Any] | None:
+    habilitar_suporte_loguru()
     response = requests.get(CEP_ENDPOINT_V2.format(cep=id_cep))
     if response.ok:
         return response.json()
     return None
 
 
-def transformar_cep(cep_dados: dict[str, Any]) -> pd.Dataframe:
+@task(
+    name="Transformar CEP",
+    description=(
+        "Transforma dados de um Código de Endereçamento Postal extraídos de "
+        + "um dos provedores disponíveis para consulta (Correios, ViaCEP e "
+        + "WideNet)."
+    ),
+    tags=["cep", "transformacao"],
+    retries=1,
+    retry_delay_seconds=60,
+)
+def transformar_cep(cep_dados: dict[str, Any]) -> pd.DataFrame:
     """Transforma um dicionário com dados de um CEP retornado pela BrasilAPI.
 
     Argumentos:
@@ -65,6 +88,7 @@ def transformar_cep(cep_dados: dict[str, Any]) -> pd.Dataframe:
 
     [BrasilAPI]: https://brasilapi.com.br/docs#tag/CEP-V2
     """
+    habilitar_suporte_loguru()
     logger.debug(
         "Transformando dados para o CEP '{}'.",
         cep_dados["cep"],
@@ -98,7 +122,18 @@ def transformar_cep(cep_dados: dict[str, Any]) -> pd.Dataframe:
     return cep_transformado
 
 
-@logger.catch
+@task(
+    name="Carregar CEP",
+    description=(
+        "Carrega dados de um Código de Endereçamento Postal extraídos de "
+        + "um dos provedores disponíveis para consulta (Correios, ViaCEP e "
+        + "WideNet) e transformados, tendo como destino o banco de dados da "
+        + "Impulso Gov."
+    ),
+    tags=["cep", "carregamento"],
+    retries=1,
+    retry_delay_seconds=60,
+)
 def carregar_cep(
     sessao: Session,
     cep_transformado: pd.DataFrame,
@@ -122,7 +157,7 @@ def carregar_cep(
     [`sqlalchemy.orm.session.Session`]: https://docs.sqlalchemy.org/en/14/orm/session_api.html#sqlalchemy.orm.Session
     [`transformar_cep()`]: impulsoetl.brasilapi.cep.transformar_cep
     """
-
+    habilitar_suporte_loguru()
     tabela_nome = tabela_destino.key
     logger.debug(
         "Carregando dados do CEP {cep} para a tabela `{tabela_nome}`...",
@@ -139,9 +174,21 @@ def carregar_cep(
     return 0
 
 
+@flow(
+    name="Obter CEP",
+    description=(
+        "Extrai, transforma e carrega os dados de um Código de Endereçamento "
+        + "Postal extraídos de um dos provedores disponíveis para consulta "
+        + "(Correios, ViaCEP e WideNet)."
+    ),
+    retries=0,
+    retry_delay_seconds=None,
+    version=__VERSION__,
+    validate_parameters=False,
+)
 def obter_cep(
     sessao: Session,
-    ceps_pendentes=Iterable[str],
+    ceps_pendentes: Iterable[str],
     teste: bool = False,
     **kwargs,
 ) -> None:
@@ -161,6 +208,7 @@ def obter_cep(
 
     [`sqlalchemy.orm.session.Session`]: https://docs.sqlalchemy.org/en/14/orm/session_api.html#sqlalchemy.orm.Session
     """
+    habilitar_suporte_loguru()
     logger.info("Iniciando captura de dados de CEPs.")
 
     if teste and len(ceps_pendentes) > 10:
@@ -188,6 +236,3 @@ def obter_cep(
         ceps_carregados,
         len(ceps_pendentes) - ceps_carregados,
     )
-
-    if not teste:
-        sessao.commit()

@@ -159,7 +159,7 @@ def teste_postgresql_copiar_dados(
 
 
 def teste_carregar_dataframe(sessao, dataframe_exemplo, tabela_teste, passo):
-    carregamento_status = carregar_dataframe(
+    carregamento_status = carregar_dataframe.fn(
         sessao=sessao,
         df=dataframe_exemplo,
         tabela_destino=tabela_teste,
@@ -184,7 +184,7 @@ def teste_carregar_dataframe_incompleto(
     dataframe_exemplo_dados_faltantes,
     tabela_teste,
 ):
-    carregamento_status = carregar_dataframe(
+    carregamento_status = carregar_dataframe.fn(
         sessao=sessao,
         df=dataframe_exemplo_dados_faltantes,
         tabela_destino=tabela_teste,
@@ -216,9 +216,9 @@ def teste_carregar_dataframe_com_erro(
     tabela,
     erro_esperado,
     passo,
-    caplog,
+    capfd,
 ):
-    carregamento_status = carregar_dataframe(
+    carregamento_status = carregar_dataframe.fn(
         sessao=sessao,
         df=dataframe_exemplo,
         tabela_destino=tabela,
@@ -227,4 +227,4 @@ def teste_carregar_dataframe_com_erro(
     )
 
     assert errorcodes.lookup(carregamento_status) == erro_esperado
-    assert "Erro ao inserir registros na tabela" in caplog.text
+    assert "Erro ao inserir registros na tabela" in capfd.readouterr().err

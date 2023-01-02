@@ -6,8 +6,6 @@
 """Testa a interação com elementos genéricos de formulários do SISAB."""
 
 
-from __future__ import annotations
-
 from typing import Generator
 
 import pytest

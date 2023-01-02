@@ -5,8 +5,6 @@
 """Casos de teste para o ETL de notificações de agravos de violência."""
 
 
-from __future__ import annotations
-
 import re
 from datetime import date
 
@@ -153,7 +151,7 @@ def teste_transformar_agravos_violencia(
 ):
     agravos_violencia, periodo_id = agravos_violencia
 
-    agravos_violencia_transformada = transformar_agravos_violencia(
+    agravos_violencia_transformada = transformar_agravos_violencia.fn(
         sessao=sessao,
         agravos_violencia=agravos_violencia,
         periodo_id=periodo_id,
@@ -187,11 +185,11 @@ def teste_transformar_agravos_violencia(
 def teste_carregar_agravos_violencia(
     sessao,
     agravos_violencia_transformada,
-    caplog,
+    capfd,
     tabela_teste,
     passo,
 ):
-    codigo_saida = carregar_dataframe(
+    codigo_saida = carregar_dataframe.fn(
         sessao=sessao,
         df=agravos_violencia_transformada.iloc[:10],
         tabela_destino=tabela_teste,
@@ -200,7 +198,7 @@ def teste_carregar_agravos_violencia(
     )
     assert codigo_saida == 0
 
-    logs = caplog.text
+    logs = capfd.readouterr().err
     assert "Carregamento concluído" in logs
 
 
@@ -223,7 +221,7 @@ def teste_obter_do(
     sessao,
     periodo_data_inicio,
     periodo_id,
-    caplog,
+    capfd,
     tabela_teste,
     parametros,
 ):
@@ -236,5 +234,5 @@ def teste_obter_do(
         **parametros,
     )
 
-    logs = caplog.text
+    logs = capfd.readouterr().err
     assert "Carregamento concluído" in logs

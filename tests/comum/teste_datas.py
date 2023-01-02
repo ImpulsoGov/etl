@@ -6,8 +6,6 @@
 """Testes de categorias de datas utilizadas em vários processos de ETL."""
 
 
-from __future__ import annotations
-
 import pandas as pd
 import pytest
 

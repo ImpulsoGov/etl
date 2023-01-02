@@ -6,19 +6,32 @@
 from datetime import date, datetime
 
 import pandas as pd
+from prefect import task
 from sqlalchemy.orm import Session
 
+from impulsoetl.loggers import habilitar_suporte_loguru
 from impulsoetl.comum.datas import periodo_por_codigo, periodo_por_data
 from impulsoetl.comum.geografias import id_sus_para_id_impulso
 
 
+@task(
+    name="Transformar Parâmetros de Cadastro",
+    description=(
+        "Transforma os dados dos parâmetros de cadastro do Previne Brasil "
+        + "extraídos do portal público do Sistema de Informação em Saúde para "
+        + "a Atenção Básica do SUS."
+    ),
+    tags=["aps", "sisab", "parametros_cadastro", "transformacao"],
+    retries=0,
+    retry_delay_seconds=None,
+)
 def tratamento_dados(
     sessao: Session,
     dados_sisab_cadastros: pd.DataFrame,
     periodo: date,
     nivel_agregacao: str,
 ) -> pd.DataFrame:
-
+    habilitar_suporte_loguru()
     tabela_consolidada = pd.DataFrame(
         columns=[
             "municipio_id_sus",

@@ -5,17 +5,16 @@
 
 """Processa dados do relatório de validação por produção para o formato usado no BD."""
 
-from __future__ import annotations
-
 from typing import Final
 
 import numpy as np
 import pandas as pd
 from frozendict import frozendict
+from prefect import task
 from sqlalchemy.orm import Session
 
 from impulsoetl.comum.geografias import id_sus_para_id_impulso
-from impulsoetl.loggers import logger
+from impulsoetl.loggers import habilitar_suporte_loguru, logger
 
 VALIDACAO_TIPOS: Final[frozendict] = frozendict(
     {
@@ -46,6 +45,17 @@ VALIDACAO_COLUNAS: Final[dict[str, str]] = {
 }
 
 
+@task(
+    name="Transformar Relatórios de Validação da Produção",
+    description=(
+        "Transforma os dados dos relatórios de validação da produção "
+        + "extraídos do portal público do Sistema de Informação em Saúde para "
+        + "a Atenção Básica do SUS."
+    ),
+    tags=["aps", "sisab", "validacao_producao", "transformacao"],
+    retries=0,
+    retry_delay_seconds=None,
+)
 def tratamento_dados(
     sessao: Session,
     df_extraido: str,
@@ -76,7 +86,7 @@ def tratamento_dados(
             [`sqlalchemy.orm.session.Session`]: https://docs.sqlalchemy.org/en/14/orm/session_api.html#sqlalchemy.orm.Session
             [`pandas.DataFrame`]: https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html
     """
-
+    habilitar_suporte_loguru()
     logger.info("Iniciando tratamento dos dados...")
     logger.info("Renomeando colunas...")
     df_tratado = df_extraido.rename(columns=VALIDACAO_COLUNAS)

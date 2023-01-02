@@ -6,14 +6,13 @@
 """Carrega dados de validação por ficha por aplicação no banco de dados da Impulso."""
 
 
-from __future__ import annotations
-
 import pandas as pd
+from prefect import task
 from sqlalchemy import delete
 from sqlalchemy.orm import Query, Session
 
 from impulsoetl.bd import tabelas
-from impulsoetl.loggers import logger
+from impulsoetl.loggers import habilitar_suporte_loguru, logger
 from impulsoetl.utilitarios.bd import carregar_dataframe
 
 
@@ -41,6 +40,17 @@ def obter_lista_registros_inseridos(
     return registros
 
 
+@task(
+    name="Carrega Relatórios de Validação da Produção",
+    description=(
+        "Carrega os dados dos relatórios de validação da produção extraídos "
+        + "extraídos e transformados a partir do portal público do Sistema "
+        + "de Informação em Saúde para a Atenção Básica do SUS."
+    ),
+    tags=["aps", "sisab", "validacao_producao", "carregamento"],
+    retries=0,
+    retry_delay_seconds=None,
+)
 def carregar_dados(
     sessao: Session,
     df_tratado: pd.DataFrame,
@@ -63,7 +73,7 @@ def carregar_dados(
 
     [`sqlalchemy.orm.session.Session`]: https://docs.sqlalchemy.org/en/14/orm/session_api.html#sqlalchemy.orm.Session
     [`pandas.D"""
-
+    habilitar_suporte_loguru()
     logger.info("Excluíndo registros se houver atualização retroativa...")
     tabela_relatorio_validacao = tabelas[tabela_destino]
     registros_inseridos = obter_lista_registros_inseridos(

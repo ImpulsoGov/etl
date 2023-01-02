@@ -4,6 +4,9 @@
 
 
 import pandas as pd
+from prefect import task
+
+from impulsoetl.loggers import habilitar_suporte_loguru
 
 
 def verificar_qtd_municipios(
@@ -66,6 +69,17 @@ def verificar_diferenca_ctg_ine(
     return df["INE"].nunique() - df_tratado["ine_id"].nunique() == 0
 
 
+@task(
+    name="Validar Cadastros Individuais",
+    description=(
+        "Valida os dados de cadastros individuais extraídos e transformados a "
+        + "partir do portal público do Sistema de Informação em Saúde para a "
+        + "Atenção Básica do SUS."
+    ),
+    tags=["aps", "sisab", "cadastros_individuais", "validacao"],
+    retries=0,
+    retry_delay_seconds=None,
+)
 def verificar_cadastros_individuais(
     df: pd.DataFrame,
     df_tratado: pd.DataFrame,
@@ -78,6 +92,7 @@ def verificar_cadastros_individuais(
 
     [`AssertionError`]: https://docs.python.org/3/library/exceptions.html#AssertionError
     """
+    habilitar_suporte_loguru()
     assert verificar_qtd_municipios(df, df_tratado)
     assert verificar_diferenca_ctg_municpios(df, df_tratado)
     assert verificar_diferenca_mun_betim(df, df_tratado)

@@ -3,14 +3,13 @@
 # SPDX-License-Identifier: MIT
 
 
-from __future__ import annotations
-
 import json
 
 import pandas as pd
+from prefect import task
 from sqlalchemy.orm import Session
 
-from impulsoetl.loggers import logger
+from impulsoetl.loggers import habilitar_suporte_loguru, logger
 from impulsoetl.sisab.cadastros_individuais.modelos import (
     cadastros_equipe_homologadas,
     cadastros_equipe_validas,
@@ -18,9 +17,21 @@ from impulsoetl.sisab.cadastros_individuais.modelos import (
 )
 
 
+@task(
+    name="Carregar Cadastros Individuais",
+    description=(
+        "Carrega os dados de cadastros individuais extraídos e transformados "
+        + "a partir do portal público do Sistema de Informação em Saúde para "
+        + "a Atenção Básica do SUS."
+    ),
+    tags=["aps", "sisab", "cadastros_individuais", "carregamento"],
+    retries=0,
+    retry_delay_seconds=None,
+)
 def carregar_cadastros(
     sessao: Session, cadastros_transformada: pd.DataFrame, visao_equipe: str
 ) -> int:
+    habilitar_suporte_loguru()
 
     registros = json.loads(
         cadastros_transformada.to_json(

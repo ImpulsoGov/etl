@@ -5,18 +5,18 @@
 
 """Processa dados de indicadores de desempenho para o formato usado no BD."""
 
-from __future__ import annotations
-
 from datetime import date
 from typing import Final
 
 import pandas as pd
 from frozendict import frozendict
 from impulsoetl.loggers import logger
+from prefect import task
 from sqlalchemy.orm import Session
 
 from impulsoetl.comum.datas import periodo_por_codigo, periodo_por_data
 from impulsoetl.comum.geografias import id_sus_para_id_impulso
+from impulsoetl.loggers import habilitar_suporte_loguru
 from impulsoetl.sisab.indicadores_municipios.modelos import indicadores_regras
 
 TIPOS: Final[frozendict] = frozendict(
@@ -63,6 +63,17 @@ def indicadores_regras_id_por_periodo(  # noqa: WPS122 - permite argumento data
     )
 
 
+@task(
+    name="Transformar Indicadores do Previne Brasil",
+    description=(
+        "Transforma os dados dos relatórios de indicadores do Previne Brasil "
+        + "extraídos do portal público do Sistema de Informação em Saúde para "
+        + "a Atenção Básica do SUS."
+    ),
+    tags=["aps", "sisab", "indicadores_municipios", "transformacao"],
+    retries=0,
+    retry_delay_seconds=None,
+)
 def transformar_indicadores(
     sessao: Session,
     df_extraido: pd.DataFrame,
@@ -96,7 +107,7 @@ def transformar_indicadores(
     [`extrair_dados()`]: impulsoetl.sisab.indicadores_municipios.extracao.extrair_dados
     [`pandas.DataFrame`]: https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html
     """
-
+    habilitar_suporte_loguru()
     logger.info("Iniciando tratamento dos dados...")
     df_tratado = df_extraido.rename(columns=INDICADORES_RENOMEIA_COLUNAS)
     df_tratado["indicadores_nome"] = indicador

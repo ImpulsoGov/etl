@@ -4,15 +4,25 @@
 
 """Carrega dados do relatório de financiamento do Egestor no banco de dados da Impulso."""
 
-from __future__ import annotations
-
 import pandas as pd
+from prefect import task
 from sqlalchemy.orm import Session
 
-from impulsoetl.loggers import logger
+from impulsoetl.loggers import habilitar_suporte_loguru, logger
 from impulsoetl.utilitarios.bd import carregar_dataframe
 
 
+@task(
+    name="Carregar Relatórios de Financiamento",
+    description=(
+        "Carrega os dados dos relatórios de financiamento da Atenção "
+        + "Primária à Saúde extraídos e transformados a partir do eGestor "
+        + "Atenção Básica com destino ao banco de dados da Impulso Gov."
+    ),
+    tags=["aps", "egestor", "financiamento", "carregamento"],
+    retries=0,
+    retry_delay_seconds=None,
+)
 def carregar_dados(
     sessao: Session, 
     df_tratado: pd.DataFrame, 
@@ -35,7 +45,7 @@ def carregar_dados(
         [`sqlalchemy.orm.session.Session`]: https://docs.sqlalchemy.org/en/14/orm/session_api.html#sqlalchemy.orm.Session
         [`pandas.D
     """
-
+    habilitar_suporte_loguru()
     logger.info("Carregando dados em tabela...")
 
     carregar_dataframe(

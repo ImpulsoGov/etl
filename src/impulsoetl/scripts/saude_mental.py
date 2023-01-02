@@ -8,10 +8,12 @@
 """Scripts para o produto de Saúde Mental."""
 
 
+from prefect import flow
 from sqlalchemy.orm import Session
 
-from impulsoetl.bd import Sessao, tabelas
-from impulsoetl.loggers import logger
+from impulsoetl import __VERSION__
+from impulsoetl.bd import tabelas
+from impulsoetl.loggers import habilitar_suporte_loguru, logger
 from impulsoetl.siasus.bpa_i import obter_bpa_i
 from impulsoetl.siasus.procedimentos import obter_pa
 from impulsoetl.siasus.raas_ps import obter_raas_ps
@@ -23,7 +25,19 @@ agendamentos = tabelas["configuracoes.capturas_agendamentos"]
 capturas_historico = tabelas["configuracoes.capturas_historico"]
 
 
-@logger.catch
+@flow(
+    name="Rodar Agendamentos de Resolutividade da APS por Condição Avaliada",
+    description=(
+        "Lê as capturas agendadas para obter os desfechos dos atendimentos "
+        + "individuais na Atenção Primária à Saúde, por problema/condição "
+        + "avaliada, a partir do Sistema de Informação em Saúde da Atenção "
+        + "Básica do SUS."
+    ),
+    retries=0,
+    retry_delay_seconds=None,
+    version=__VERSION__,
+    validate_parameters=False,
+)
 def resolutividade_aps_por_condicao(
     sessao: Session,
     teste: bool = False,
@@ -41,7 +55,7 @@ def resolutividade_aps_por_condicao(
 
     [`sqlalchemy.orm.session.Session`]: https://docs.sqlalchemy.org/en/14/orm/session_api.html#sqlalchemy.orm.Session
     """
-
+    habilitar_suporte_loguru()
     logger.info(
         "Capturando dados de resolutividade da APS (desfechos de atendimentos "
         + "individuais) por condição de saúde avaliada.",
@@ -70,7 +84,19 @@ def resolutividade_aps_por_condicao(
             break
 
 
-@logger.catch
+@flow(
+    name="Rodar Agendamentos de Produção por Tipo de Equipe da APS",
+    description=(
+        "Lê as capturas agendadas para obter a quantidade de contatos "
+        + "assistenciais realizados na Atenção Primária à Saúde, por tipo da "
+        + "produção realizada e por tipo de equipe, a partir do Sistema de "
+        + "Informação em Saúde da Atenção Básica do SUS."
+    ),
+    retries=0,
+    retry_delay_seconds=None,
+    version=__VERSION__,
+    validate_parameters=False,
+)
 def tipo_equipe_por_tipo_producao(
     sessao: Session,
     teste: bool = False,
@@ -88,6 +114,7 @@ def tipo_equipe_por_tipo_producao(
 
     [`sqlalchemy.orm.session.Session`]: https://docs.sqlalchemy.org/en/14/orm/session_api.html#sqlalchemy.orm.Session
     """
+    habilitar_suporte_loguru()
     logger.info(
         "Capturando dados de atendimentos individuais) por condição de saúde avaliada.",
     )
@@ -115,11 +142,24 @@ def tipo_equipe_por_tipo_producao(
             break
 
 
-@logger.catch
+@flow(
+    name="Rodar Agendamentos de Arquivos de Disseminação da RAAS-PS",
+    description=(
+        "Lê as capturas agendadas para obter os arquivos de disseminação dos "
+        + "Registros de Ações Ambulatoriais em Saúde - Psicossociais "
+        + "(RAAS-PS), a partir do repositório público do Sistema de "
+        + "Informações Ambulatoriais do SUS."
+    ),
+    retries=0,
+    retry_delay_seconds=None,
+    version=__VERSION__,
+    validate_parameters=False,
+)
 def raas_disseminacao(
     sessao: Session,
     teste: bool = False,
 ) -> None:
+    habilitar_suporte_loguru()
     logger.info(
         "Capturando RAAS Psicossociais do SIASUS.",
     )
@@ -161,11 +201,24 @@ def raas_disseminacao(
         logger.info("OK.")
 
 
-@logger.catch
+@flow(
+    name="Rodar Agendamentos de Arquivos de Disseminação dos BPA-i's",
+    description=(
+        "Lê as capturas agendadas para obter os arquivos de disseminação dos "
+        + "Boletins de Produção Ambulatorial - individualizados (BPA-i), a "
+        + "partir do repositório público do Sistema de Informações "
+        + "Ambulatoriais do SUS."
+    ),
+    retries=0,
+    retry_delay_seconds=None,
+    version=__VERSION__,
+    validate_parameters=False,
+)
 def bpa_i_disseminacao(
     sessao: Session,
     teste: bool = False,
 ) -> None:
+    habilitar_suporte_loguru()
     logger.info(
         "Capturando BPAs individualizados do SIASUS.",
     )
@@ -208,11 +261,26 @@ def bpa_i_disseminacao(
         logger.info("OK.")
 
 
-@logger.catch
+@flow(
+    name=(
+        "Rodar Agendamentos de Arquivos de Disseminação de Procedimentos "
+        + "Ambulatoriais"
+    ),
+    description=(
+        "Lê as capturas agendadas para obter os arquivos de disseminação dos "
+        + "procedimentos ambulatoriais da atenção especializada, a partir do "
+        + "repositório público do Sistema de Informações Ambulatoriais do SUS."
+    ),
+    retries=0,
+    retry_delay_seconds=None,
+    version=__VERSION__,
+    validate_parameters=False,
+)
 def procedimentos_disseminacao(
     sessao: Session,
     teste: bool = False,
 ) -> None:
+    habilitar_suporte_loguru()
     logger.info(
         "Capturando procedimentos ambulatoriais do SIASUS.",
     )
@@ -255,11 +323,24 @@ def procedimentos_disseminacao(
         logger.info("OK.")
 
 
-@logger.catch
+@flow(
+    name="Rodar Agendamentos de Arquivos de Disseminação das AIH-RD's",
+    description=(
+        "Lê as capturas agendadas para obter os arquivos de disseminação das "
+        + "Autorizações de Internação Hospitalar - reduzidas (AIH-RD), a "
+        + "partir do repositório público do Sistema de Informações "
+        + "Hospitalares do SUS."
+    ),
+    retries=0,
+    retry_delay_seconds=None,
+    version=__VERSION__,
+    validate_parameters=False,
+)
 def aih_reduzida_disseminacao(
     sessao: Session,
     teste: bool = False,
 ) -> None:
+    habilitar_suporte_loguru()
     logger.info(
         "Capturando autorizações de internação hospitalar do SIHSUS.",
     )
@@ -298,11 +379,26 @@ def aih_reduzida_disseminacao(
         logger.info("OK.")
 
 
-@logger.catch
+@flow(
+    name=(
+        "Rodar Agendamentos de Arquivos de Disseminação de Agravos de "
+        + "Violência"
+    ),
+    description=(
+        "Lê as capturas agendadas para obter os arquivos de disseminação das "
+        + "notificações de agravo de violência, a partir do repositório "
+        + "público do Sistema de Informação de Agravos de Notificação do SUS."
+    ),
+    retries=0,
+    retry_delay_seconds=None,
+    version=__VERSION__,
+    validate_parameters=False,
+)
 def agravos_violencia(
     sessao: Session,
     teste: bool = False,
 ) -> None:
+    habilitar_suporte_loguru()
     logger.info("Capturando notificações de agravos de violência do SINAN.")
 
     operacao_ids = [
@@ -341,33 +437,3 @@ def agravos_violencia(
         conector.execute(requisicao_inserir_historico)
         sessao.commit()
         logger.info("OK.")
-
-
-def principal(sessao: Session, teste: bool = False) -> None:
-    """Executa todos os scripts de captura de dados de saúde mental.
-
-    Argumentos:
-        sessao: objeto [`sqlalchemy.orm.session.Session`][] que permite
-            acessar a base de dados da ImpulsoGov.
-        teste: Indica se as modificações devem ser de fato escritas no banco de
-            dados (`False`, padrão). Caso seja `True`, as modificações são
-            adicionadas à uma transação, e podem ser revertidas com uma chamada
-            posterior ao método [`Session.rollback()`][] da sessão gerada com o
-            SQLAlchemy.
-
-    [`sqlalchemy.orm.session.Session`]: https://docs.sqlalchemy.org/en/14/orm/session_api.html#sqlalchemy.orm.Session
-    """
-
-    resolutividade_aps_por_condicao(sessao=sessao, teste=teste)
-    raas_disseminacao(sessao=sessao, teste=teste)
-    bpa_i_disseminacao(sessao=sessao, teste=teste)
-    procedimentos_disseminacao(sessao=sessao, teste=teste)
-    tipo_equipe_por_tipo_producao(sessao=sessao, teste=teste)
-    agravos_violencia(sessao=sessao, teste=teste)
-    aih_reduzida_disseminacao(sessao=sessao, teste=teste)
-    # outros scripts de saúde mental aqui...
-
-
-if __name__ == "__main__":
-    with Sessao() as sessao:
-        principal(sessao=sessao)
