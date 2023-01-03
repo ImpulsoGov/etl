@@ -19,10 +19,12 @@ from prefect.infrastructure.docker import (
     DockerRegistry,
     ImagePullPolicy
 )
+from prefect.orion.schemas.schedules import CronSchedule
 
 from impulsoetl import __VERSION__ as impulsoetl_versao
 from impulsoetl.bd import BD_HOST, BD_PORTA, BD_NOME, BD_USUARIO, BD_SENHA
 from impulsoetl.loggers import logger
+from impulsoetl.utilitarios.textos import normalizar_texto
 
 
 logger.info("Lendo configurações a partir de variáveis de ambiente...")
@@ -90,6 +92,8 @@ if __name__ == "__main__":
         fluxos = [
             atributo for atributo in modulo.__dict__.values()
             if isinstance(atributo, Flow)
+            # evita importações indiretas
+            and atributo.__module__ == modulo.__name__
         ]
         logger.info(
             "Identificados {} fluxos para o módulo `{}`.",
@@ -97,10 +101,11 @@ if __name__ == "__main__":
             modulo.__name__,
         )
         for fluxo in fluxos:
-            logger.info("Implementando fluxo `{}`...", fluxo.name)
+            implementacao_nome = normalizar_texto(fluxo.fn.__name__, "-")
+            logger.info("Implementando fluxo `{}`...", implementacao_nome)
             implementacao = Deployment.build_from_flow(
                 flow=fluxo,
-                name=fluxo.name,
+                name=implementacao_nome,
                 output=None,
                 skip_upload=True,
                 apply=False,
@@ -110,6 +115,11 @@ if __name__ == "__main__":
                 path=str(modulo_localizacao.parent),
                 version=impulsoetl_versao,
             )
+            if not implementacao.schedule:
+                implementacao.schedule = CronSchedule(
+                    cron="0 1 * * *",
+                    timezone="America/Sao_Paulo",
+                )
             implementacao_id = implementacao.apply(
                 upload=False,
                 work_queue_concurrency=3,
