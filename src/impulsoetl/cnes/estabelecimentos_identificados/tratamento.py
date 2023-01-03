@@ -1,0 +1,150 @@
+import pandas as pd
+import numpy as np
+from typing import Final
+from frozendict import frozendict
+from sqlalchemy.orm import Session
+
+
+import sys
+
+sys.path.append (r'C:\Users\maira\Impulso\etl\src\impulsoetl')
+from cnes.extracao_lista_cnes import extrair_lista_cnes
+from cnes.estabelecimentos_identificados.extracao import extrair_informacoes_estabelecimentos
+#from impulsoetl.comum.geografias import id_sus_para_id_impulso
+
+
+
+
+COLUNAS_RENOMEAR: Final[dict[str, str]]= {
+    'municipio':'municipio_id_sus',
+    'cnes' : 'estabelecimento_cnes_id',
+    'noFantasia':'estabelecimento_nome',
+    'noEmpresarial':'estabelecimento_nome_empresarial',
+    'natJuridica':'estabelecimento_natureza_juridica',
+    'cnpj':'estabelecimento_cnpj',
+    'noLogradouro':'estabelecimento_logradouro',
+    'nuEndereco':'estabelecimento_logradouro_numero',
+    'bairro':'estabelecimento_bairro',
+    'cep':'estabelecimento_cep',
+    'regionalSaude':'estabelecimento_regional_saude',
+    'dsTpUnidade':'estabelecimento_tipo',
+    'dsStpUnidade':'estabelecimento_subtipo',
+    'nvDependencia':'estabelecimento_dependencia',
+    'tpGestao':'estabelecimento_gestao_tipo',
+    'nuTelefone':'estabelecimento_telefone',
+    'tpSempreAberto':'sempre_aberto',
+    'dtCarga':'estabelecimento_data_cadastro',
+    'coMotivoDesab':'codigo_motivo_desativacao', 
+    'dsMotivoDesab':'descricao_motivo_desativacao',
+    'dtAtualizacaoOrigem':'estabelecimento_data_atualizacao_base_local', 
+    'dtAtualizacao':'estabelecimento_data_atualizacao_base_nacional'
+}
+
+COLUNAS_EXCLUIR = [
+    'id',
+    'natJuridicaMant',
+    'tpPessoa',
+    'nuAlvara',
+    'dtExpAlvara', 
+    'orgExpAlvara',
+    'uf',
+    'noComplemento',
+    'noMunicipio',
+    'cpfDiretorCln', 
+    'stContratoFormalizado', 
+    'nuCompDesab', 
+    ]
+
+ESTABELECIMENTO_NATUREZA_JURIDICA: Final[dict[str, str]]= {
+    '1':'ADMINISTRAÇÃO PÚBLICA',
+    '2':'ENTIDADES EMPRESARIAIS',
+    '3':'ENTIDADES SEM FINS LUCRATIVOS',
+    '4':'PESSOAS FÍSICAS'
+}
+
+ESTABELECIMENTO_GESTAO_TIPO: Final[dict[str, str]]= {
+    'D':'DUPLA',
+    'E':'ESTADUAL',
+    'M':'MUNICIPAL'
+}
+
+ESTABELECIMENTO_DEPENDENCIA: Final[dict[str,str]]={
+    '1':'INDIVIDUAL',
+    '3':'MANTIDA'
+}
+
+COLUNAS_TIPOS: Final[frozendict] = frozendict(
+    {
+    'estabelecimento_cnes_id':'str', 
+    'estabelecimento_nome':'str',
+    'estabelecimento_nome_empresarial':'str',
+    'estabelecimento_natureza_juridica':'int64',
+    'estabelecimento_cnpj':'str',
+    'estabelecimento_dependencia':'int64',
+    'estabelecimento_tipo':'str', 
+    'estabelecimento_subtipo':'str',
+    'estabelecimento_logradouro':'str',
+    'estabelecimento_logradouro_numero':'str',      
+    'estabelecimento_cep':'str',
+    'estabelecimento_regional_saude':'int64',
+    'estabelecimento_bairro':'str',
+    'municipio_id_sus':'str',
+    'estabelecimento_gestao_tipo':'str',
+    'estabelecimento_telefone':'str',
+    'sempre_aberto':'boolean',
+    'codigo_motivo_desativacao':'int',
+    'descricao_motivo_desativacao':'str',
+    'estabelecimento_data_cadastro':'datetime64[ns]',
+    'estabelecimento_data_atualizacao_base_local':'datetime64[ns]',
+    'estabelecimento_data_atualizacao_base_nacional':'datetime64[ns]',
+    'status_estabelecimento':'str',
+    #'unidade_geografica_id':'str',
+    
+    }
+)
+
+COLUNAS_DATA = ['estabelecimento_data_cadastro','estabelecimento_data_atualizacao_base_local','estabelecimento_data_atualizacao_base_nacional']
+
+def status_estabelecimento(df_extraido:pd.DataFrame)->pd.DataFrame:
+    df_extraido['status_estabelecimento'] = np.where(df_extraido['codigo_motivo_desativacao'].isnull(),'ATIVO','DESATIVADO')
+
+def renomear_colunas(df_extraido: pd.DataFrame) -> pd.DataFrame:
+    df_extraido.rename(columns=COLUNAS_RENOMEAR, inplace=True)
+
+def excluir_colunas(df_extraido: pd.DataFrame) -> pd.DataFrame:
+    df_extraido.drop(columns=COLUNAS_EXCLUIR, inplace=True)
+
+def tratar_valores_codificados(df_extraido: pd.DataFrame) -> pd.DataFrame:
+    df_extraido['sempre_aberto'] = df_extraido['sempre_aberto'].map({'S':True,'N':False})
+    df_extraido['estabelecimento_natureza_juridica'] = df_extraido['estabelecimento_natureza_juridica'].map(ESTABELECIMENTO_NATUREZA_JURIDICA)
+    df_extraido['estabelecimento_gestao_tipo'] = df_extraido['estabelecimento_gestao_tipo'].map(ESTABELECIMENTO_GESTAO_TIPO)
+    df_extraido['estabelecimento_dependencia'] = df_extraido['estabelecimento_dependencia'].map(ESTABELECIMENTO_DEPENDENCIA)
+
+
+def tratar_tipos(df_extraido:pd.DataFrame) -> pd.DataFrame:
+    for coluna in COLUNAS_DATA:
+        df_extraido[coluna] = pd.to_datetime(df_extraido[coluna],infer_datetime_format=True)
+
+    df_extraido = df_extraido.astype(COLUNAS_TIPOS, errors = 'ignore').where(df_extraido.notna(), None)
+
+
+def tratamento_dados(
+    df_extraido:pd.DataFrame,
+    #sessao:Session
+) -> pd.DataFrame:
+
+    renomear_colunas(df_extraido)
+    excluir_colunas(df_extraido)
+    status_estabelecimento(df_extraido)
+    tratar_valores_codificados(df_extraido)
+    #df_extraido["unidade_geografica_id"] = df_extraido["municipio_id_sus"].apply(lambda municipio_id_sus: id_sus_para_id_impulso(sessao=sessao, id_sus=municipio_id_sus))
+    tratar_tipos(df_extraido)
+
+    df_extraido = df_extraido.reset_index(drop=True)
+
+    return df_extraido
+
+#lista_cnes = extrair_lista_cnes(coMun)
+#df_extraido_extraido = extrair_informacoes_estabelecimentos(coMun,lista_cnes)
+#df_extraido_tratado = tratamento_dados(df_extraido_extraido)
+#df_extraido_tratado.to_csv(r'C:\Users\maira\Impulso\etl_cnes\acrelandia.csv', index=False)
