@@ -2,10 +2,8 @@ import requests
 import pandas as pd
 import json
 
-import sys
 
-sys.path.append (r'C:\Users\maira\Impulso\etl\src\impulsoetl')
-from cnes.extracao_lista_cnes import extrair_lista_cnes
+from impulsoetl.cnes.extracao_lista_cnes import extrair_lista_cnes
 
 def extrair_horario_atendimento_estabelecimentos(coMun:str, lista_cnes:list) -> pd.DataFrame:
     """

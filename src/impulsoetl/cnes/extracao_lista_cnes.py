@@ -1,8 +1,12 @@
 """Extrai a lista dos códigos dos estabelecimentos do município a partir da página do CNES"""
+import warnings
+warnings.simplefilter(action='ignore', category=FutureWarning)
 
 import requests
 import pandas as pd
 import json
+
+
 
 
 def extrair_lista_cnes(codigo_municipio: str) -> list: 
@@ -23,6 +27,7 @@ def extrair_lista_cnes(codigo_municipio: str) -> list:
 
     colunas = ['id', 'cnes', 'noFantasia','noEmpresarial','uf','noMunicipio','gestao','natJuridica','atendeSus']
     df_consolidado = pd.DataFrame(columns=colunas)
+    
 
     for i in lista:
         parsed = {k:[v] for k,v in i.items()}  

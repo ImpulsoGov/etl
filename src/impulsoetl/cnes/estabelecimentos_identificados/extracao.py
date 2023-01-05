@@ -1,25 +1,18 @@
+import warnings
+warnings.filterwarnings("ignore")
 import requests
 import pandas as pd
 import json
 
-import sys
-
-sys.path.append (r'C:\Users\maira\Impulso\etl\src\impulsoetl')
-from cnes.extracao_lista_cnes import extrair_lista_cnes
+from impulsoetl.cnes.extracao_lista_cnes import extrair_lista_cnes
 from impulsoetl.loggers import logger
 
 
 def extrair_informacoes_estabelecimentos(codigo_municipio: str, lista_cnes: list) -> pd.DataFrame:
     
-    colunas = ['id', 'cnes', 'noFantasia', 'noEmpresarial', 'natJuridica',
-       'natJuridicaMant', 'cnpj', 'tpPessoa', 'nvDependencia', 'nuAlvara',
-       'dtExpAlvara', 'orgExpAlvara', 'dsTpUnidade', 'dsStpUnidade',
-       'noLogradouro', 'nuEndereco', 'cep', 'regionalSaude', 'bairro',
-       'noComplemento', 'municipio', 'noMunicipio', 'uf', 'tpGestao',
-       'nuTelefone', 'tpSempreAberto', 'coMotivoDesab', 'dsMotivoDesab',
-       'cpfDiretorCln', 'stContratoFormalizado', 'nuCompDesab', 'dtCarga',
-       'dtAtualizacaoOrigem', 'dtAtualizacao']
-    df_estabelecimentos = pd.DataFrame(columns=colunas)
+    df_extraido = pd.DataFrame()
+    
+    logger.info("Iniciando a extração da lista dos códigos CNES do município...")
     
     for cnes in lista_cnes:
         url = "http://cnes.datasus.gov.br/services/estabelecimentos/"+codigo_municipio+cnes
@@ -36,11 +29,13 @@ def extrair_informacoes_estabelecimentos(codigo_municipio: str, lista_cnes: list
         res = response.text
         
         parsed = json.loads(res)
-        parsed = {k:[v] for k,v in parsed.items()}
-        df = pd.DataFrame(parsed)
-        df_estabelecimentos = df_estabelecimentos.append(df)
+        df_parcial = pd.DataFrame([parsed])
 
-    return df_estabelecimentos
+        df_extraido = df_extraido.append(df_parcial)
+
+    logger.info("Extração concluída")
+
+    return df_extraido
 
 
 #coMun = '120001'

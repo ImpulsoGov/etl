@@ -3,11 +3,8 @@ import pandas as pd
 from typing import Final
 from frozendict import frozendict
 
-import sys
-
-sys.path.append (r'C:\Users\maira\Impulso\etl\src\impulsoetl')
-from cnes.extracao_lista_cnes import extrair_lista_cnes
-from cnes.estabelecimentos_horarios.extracao import extrair_horario_atendimento_estabelecimentos
+from impulsoetl.cnes.extracao_lista_cnes import extrair_lista_cnes
+from impulsoetl.cnes.estabelecimentos_horarios.extracao import extrair_horario_atendimento_estabelecimentos
 
 
 COLUNAS_EXCLUIR = [

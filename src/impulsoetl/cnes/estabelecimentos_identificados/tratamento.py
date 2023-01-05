@@ -1,18 +1,19 @@
+import warnings
+warnings.filterwarnings("ignore")
+
+
 import pandas as pd
 import numpy as np
 from typing import Final
 from frozendict import frozendict
 from sqlalchemy.orm import Session
+from datetime import date
+from impulsoetl.bd import Sessao
 
 
-import sys
-
-sys.path.append (r'C:\Users\maira\Impulso\etl\src\impulsoetl')
-from cnes.extracao_lista_cnes import extrair_lista_cnes
-from cnes.estabelecimentos_identificados.extracao import extrair_informacoes_estabelecimentos
-#from impulsoetl.comum.geografias import id_sus_para_id_impulso
-
-
+from impulsoetl.cnes.extracao_lista_cnes import extrair_lista_cnes
+from impulsoetl.cnes.estabelecimentos_identificados.extracao import extrair_informacoes_estabelecimentos
+from impulsoetl.loggers import logger
 
 
 COLUNAS_RENOMEAR: Final[dict[str, str]]= {
@@ -94,11 +95,10 @@ COLUNAS_TIPOS: Final[frozendict] = frozendict(
     'sempre_aberto':'boolean',
     'codigo_motivo_desativacao':'int',
     'descricao_motivo_desativacao':'str',
-    'estabelecimento_data_cadastro':'datetime64[ns]',
-    'estabelecimento_data_atualizacao_base_local':'datetime64[ns]',
-    'estabelecimento_data_atualizacao_base_nacional':'datetime64[ns]',
+    'estabelecimento_data_cadastro':'str',
+    'estabelecimento_data_atualizacao_base_local':'str',
+    'estabelecimento_data_atualizacao_base_nacional':'str',
     'status_estabelecimento':'str',
-    #'unidade_geografica_id':'str',
     
     }
 )
@@ -107,18 +107,24 @@ COLUNAS_DATA = ['estabelecimento_data_cadastro','estabelecimento_data_atualizaca
 
 def status_estabelecimento(df_extraido:pd.DataFrame)->pd.DataFrame:
     df_extraido['status_estabelecimento'] = np.where(df_extraido['codigo_motivo_desativacao'].isnull(),'ATIVO','DESATIVADO')
+    return df_extraido
 
 def renomear_colunas(df_extraido: pd.DataFrame) -> pd.DataFrame:
     df_extraido.rename(columns=COLUNAS_RENOMEAR, inplace=True)
+    return df_extraido
+
 
 def excluir_colunas(df_extraido: pd.DataFrame) -> pd.DataFrame:
     df_extraido.drop(columns=COLUNAS_EXCLUIR, inplace=True)
+    return df_extraido
+
 
 def tratar_valores_codificados(df_extraido: pd.DataFrame) -> pd.DataFrame:
     df_extraido['sempre_aberto'] = df_extraido['sempre_aberto'].map({'S':True,'N':False})
     df_extraido['estabelecimento_natureza_juridica'] = df_extraido['estabelecimento_natureza_juridica'].map(ESTABELECIMENTO_NATUREZA_JURIDICA)
     df_extraido['estabelecimento_gestao_tipo'] = df_extraido['estabelecimento_gestao_tipo'].map(ESTABELECIMENTO_GESTAO_TIPO)
     df_extraido['estabelecimento_dependencia'] = df_extraido['estabelecimento_dependencia'].map(ESTABELECIMENTO_DEPENDENCIA)
+    return df_extraido
 
 
 def tratar_tipos(df_extraido:pd.DataFrame) -> pd.DataFrame:
@@ -126,25 +132,35 @@ def tratar_tipos(df_extraido:pd.DataFrame) -> pd.DataFrame:
         df_extraido[coluna] = pd.to_datetime(df_extraido[coluna],infer_datetime_format=True)
 
     df_extraido = df_extraido.astype(COLUNAS_TIPOS, errors = 'ignore').where(df_extraido.notna(), None)
+    #rint(df_extraido.info())
+
+    return df_extraido
 
 
 def tratamento_dados(
     df_extraido:pd.DataFrame,
-    #sessao:Session
+    sessao:Session
 ) -> pd.DataFrame:
 
-    renomear_colunas(df_extraido)
-    excluir_colunas(df_extraido)
-    status_estabelecimento(df_extraido)
-    tratar_valores_codificados(df_extraido)
-    #df_extraido["unidade_geografica_id"] = df_extraido["municipio_id_sus"].apply(lambda municipio_id_sus: id_sus_para_id_impulso(sessao=sessao, id_sus=municipio_id_sus))
-    tratar_tipos(df_extraido)
+    logger.info("Iniciando o tratamento dos dados ...")
 
+    df_extraido = renomear_colunas(df_extraido)
+    df_extraido = excluir_colunas(df_extraido)
+    df_extraido = status_estabelecimento(df_extraido)
+    df_extraido = tratar_valores_codificados(df_extraido)
+    df_extraido = tratar_tipos(df_extraido)
     df_extraido = df_extraido.reset_index(drop=True)
+
+    logger.info("Dados transformados ...")
 
     return df_extraido
 
-#lista_cnes = extrair_lista_cnes(coMun)
-#df_extraido_extraido = extrair_informacoes_estabelecimentos(coMun,lista_cnes)
-#df_extraido_tratado = tratamento_dados(df_extraido_extraido)
+#coMun = '120001'
+
+#with Sessao() as sessao:
+ #   lista_cnes = extrair_lista_cnes(coMun)
+  #  df_extraido= extrair_informacoes_estabelecimentos(coMun,lista_cnes)
+   # #df_extraido.info()
+    #df_tratado = tratamento_dados(df_extraido, sessao)
+    p#rint(list(df_tratado.columns))
 #df_extraido_tratado.to_csv(r'C:\Users\maira\Impulso\etl_cnes\acrelandia.csv', index=False)
