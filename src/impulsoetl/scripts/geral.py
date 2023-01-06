@@ -169,107 +169,51 @@ def ceps(sessao: Session, teste: bool = False) -> None:
     ).all()
     obter_cep(sessao=sessao, ceps_pendentes=ceps_pendentes, teste=teste)
 
-with Sessao() as sessao:
 
-    def capturar_agendamento(operacao_id, sessao = sessao):
-        agendamentos_cnes = (
-            sessao.query(agendamentos)
-            .filte((agendamentos.c.operacao_id == operacao_id)
-            .all()
-            )
-        )
+def cnes_estabelecimentos_identificados(
+    sessao : Session,
+    teste: bool = True,
+)-> None:
+
+    operacao_id  = "063b5cf8-34d1-744d-8f96-353d4f199171"
+
+    agendamentos_cnes = (
+        sessao.query(agendamentos)
+        .filter(agendamentos.c.operacao_id == operacao_id)
+        .all()
+    )
     
-    def cnes_estabelecimentos_identificados(
-        teste: bool = False,
-        sessao = sessao
-    )-> None:
+    for agendamento in agendamentos_cnes:
+        periodo_id = agendamento.periodo_id
+        unidade_geografica_id = agendamento.unidade_geografica_id
+        tabela_destino = agendamento.tabela_destino
+        codigo_sus_municipio = agendamento.unidade_geografica_id_sus
 
-        operacao_id  = "063b5cf8-34d1-744d-8f96-353d4f199171"
-
-        agendamentos_cnes = capturar_agendamento(operacao_id,sessao=sessao)
-        
-        for agendamento in agendamentos_cnes:
-            periodo_id = agendamentos_cnes.periodo_id
-            unidade_geografica_id = agendamentos_cnes.unidade_geografica_id
-            tabela_destino = agendamentos_cnes.tabela_destino
-            codigo_sus_municipio = agendamentos_cnes.unidade_geografica_id_sus
-
-            df_extraido = obter_informacoes_estabelecimentos_identificados(
-                sessao=sessao,
-                tabela_destino=tabela_destino,
-                codigo_municipio=codigo_sus_municipio
-            )
-            df_extraido['periodo_id']=periodo_id
-            df_extraido['unidade_geografica_id']=unidade_geografica_id
-
-            if teste: 
-                sessao.rollback()
-                break
-
-            logger.info("Registrando captura bem-sucedida...")
-
-            requisicao_inserir_historico = capturas_historico.insert(
-                {
-                    "operacao_id": operacao_id,
-                    "periodo_id": agendamento.periodo_id,
-                    "unidade_geografica_id": agendamento.unidade_geografica_id,
-                }
-            )
-            conector = sessao.connection()
-            conector.execute(requisicao_inserir_historico)
-            sessao.commit()
-            logger.info("OK.")
-
-
-with Sessao() as sessao:
-
-    def capturar_agendamento(operacao_id, sessao = sessao):
-        agendamentos_cnes = (
-            sessao.query(agendamentos)
-            .filte((agendamentos.c.operacao_id == operacao_id)
-            .all()
-            )
+        df_extraido = obter_informacoes_estabelecimentos_identificados(
+            sessao=sessao,
+            tabela_destino=tabela_destino,
+            codigo_municipio=codigo_sus_municipio
         )
-    
-    def cnes_estabelecimentos_identificados(
-        teste: bool = False,
-    )-> None:
+        df_extraido['periodo_id']=periodo_id
+        df_extraido['unidade_geografica_id']=unidade_geografica_id
 
-        operacao_id  = "063b5cf8-34d1-744d-8f96-353d4f199171"
+        if teste: 
+            sessao.rollback()
+            break
 
-        agendamentos_cnes = capturar_agendamento(operacao_id,sessao=sessao)
-        
-        for agendamento in agendamentos_cnes:
-            periodo_id = agendamentos_cnes.periodo_id
-            unidade_geografica_id = agendamentos_cnes.unidade_geografica_id
-            tabela_destino = agendamentos_cnes.tabela_destino
-            codigo_sus_municipio = agendamentos_cnes.unidade_geografica_id_sus
+        logger.info("Registrando captura bem-sucedida...")
 
-            df_extraido = obter_informacoes_estabelecimentos_identificados(
-                sessao=sessao,
-                tabela_destino=tabela_destino,
-                codigo_municipio=codigo_sus_municipio
-            )
-            df_extraido['periodo_id']=periodo_id
-            df_extraido['unidade_geografica_id']=unidade_geografica_id
-
-            if teste: 
-                sessao.rollback()
-                break
-
-            logger.info("Registrando captura bem-sucedida...")
-
-            requisicao_inserir_historico = capturas_historico.insert(
-                {
-                    "operacao_id": operacao_id,
-                    "periodo_id": agendamento.periodo_id,
-                    "unidade_geografica_id": agendamento.unidade_geografica_id,
-                }
-            )
-            conector = sessao.connection()
-            conector.execute(requisicao_inserir_historico)
-            sessao.commit()
-            logger.info("OK.")
+        #requisicao_inserir_historico = capturas_historico.insert(
+         #   {
+           #     "operacao_id": operacao_id,
+           #     "periodo_id": agendamento.periodo_id,
+           #     "unidade_geografica_id": agendamento.unidade_geografica_id,
+         #   }
+      #  )
+        #conector = sessao.connection()
+        #conector.execute(requisicao_inserir_historico)
+        sessao.commit()
+        logger.info("OK.")
 
 
 def principal(sessao: Session, teste: bool = False) -> None:
@@ -288,7 +232,7 @@ def principal(sessao: Session, teste: bool = False) -> None:
     """
 
     vinculos_disseminacao(sessao=sessao, teste=teste)
-    obter_informacoes_estabelecimentos_identificados(sessao=sessao, teste=teste)
+    cnes_estabelecimentos_identificados(sessao=sessao, teste=teste)
     # ceps(sessao=sessao, teste=teste)
     # outros scripts de uso geral aqui...
 
