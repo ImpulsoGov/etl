@@ -49,7 +49,7 @@ def extrair_servicos_estabelecimentos(codigo_municipio: str, lista_cnes: list) -
     return df_extraido
 
 
-coMun = '120001'
-lista_codigos = extrair_lista_cnes(coMun)
-data = extrair_servicos_estabelecimentos(coMun, lista_codigos)
-print(data)
+#coMun = '120001'
+#lista_codigos = extrair_lista_cnes(coMun)
+#data = extrair_servicos_estabelecimentos(coMun, lista_codigos)
+#print(data)
