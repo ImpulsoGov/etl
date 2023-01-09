@@ -27,7 +27,7 @@ def extrair_lista_cnes(codigo_municipio: str) -> list:
   
     response = requests.request("GET", url, headers=headers, data=payload)
     res = response.text
-    print(res)
+    #print(res)
   
     parsed = json.loads(res)
   #print(parsed)
@@ -45,6 +45,6 @@ def extrair_lista_cnes(codigo_municipio: str) -> list:
 
   return lista_cnes
 
-#coMun = '120010'
+#coMun = '110025'
 #data = extrair_lista_cnes(coMun)
 #print(data)

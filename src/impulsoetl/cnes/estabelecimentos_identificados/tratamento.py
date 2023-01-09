@@ -107,6 +107,7 @@ COLUNAS_DATA = ['estabelecimento_data_cadastro','estabelecimento_data_atualizaca
 
 def status_estabelecimento(df_extraido:pd.DataFrame)->pd.DataFrame:
     df_extraido['status_estabelecimento'] = np.where(df_extraido['codigo_motivo_desativacao'].isnull(),'ATIVO','DESATIVADO')
+    df_extraido.loc[df_extraido['estabelecimento_nome']=='NAO IDENTIFICADO', 'status_estabelecimento']='NAO IDENTIFICADO'
     return df_extraido
 
 def renomear_colunas(df_extraido: pd.DataFrame) -> pd.DataFrame:
@@ -117,7 +118,6 @@ def renomear_colunas(df_extraido: pd.DataFrame) -> pd.DataFrame:
 def excluir_colunas(df_extraido: pd.DataFrame) -> pd.DataFrame:
     df_extraido.drop(columns=COLUNAS_EXCLUIR, inplace=True)
     return df_extraido
-
 
 def tratar_valores_codificados(df_extraido: pd.DataFrame) -> pd.DataFrame:
     df_extraido['sempre_aberto'] = df_extraido['sempre_aberto'].map({'S':True,'N':False})
@@ -135,7 +135,6 @@ def tratar_tipos(df_extraido:pd.DataFrame) -> pd.DataFrame:
     #rint(df_extraido.info())
 
     return df_extraido
-
 
 def tratamento_dados(
     df_extraido:pd.DataFrame,
@@ -155,12 +154,10 @@ def tratamento_dados(
 
     return df_extraido
 
-#coMun = '120001'
-
+#codigo_municipio = '110025'
 #with Sessao() as sessao:
- #   lista_cnes = extrair_lista_cnes(coMun)
-  #  df_extraido= extrair_informacoes_estabelecimentos(coMun,lista_cnes)
-   # #df_extraido.info()
+    #lista_cnes = extrair_lista_cnes(codigo_municipio)
+    #df_extraido= extrair_informacoes_estabelecimentos(codigo_municipio,lista_cnes)
+    #print(df_extraido)
     #df_tratado = tratamento_dados(df_extraido, sessao)
-    p#rint(list(df_tratado.columns))
-#df_extraido_tratado.to_csv(r'C:\Users\maira\Impulso\etl_cnes\acrelandia.csv', index=False)
+    #print(df_tratado)
