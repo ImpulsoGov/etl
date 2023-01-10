@@ -14,6 +14,7 @@ from impulsoetl.bd import Sessao
 from impulsoetl.cnes.extracao_lista_cnes import extrair_lista_cnes
 from impulsoetl.cnes.estabelecimentos_identificados.extracao import extrair_informacoes_estabelecimentos
 from impulsoetl.loggers import logger
+from impulsoetl.comum.geografias import id_sus_para_id_impulso
 
 
 COLUNAS_RENOMEAR: Final[dict[str, str]]= {
@@ -138,7 +139,9 @@ def tratar_tipos(df_extraido:pd.DataFrame) -> pd.DataFrame:
 
 def tratamento_dados(
     df_extraido:pd.DataFrame,
-    sessao:Session
+    sessao:Session,
+    periodo_id:str,
+    unidade_geografica_id:str
 ) -> pd.DataFrame:
 
     logger.info("Iniciando o tratamento dos dados ...")
@@ -148,16 +151,21 @@ def tratamento_dados(
     df_extraido = status_estabelecimento(df_extraido)
     df_extraido = tratar_valores_codificados(df_extraido)
     df_extraido = tratar_tipos(df_extraido)
+    df_extraido['periodo_id']= periodo_id
+    df_extraido["unidade_geografica_id"] = unidade_geografica_id
     df_extraido = df_extraido.reset_index(drop=True)
 
     logger.info("Dados transformados ...")
+    print(df_extraido)
 
     return df_extraido
 
 #codigo_municipio = '110025'
+#periodo_id = 'M12022'
+#unidade_geografica_id = 'xxxxxx'
 #with Sessao() as sessao:
     #lista_cnes = extrair_lista_cnes(codigo_municipio)
     #df_extraido= extrair_informacoes_estabelecimentos(codigo_municipio,lista_cnes)
     #print(df_extraido)
-    #df_tratado = tratamento_dados(df_extraido, sessao)
+    #df_tratado = tratamento_dados(df_extraido, sessao, periodo_id, unidade_geografica_id)
     #print(df_tratado)

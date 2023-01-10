@@ -189,29 +189,29 @@ def cnes_estabelecimentos_identificados(
         tabela_destino = agendamento.tabela_destino
         codigo_sus_municipio = agendamento.unidade_geografica_id_sus
 
-        df_extraido = obter_informacoes_estabelecimentos_identificados(
+        obter_informacoes_estabelecimentos_identificados(
             sessao=sessao,
             tabela_destino=tabela_destino,
-            codigo_municipio=codigo_sus_municipio
+            codigo_municipio=codigo_sus_municipio,
+            periodo_id=periodo_id,
+            unidade_geografica_id=unidade_geografica_id
         )
-        df_extraido['periodo_id']=periodo_id
-        df_extraido['unidade_geografica_id']=unidade_geografica_id
-
+       
         if teste: 
             sessao.rollback()
             break
 
         logger.info("Registrando captura bem-sucedida...")
 
-        #requisicao_inserir_historico = capturas_historico.insert(
-         #   {
-           #     "operacao_id": operacao_id,
-           #     "periodo_id": agendamento.periodo_id,
-           #     "unidade_geografica_id": agendamento.unidade_geografica_id,
-         #   }
-      #  )
-        #conector = sessao.connection()
-        #conector.execute(requisicao_inserir_historico)
+        requisicao_inserir_historico = capturas_historico.insert(
+            {
+                "operacao_id": operacao_id,
+                "periodo_id": agendamento.periodo_id,
+                "unidade_geografica_id": agendamento.unidade_geografica_id,
+            }
+        )
+        conector = sessao.connection()
+        conector.execute(requisicao_inserir_historico)
         sessao.commit()
         logger.info("OK.")
 

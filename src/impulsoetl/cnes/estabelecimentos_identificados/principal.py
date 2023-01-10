@@ -17,7 +17,9 @@ from impulsoetl.cnes.estabelecimentos_identificados.carregamento import carregar
 def obter_informacoes_estabelecimentos_identificados(
     sessao: Session,
     tabela_destino:str,
-    codigo_municipio:str
+    codigo_municipio:str,
+    periodo_id:str,
+    unidade_geografica_id:str
 ):
     lista_cnes = extrair_lista_cnes(
         codigo_municipio=codigo_municipio)
@@ -28,7 +30,9 @@ def obter_informacoes_estabelecimentos_identificados(
 
     df_tratado = tratamento_dados(
         df_extraido = df_extraido,
-        sessao=sessao
+        sessao=sessao,
+        periodo_id=periodo_id,
+        unidade_geografica_id=unidade_geografica_id
     )
 
     carregar_dados(
