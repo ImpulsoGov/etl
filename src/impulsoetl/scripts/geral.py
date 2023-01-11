@@ -7,9 +7,10 @@
 
 """Scripts para a obtenção de dados de uso geral entre produtos da Impulso."""
 
+from prefect import flow
 
+from impulsoetl import __VERSION__
 from sqlalchemy.orm import Session
-
 from impulsoetl.bd import Sessao, tabelas
 from impulsoetl.brasilapi.cep import obter_cep
 from impulsoetl.loggers import logger
@@ -170,6 +171,18 @@ def ceps(sessao: Session, teste: bool = False) -> None:
     obter_cep(sessao=sessao, ceps_pendentes=ceps_pendentes, teste=teste)
 
 
+@flow(
+    name="Rodar Agendamentos de Estabelecimentos Identificados "
+    + "(por município)",
+    description=(
+        "Lê os agendamentos para obter as informações dos estabelecimentos "
+        + "de saúde por município na página do CNES"
+    ),
+    retries=0,
+    retry_delay_seconds=None,
+    version=__VERSION__,
+    validate_parameters=False,
+)
 def cnes_estabelecimentos_identificados(
     sessao : Session,
     teste: bool = True,
