@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2021, 2022 ImpulsoGov <contato@impulsogov.org>
+#
+# SPDX-License-Identifier: MIT
+
 """Extrai a lista dos códigos dos estabelecimentos do município a partir da página do CNES"""
 import warnings
 warnings.simplefilter(action='ignore', category=FutureWarning)
@@ -9,6 +13,16 @@ import json
 from impulsoetl.loggers import logger
 
 def extrair_lista_cnes(codigo_municipio: str) -> list: 
+  """
+  Extrai a lista dos códigos CNES dos estabelecimentos presentes no município.
+
+   Argumentos:
+    codigo_municipio: Id sus do municipio.
+
+  Retorna:
+    Lista contendo os códigos CNES dos estabelecimentos de saúde.
+
+  """
   
   logger.info("Iniciando a extração da lista dos códigos CNES do município:" + codigo_municipio)
 
@@ -27,24 +41,16 @@ def extrair_lista_cnes(codigo_municipio: str) -> list:
   
     response = requests.request("GET", url, headers=headers, data=payload)
     res = response.text
-    #print(res)
   
     parsed = json.loads(res)
-  #print(parsed)
-  #for p in parsed:
     df_parcial = pd.DataFrame(parsed)
     df_extraido = df_extraido.append(df_parcial)
     lista_cnes = df_extraido['cnes'].value_counts().index.tolist()
   
     logger.info("Extração da lista dos códigos CNES do município " + codigo_municipio + " realizada com sucesso")
 
-    #print(df_parcial)
   except:
       logger.info("Erro ao realizar a requisição para o municipio: " + codigo_municipio)
       pass
 
   return lista_cnes
-
-#coMun = '110025'
-#data = extrair_lista_cnes(coMun)
-#print(data)

@@ -1,17 +1,38 @@
-import warnings
+# SPDX-FileCopyrightText: 2021, 2022 ImpulsoGov <contato@impulsogov.org>
+#
+# SPDX-License-Identifier: MIT
 
+""" Extrai informações dos estabelecimentos de saúde a partir da página do CNES """
+
+import warnings
 warnings.filterwarnings("ignore")
 import json
 
 import numpy as np
 import pandas as pd
 import requests
+from prefect import task
 
 from impulsoetl.cnes.extracao_lista_cnes import extrair_lista_cnes
 from impulsoetl.loggers import logger
 
 
-def tratar_ficha_vazia(cnes: str, codigo_municipio: str) -> pd.DataFrame:
+def tratar_ficha_vazia(
+    cnes: str, 
+    codigo_municipio: str
+    ) -> pd.DataFrame:
+    """
+    Realiza tratamento para os estabelecimentos cujas fichas contendo as informações estão vazias.
+     
+     Argumentos: 
+        cnes: Código CNES dos estabelecimentos.
+        codigo_municipio: Id sus do municipio.
+     
+     Retorna:
+        Objeto [`pandas.DataFrame`] com os dados extraídos e tratados para os estabelecimendos com ficha vazia.
+
+:  
+    """
 
     colunas = [
         "id",
@@ -63,9 +84,31 @@ def tratar_ficha_vazia(cnes: str, codigo_municipio: str) -> pd.DataFrame:
     return df_sem_ficha
 
 
+@task(
+    name="Extrair Informações dos Estabelecimentos Identificados",
+    description=(
+        "Extrai os dados dos estabelecimentos de saúde de cada município"
+        + "a partir da página do CNES."
+    ),
+    tags=["cnes", "estabelecimentos", "extracao"],
+    retries=2,
+    retry_delay_seconds=120,
+)
 def extrair_informacoes_estabelecimentos(
-    codigo_municipio: str, lista_cnes: list
+    codigo_municipio: str, 
+    lista_cnes: list
 ) -> pd.DataFrame:
+    """
+    Extrai informaçãoes dos estabelecimentos de saúde a partir da página do CNES
+
+     Argumentos:
+        codigo_municipio: Id sus do municipio.
+        lista_cnes: Lista contento os códigos CNES dos estabelecimentos presentes no município
+                    (conforme retornado pela função [`extrair_lista_cnes()`][]).
+     
+     Retorna:
+        Objeto [`pandas.DataFrame`] com os dados extraídos.
+    """
 
     df_extraido = pd.DataFrame()
 

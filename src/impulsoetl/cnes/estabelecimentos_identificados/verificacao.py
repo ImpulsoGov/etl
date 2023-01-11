@@ -1,19 +1,21 @@
+# SPDX-FileCopyrightText: 2021, 2022 ImpulsoGov <contato@impulsogov.org>
+#
+# SPDX-License-Identifier: MIT
+
 """Verifica a qualidade dos dados dos estabelecimentos identificados pós processamento"""
+
 import warnings
 warnings.filterwarnings("ignore")
 
 import pandas as pd
 import numpy as np
+from prefect import task
 
 from impulsoetl.cnes.extracao_lista_cnes import extrair_lista_cnes
 from impulsoetl.cnes.estabelecimentos_identificados.extracao import extrair_informacoes_estabelecimentos
 from impulsoetl.cnes.estabelecimentos_identificados.tratamento import tratamento_dados
 
 from impulsoetl.loggers import logger
-
-#Verificar quantidade de colunas
-
-coMun = '120001'
 
 def verifica_diferenca_qtd_colunas(
     df_extraido:pd.DataFrame,
@@ -30,26 +32,43 @@ def verifica_diferenca_qtd_registros(
     df_extraido:pd.DataFrame,
     df_tratado: pd.DataFrame,
 )-> bool:
-    """Verifica se há diferença na contagem de colunas"""
+    """Verifica se há diferença na contagem de registros"""
     return (
         df_extraido['estabelecimento_cnes_id'].count() - df_tratado['estabelecimento_cnes_id'].count() == 0
     )
 
+@task(
+    name="Validar dados dos Estabelecimentos Identificados",
+    description=(
+        "Realiza a validacao dos dados dos estabelecimentos de saúde "
+        +"pós tratamento dos dados extraídos a partir da página do CNES"
+    ),
+    tags=["cnes", "estabelecimentos", "validacao"],
+    retries=0,
+    retry_delay_seconds=None,
+)
 def verificar_informacoes_estabelecimentos_identicados(
     df_extraido: pd.DataFrame,
     df_tratado: pd.DataFrame,
 ) -> None:
+    """
+    Valida os dados extraídos para o estabelecimentos de saúde pós tratamento.
+
+     Argumentos:
+        df_extraido: df_extraido: [`DataFrame`][] contendo os dados extraídos no na página do CNES
+            (conforme retornado pela função [`extrair_informacoes_estabelecimentos()`][]).
+        df_tratado: [`DataFrame`][] contendo os dados tratados
+            (conforme retornado pela função [`tratamento_dados()`][]).
+
+     Exceções:
+        Levanta um erro da classe [`AssertionError`][] quando uma das condições testadas não é 
+        considerada válida.
+
+    [`AssertionError`]: https://docs.python.org/3/library/exceptions.html#AssertionError
+    """
     logger.info("Iniciando a verificação dos dados ... ")
     assert verifica_diferenca_qtd_colunas(df_extraido,df_tratado)
     assert verifica_diferenca_qtd_registros(df_extraido,df_tratado)
     logger.info("Dados verificados corretamente")
 
-
-#with Sessao() as sessao:
-    #lista_cnes = extrair_lista_cnes(coMun)
-    #df_extraido= extrair_informacoes_estabelecimentos(coMun,lista_cnes)
-    #df_tratado = tratamento_dados(df_extraido, sessao)
-    #print(" df_extraido: " + str(df_extraido['municipio_id_sus'].count()))
-    #print(" df_tratado: " + str(df_tratado['municipio_id_sus'].count()))
-    #verificar_informacoes_estabelecimentos_identicados(df_extraido, df_tratado)
     

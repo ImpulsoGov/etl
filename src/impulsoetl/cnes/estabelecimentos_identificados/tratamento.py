@@ -1,3 +1,9 @@
+# SPDX-FileCopyrightText: 2021, 2022 ImpulsoGov <contato@impulsogov.org>
+#
+# SPDX-License-Identifier: MIT
+
+""" Realiza o tratamento das informações extraídas para os estabelecimentos de saúde para o formato usado no bando de dados da Impulso"""
+
 import warnings
 warnings.filterwarnings("ignore")
 
@@ -9,6 +15,7 @@ from frozendict import frozendict
 from sqlalchemy.orm import Session
 from datetime import date
 from impulsoetl.bd import Sessao
+from prefect import task
 
 
 from impulsoetl.cnes.extracao_lista_cnes import extrair_lista_cnes
@@ -137,12 +144,33 @@ def tratar_tipos(df_extraido:pd.DataFrame) -> pd.DataFrame:
 
     return df_extraido
 
+@task(
+    name="Tratar dados dos Estabelecimentos Identificados",
+    description=(
+        "Realiza o tratamento dos dados extraídos dos estabelecimentos de saúde "
+        + "a partir da página do CNES"
+    ),
+    tags=["cnes", "estabelecimentos", "tratamento"],
+    retries=0,
+    retry_delay_seconds=None,
+)
 def tratamento_dados(
     df_extraido:pd.DataFrame,
-    sessao:Session,
     periodo_id:str,
     unidade_geografica_id:str
 ) -> pd.DataFrame:
+    """ 
+    Trata os dados extraídos para os estabelecimentos de saúde a partir da página do CNES
+
+     Argumentos:
+        df_extraido: [`DataFrame`][] contendo os dados extraídos no na página do CNES
+            (conforme retornado pela função [`extrair_informacoes_estabelecimentos()`][]).
+        periodo_id: Código de identificação do período.
+        unidade_geografica_id: Código de identificação da unidade geográfica.
+
+     Retorna:
+        Objeto [`pandas.DataFrame`] com os dados enriquecidos e tratados.
+    """
 
     logger.info("Iniciando o tratamento dos dados ...")
 
@@ -160,12 +188,3 @@ def tratamento_dados(
 
     return df_extraido
 
-#codigo_municipio = '110025'
-#periodo_id = 'M12022'
-#unidade_geografica_id = 'xxxxxx'
-#with Sessao() as sessao:
-    #lista_cnes = extrair_lista_cnes(codigo_municipio)
-    #df_extraido= extrair_informacoes_estabelecimentos(codigo_municipio,lista_cnes)
-    #print(df_extraido)
-    #df_tratado = tratamento_dados(df_extraido, sessao, periodo_id, unidade_geografica_id)
-    #print(df_tratado)
