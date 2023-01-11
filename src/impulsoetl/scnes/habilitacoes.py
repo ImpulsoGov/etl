@@ -6,8 +6,6 @@
 """Ferramentas para obter habilitações dos estabelecimentos no SCNES."""
 
 
-from __future__ import annotations
-
 import os
 import re
 from datetime import date
@@ -18,12 +16,14 @@ import numpy as np
 import pandas as pd
 import roman
 from frozendict import frozendict
+from prefect import flow, task
 from sqlalchemy.orm import Session
 from uuid6 import uuid7
 
+from impulsoetl import __VERSION__
 from impulsoetl.comum.datas import agora_gmt_menos3, periodo_por_data
 from impulsoetl.comum.geografias import id_sus_para_id_impulso
-from impulsoetl.loggers import logger
+from impulsoetl.loggers import habilitar_suporte_loguru, logger
 from impulsoetl.utilitarios.bd import carregar_dataframe
 from impulsoetl.utilitarios.datasus_ftp import extrair_dbc_lotes
 
@@ -175,6 +175,17 @@ def extrair_habilitacoes(
     )
 
 
+@task(
+    name="Transformar Habilitações",
+    description=(
+        "Transforma os dados dos arquivos de disseminação de habilitações dos "
+        + "estabelecimentos de saúde a partir do repositório público do "
+        + "Sistema do Cadastro Nacional de Estabelecimentos de Saúde do SUS."
+    ),
+    tags=["saude_mental", "scnes", "habilitacoes", "transformacao"],
+    retries=0,
+    retry_delay_seconds=None,
+)
 def transformar_habilitacoes(
     sessao: Session,
     habilitacoes: pd.DataFrame,
@@ -197,6 +208,7 @@ def transformar_habilitacoes(
         [`DataFrame`]: https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html
         [`pysus.online_data.CNES.download()`]: http://localhost:9090/@https://github.com/AlertaDengue/PySUS/blob/600c61627b7998a1733b71ac163b3de71324cfbe/pysus/online_data/CNES.py#L28
     """
+    habilitar_suporte_loguru()
     logger.info(
         "Transformando DataFrame com {num_registros} habilitações "
         + "de estabelecimentos do SCNES.",
@@ -319,6 +331,19 @@ def transformar_habilitacoes(
     return habilitacoes_transformado
 
 
+@flow(
+    name="Obter Habilitações",
+    description=(
+        "Extrai, transforma e carrega os dados dos arquivos de disseminação "
+        + "das habilitações dos estabelecimentos a partir do repositório "
+        + "público do Sistema do Cadastro Nacional de Estabelecimentos de "
+        + "Saúde do SUS."
+    ),
+    retries=0,
+    retry_delay_seconds=None,
+    version=__VERSION__,
+    validate_parameters=False,
+)
 def obter_habilitacoes(
     sessao: Session,
     uf_sigla: str,
@@ -348,6 +373,7 @@ def obter_habilitacoes(
     [`sqlalchemy.engine.Row`]: https://docs.sqlalchemy.org/en/14/core/connections.html#sqlalchemy.engine.Row
     [`datetime.date`]: https://docs.python.org/3/library/datetime.html#date-objects
     """
+    habilitar_suporte_loguru()
     logger.info(
         "Iniciando captura de habilitacoes da Unidade "
         + "Federativa '{}' na competencia de {:%m/%Y}.",

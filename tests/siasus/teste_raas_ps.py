@@ -119,7 +119,7 @@ def teste_extrair_raas_ps(uf_sigla, periodo_data_inicio, passo):
     ["UFMUN == '280030'", None],
 )
 def teste_transformar_raas_ps(sessao, raas_ps, condicoes):
-    raas_ps_transformada = transformar_raas_ps(
+    raas_ps_transformada = transformar_raas_ps.fn(
         sessao=sessao,
         raas_ps=raas_ps,
         condicoes=condicoes,
@@ -153,9 +153,9 @@ def teste_carregar_raas_ps(
     raas_ps_transformada,
     tabela_teste,
     passo,
-    caplog,
+    capfd,
 ):
-    codigo_saida = carregar_dataframe(
+    codigo_saida = carregar_dataframe.fn(
         sessao=sessao,
         df=raas_ps_transformada.iloc[:10],
         tabela_destino=tabela_teste,
@@ -165,7 +165,7 @@ def teste_carregar_raas_ps(
 
     assert codigo_saida == 0
 
-    logs = caplog.text
+    logs = capfd.readouterr().err
     assert "Carregamento concluído" in logs
 
 
@@ -183,7 +183,7 @@ def teste_obter_raas_ps(
     uf_sigla,
     periodo_data_inicio,
     tabela_teste,
-    caplog,
+    capfd,
     parametros,
 ):
     obter_raas_ps(
@@ -196,5 +196,5 @@ def teste_obter_raas_ps(
     )
     sessao.commit()
 
-    logs = caplog.text
+    logs = capfd.readouterr().err
     assert "Carregamento concluído" in logs

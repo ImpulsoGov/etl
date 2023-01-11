@@ -18,12 +18,10 @@ Atributos:
 """
 
 
-from __future__ import annotations
-
 import re
 from collections.abc import MutableMapping
 from functools import cached_property
-from typing import Any, Final, Iterable
+from typing import Any, Final, Iterable, Optional
 
 import janitor  # noqa: F401  # nopycln: import  # janitor é usado indireta/e
 import pandas as pd
@@ -31,6 +29,7 @@ import requests
 import sqlalchemy as sa
 from bs4 import BeautifulSoup
 from frozendict import frozendict
+from prefect import flow, task
 from selenium import webdriver
 from selenium.common.exceptions import NoSuchElementException
 from selenium.webdriver.common.by import By
@@ -38,6 +37,7 @@ from sqlalchemy.orm import Session
 from toolz.functoolz import compose_left
 from uuid6 import uuid7
 
+from impulsoetl import __VERSION__
 from impulsoetl.bd import Base
 from impulsoetl.comum.datas import periodo_por_data
 from impulsoetl.comum.geografias import (
@@ -45,7 +45,7 @@ from impulsoetl.comum.geografias import (
     id_sus_para_id_impulso,
     uf_id_ibge_para_sigla,
 )
-from impulsoetl.loggers import logger
+from impulsoetl.loggers import habilitar_suporte_loguru, logger
 from impulsoetl.navegadores import criar_geckodriver
 from impulsoetl.sisab.comum import (
     SISAB_URL,
@@ -724,7 +724,7 @@ class FormularioConsulta(FormularioAbstrato):  # noqa: WPS230
             )
 
     @property
-    def metadados(self) -> ConsultaProducaoMetadados:
+    def metadados(self) -> "ConsultaProducaoMetadados":
         """Metadados da consulta, incluindo filtros ativos neste instante.
 
         Objeto [`ConsultaProducaoMetadados`][] contendo informações das
@@ -795,7 +795,7 @@ class FormularioConsulta(FormularioAbstrato):  # noqa: WPS230
         return self._metadados
 
     @property
-    def resultado(self) -> RelatorioProducao | None:
+    def resultado(self) -> Optional["RelatorioProducao"]:
         """Resultado da consulta por produção.
 
         Objeto [`RelatorioProducao`][] contendo os dados do relatório
@@ -1109,6 +1109,16 @@ class RelatorioProducao(RelatorioAbstrato):
         )
 
 
+@task(
+    name="Gerar Nome de Tabela para Relatório de Produção",
+    description=(
+        "Gera um nome padronizado para uma tabela que irá receber dados de "
+        + "relatórios de produção da Atenção Primária à Saúde."
+    ),
+    tags=["saude_mental", "sisab", "producao", "tarefas_apoio"],
+    retries=0,
+    retry_delay_seconds=None,
+)
 def gerar_nome_tabela(
     variaveis: Iterable[str],
     unidade_geografica: str = "municipios",
@@ -1131,7 +1141,7 @@ def gerar_nome_tabela(
     Retorna:
         O nome da tabela de destino para carga no banco de dados da ImpulsoGov.
     """
-
+    habilitar_suporte_loguru()
     variaveis = map(tratar_nomes_campos, variaveis)  # normalizar nomes
     variaveis = set(variaveis).difference(COLUNAS_MINIMAS)  # excluir comuns
     variaveis = sorted(variaveis)  # colocar em ordem alfabética
@@ -1147,6 +1157,16 @@ def gerar_nome_tabela(
     return "dados_publicos." + nome_tabela
 
 
+@task(
+    name="Gerar Modelo de Tabela para Relatório de Produção",
+    description=(
+        "Gera um modelo do SQLAlchemy para uma tabela que irá receber dados "
+        + "de relatórios de produção da Atenção Primária à Saúde."
+    ),
+    tags=["saude_mental", "sisab", "producao", "tarefas_apoio"],
+    retries=0,
+    retry_delay_seconds=None,
+)
 def gerar_modelo_impulso(
     tabela_nome: str,
     variaveis: Iterable[str],
@@ -1187,6 +1207,8 @@ def gerar_modelo_impulso(
     # NOTE: talvez esta função possa ser útil em outros lugares; pode ser
     # movida eventualmente para outro módulo.
 
+    habilitar_suporte_loguru()
+
     # definir dinamicamente as colunas restantes ao modelo de tabela
     modelos_colunas_especificas: dict[str, sa.Column] = {}
     variaveis = map(tratar_nomes_campos, variaveis)  # normalizar nomes
@@ -1223,6 +1245,17 @@ def gerar_modelo_impulso(
     return modelo
 
 
+@task(
+    name="Carrega Relatórios de Produção",
+    description=(
+        "Carrega os dados dos relatórios de produção da Atenção Primária à "
+        + "saúde extraídos e transformados a partir do portal público do "
+        + "Sistema de Informação em Saúde para a Atenção Básica do SUS."
+    ),
+    tags=["saude_mental", "sisab", "validacao_producao", "carregamento"],
+    retries=0,
+    retry_delay_seconds=None,
+)
 def carregar_relatorio_producao(
     sessao: Session,
     dados_producao: pd.DataFrame,
@@ -1248,6 +1281,7 @@ def carregar_relatorio_producao(
     [`sqlalchemy.orm.session.Session`]: https://docs.sqlalchemy.org/en/14/orm/session_api.html#sqlalchemy.orm.Session
     [`TabelaProducao`]: impulsoetl.sisab.modelos.TabelaProducao
     """
+    habilitar_suporte_loguru()
 
     # apontar carregamento de linhas do DataFrame na tabela do banco
     adicionados = 0
@@ -1268,6 +1302,18 @@ def carregar_relatorio_producao(
     return 0
 
 
+@flow(
+    name="Obter Relatórios de Produção",
+    description=(
+        "Extrai, transforma e carrega os dados dos relatórios de produção da "
+        + "Atenção Primária à Saúde a partir do portal público do Sistema de "
+        + "Informação em Saúde para a Atenção Básica do SUS."
+    ),
+    retries=0,
+    retry_delay_seconds=None,
+    version=__VERSION__,
+    validate_parameters=False,
+)
 @repetir_por_ano_mes(data_inicio_minima="2013-04-01")
 def obter_relatorio_producao(
     sessao: Session,
@@ -1343,6 +1389,7 @@ def obter_relatorio_producao(
     [`pd.Timestamp`]: https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.Timestamp.html
     [`Session.rollback()`]: https://docs.sqlalchemy.org/en/14/orm/session_api.html#sqlalchemy.orm.Session.rollback
     """
+    habilitar_suporte_loguru()
     logger.info(
         "Iniciando captura de relatório de produção com as variáveis "
         + "{variaveis} para {num_unidades_geograficas} "

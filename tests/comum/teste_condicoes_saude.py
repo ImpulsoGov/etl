@@ -6,8 +6,6 @@
 """Testes de categorias de datas utilizadas em vários processos de ETL."""
 
 
-from __future__ import annotations
-
 import pytest
 
 from impulsoetl.comum.condicoes_saude import e_cid10, remover_ponto_cid10

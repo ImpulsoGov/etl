@@ -6,8 +6,6 @@
 """Obtém dados dos arquivos de disseminação das Declarações de Óbito (DOs)."""
 
 
-from __future__ import annotations
-
 import os
 import re
 from datetime import date
@@ -17,13 +15,15 @@ import janitor  # noqa: F401  # nopycln: import
 import numpy as np
 import pandas as pd
 from frozendict import frozendict
+from prefect import flow, task
 from sqlalchemy.orm import Session
 from uuid6 import uuid7
 
+from impulsoetl import __VERSION__
 from impulsoetl.comum.condicoes_saude import e_cid10, remover_ponto_cid10
 from impulsoetl.comum.datas import agora_gmt_menos3
 from impulsoetl.comum.geografias import id_sim_para_id_impulso
-from impulsoetl.loggers import logger
+from impulsoetl.loggers import habilitar_suporte_loguru, logger
 from impulsoetl.utilitarios.bd import carregar_dataframe
 from impulsoetl.utilitarios.datasus_ftp import extrair_dbc_lotes
 
@@ -320,6 +320,17 @@ def extrair_do(
     )
 
 
+@task(
+    name="Transformar DO's",
+    description=(
+        "Transforma os dados dos arquivos de disseminação das Declarações de "
+        + "Óbito a partir do repositório público do Sistema de Informações "
+        + "de Mortalidade do SUS."
+    ),
+    tags=["saude_mental", "sim", "do", "transformacao"],
+    retries=0,
+    retry_delay_seconds=None,
+)
 def transformar_do(
     sessao: Session,
     do: pd.DataFrame,
@@ -354,6 +365,7 @@ def transformar_do(
     [`pandas.DataFrame.query()`]: https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.query.html
     [estrutura-sim]: https://drive.google.com/file/d/1CoRX_l-h7weaRv16RHDa_4wenrZW6jD5/view?usp=sharing
     """
+    habilitar_suporte_loguru()
     logger.info(
         "Transformando DataFrame com {num_registros_do} Declarações de Óbito.",
         num_registros_do=len(do),
@@ -602,6 +614,18 @@ def transformar_do(
     return do_transformada
 
 
+@flow(
+    name="Obter DO's",
+    description=(
+        "Extrai, transforma e carrega os dados dos arquivos de disseminação "
+        + "das Declarações de Óbito a partir do repositório público do "
+        + "Sistema de Informações da Mortalidade do SUS."
+    ),
+    retries=0,
+    retry_delay_seconds=None,
+    version=__VERSION__,
+    validate_parameters=False,
+)
 def obter_do(
     sessao: Session,
     uf_sigla: str,
@@ -639,6 +663,7 @@ def obter_do(
     [`datetime.date`]: https://docs.python.org/3/library/datetime.html#date-objects
     [`transformar_do()`]: impulsoetl.sim.do.transformar_do
     """
+    habilitar_suporte_loguru()
     logger.info(
         "Iniciando captura de Declarações de Óbito para Unidade Federativa "
         + "Federativa '{}' na competencia de {:%m/%Y}.",

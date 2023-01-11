@@ -3,13 +3,13 @@
 # SPDX-License-Identifier: MIT
 
 
-from __future__ import annotations
-
 from datetime import date
 
+from prefect import flow
 from sqlalchemy.orm import Session
 
-from impulsoetl.loggers import logger
+from impulsoetl import __VERSION__
+from impulsoetl.loggers import habilitar_suporte_loguru, logger
 from impulsoetl.sisab.cadastros_individuais.carregamento import (
     carregar_cadastros,
 )
@@ -22,6 +22,18 @@ from impulsoetl.sisab.cadastros_individuais.verificacao import (
 )
 
 
+@flow(
+    name="Obter Cadastros Individuais",
+    description=(
+        "Extrai, transforma e carrega os dados de cadastros individuais "
+        + "do portal público do Sistema de Informação em Saúde para a Atenção "
+        + "Básica do SUS."
+    ),
+    retries=0,
+    retry_delay_seconds=None,
+    version=__VERSION__,
+    validate_parameters=False,
+)
 def obter_cadastros_individuais(
     sessao: Session,
     visao_equipe: str,
@@ -49,6 +61,7 @@ def obter_cadastros_individuais(
             posterior ao método [`Session.rollback()`][] da sessão gerada com o
             SQLAlchemy.
     """
+    habilitar_suporte_loguru()
 
     for status_ponderacao in com_ponderacao:
         df = extrair_cadastros_individuais(

@@ -17,24 +17,24 @@ from impulsoetl.scripts.geral import (
 
 
 @pytest.mark.integracao
-def teste_habilitacoes_disseminacao(sessao):
+def teste_habilitacoes_disseminacao():
     """Testa obter habilitações de estabelecimentos do SCNES."""
-    habilitacoes_disseminacao(sessao=sessao, teste=True)
+    habilitacoes_disseminacao(teste=True)
 
 
 @pytest.mark.integracao
-def teste_vinculos_disseminacao(sessao):
+def teste_vinculos_disseminacao():
     """Testa obter vínculos profissionais do SCNES."""
-    vinculos_disseminacao(sessao=sessao, teste=True)
+    vinculos_disseminacao(teste=True)
 
 
 @pytest.mark.integracao
-def teste_obitos_disseminacao(sessao):
+def teste_obitos_disseminacao():
     """Testa obter declarações de óbito do SIM."""
-    obitos_disseminacao(sessao=sessao, teste=True)
+    obitos_disseminacao(teste=True)
 
 
 @pytest.mark.integracao
-def teste_ceps(sessao):
+def teste_ceps():
     """Testa obter Códigos de Endereçamento Postal."""
-    ceps(sessao=sessao, teste=True)
+    ceps(teste=True)

@@ -122,7 +122,7 @@ def teste_extrair_pa(uf_sigla, periodo_data_inicio, passo):
 
 @pytest.mark.integracao
 def teste_transformar_vinculos(sessao, vinculos):
-    vinculos_transformado = transformar_vinculos(
+    vinculos_transformado = transformar_vinculos.fn(
         sessao=sessao,
         vinculos=vinculos,
     )
@@ -155,9 +155,9 @@ def teste_carregar_vinculos(
     vinculos_transformado,
     tabela_teste,
     passo,
-    caplog,
+    capfd,
 ):
-    carregamento_status = carregar_dataframe(
+    carregamento_status = carregar_dataframe.fn(
         sessao=sessao,
         df=vinculos_transformado.iloc[:10],
         tabela_destino=tabela_teste,
@@ -167,7 +167,7 @@ def teste_carregar_vinculos(
 
     assert carregamento_status == 0
 
-    logs = caplog.text
+    logs = capfd.readouterr().err
     assert "Carregamento concluído" in logs
 
 
@@ -181,7 +181,7 @@ def teste_obter_vinculos(
     uf_sigla,
     periodo_data_inicio,
     tabela_teste,
-    caplog,
+    capfd,
 ):
     obter_vinculos(
         sessao=sessao,
@@ -191,5 +191,5 @@ def teste_obter_vinculos(
         teste=True,
     )
 
-    logs = caplog.text
+    logs = capfd.readouterr().err
     assert "Carregamento concluído" in logs

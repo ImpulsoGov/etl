@@ -2,17 +2,17 @@
 #
 # SPDX-License-Identifier: MIT
 
-"""Processa dados do relatório egestor de financimanto para o formato usado no BD."""
-
-from __future__ import annotations
+"""Processa relatório de financiamento para o formato usado no BD."""
 
 from typing import Final
-from sqlalchemy.orm import Session
-from frozendict import frozendict
+
 import pandas as pd
+from frozendict import frozendict
+from prefect import task
+from sqlalchemy.orm import Session
 
 from impulsoetl.comum.geografias import id_sus_para_id_impulso
-from impulsoetl.loggers import logger
+from impulsoetl.loggers import habilitar_suporte_loguru, logger
 
 TIPOS_EGESTOR_FINANCIAMENTO: Final[frozendict] = frozendict(
     {
@@ -470,7 +470,7 @@ COLUNAS_NUMERICAS_DECIMAIS = [
 
 def formata_valores_monetarios(
     df_extraido: pd.DataFrame,
-)-> pd.DataFrame:
+) -> pd.DataFrame:
 
     for coluna in COLUNAS_NUMERICAS_DECIMAIS:
         df_coluna = []
@@ -574,13 +574,24 @@ def garantir_tipos_dados(
             df_extraido = df_extraido.astype(df_tipos)
     return df_extraido
 
+
+@task(
+    name="Transformar Relatórios de Financiamento",
+    description=(
+        "Transforma os dados dos relatórios de financiamento da Atenção "
+        + "Primária à Saúde extraídos do eGestor Atenção Básica."
+    ),
+    tags=["aps", "egestor", "financiamento", "transformacao"],
+    retries=0,
+    retry_delay_seconds=None,
+)
 def tratamento_dados(
     sessao: Session,
     df_extraido: pd.DataFrame,
     aba: str,
     periodo_data_inicio: str,
     periodo_id: str,
-)-> pd.DataFrame:
+) -> pd.DataFrame:
     """Trata dados capturados do relatório de financiamento APS do egestor
 
         Argumentos:
@@ -598,8 +609,9 @@ def tratamento_dados(
 
                 [`sqlalchemy.orm.session.Session`]: https://docs.sqlalchemy.org/en/14/orm/session_api.html#sqlalchemy.orm.Session
                 [`pandas.DataFrame`]: https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html
-        """
+    """
 
+    habilitar_suporte_loguru()
     logger.info("Iniciando o tratamento dos dados...")
     df_extraido.drop(df_extraido.index[0], inplace=True)
 

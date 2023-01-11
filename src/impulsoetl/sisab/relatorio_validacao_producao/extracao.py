@@ -5,16 +5,15 @@
 
 """Extrai dados do relatório de validação por ficha por aplicação a partir do SISAB."""
 
-from __future__ import annotations
-
 from datetime import date
 from io import StringIO
 from typing import Final
 
 import pandas as pd
 import requests
+from prefect import task
 
-from impulsoetl.loggers import logger
+from impulsoetl.loggers import habilitar_suporte_loguru, logger
 from impulsoetl.sisab.parametros_requisicao import head
 
 FICHA_CODIGOS: Final[dict[str, str]] = {
@@ -39,6 +38,17 @@ def verificar_colunas(df_extraido: pd.DataFrame) -> bool:
     return df_extraido.shape[1] == 7
 
 
+@task(
+    name="Extrair Relatórios de Validação da Produção",
+    description=(
+        "Extrai os dados dos relatórios de validação da produção a partir do "
+        + "portal público do Sistema de Informação em Saúde para a Atenção "
+        + "Básica do SUS."
+    ),
+    tags=["aps", "sisab", "validacao_producao", "extracao"],
+    retries=2,
+    retry_delay_seconds=120,
+)
 def extrair_dados(
     periodo_competencia: date,
     envio_prazo: bool,
@@ -65,6 +75,8 @@ def extrair_dados(
             [`pandas.DataFrame`]: https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html
 
     """
+    habilitar_suporte_loguru()
+
     # Captura de cookies e view state para requisição
     url = "https://sisab.saude.gov.br/paginas/acessoRestrito/relatorio/federal/envio/RelValidacao.xhtml"
     hd = head(url)

@@ -5,8 +5,6 @@
 """Casos de teste para o ETL de Declarações de Óbito."""
 
 
-from __future__ import annotations
-
 import re
 from datetime import date
 
@@ -152,7 +150,7 @@ def teste_transformar_do(sessao, do, condicoes, tabela_teste):
 
     do, periodo_id = do
 
-    do_transformada = transformar_do(
+    do_transformada = transformar_do.fn(
         sessao=sessao,
         do=do,
         periodo_id=periodo_id,
@@ -182,8 +180,8 @@ def teste_transformar_do(sessao, do, condicoes, tabela_teste):
         )
 
 
-def teste_carregar_do(sessao, do_transformada, caplog, tabela_teste, passo):
-    codigo_saida = carregar_dataframe(
+def teste_carregar_do(sessao, do_transformada, capfd, tabela_teste, passo):
+    codigo_saida = carregar_dataframe.fn(
         sessao=sessao,
         df=do_transformada.iloc[:10],
         tabela_destino=tabela_teste,
@@ -193,7 +191,7 @@ def teste_carregar_do(sessao, do_transformada, caplog, tabela_teste, passo):
 
     assert codigo_saida == 0
 
-    logs = caplog.text
+    logs = capfd.readouterr().err
     assert "Carregamento concluído" in logs
 
 
@@ -214,7 +212,7 @@ def teste_obter_do(
     uf_sigla,
     periodo_data_inicio,
     periodo_id,
-    caplog,
+    capfd,
     tabela_teste,
     parametros,
 ):
@@ -228,5 +226,5 @@ def teste_obter_do(
         **parametros,
     )
 
-    logs = caplog.text
+    logs = capfd.readouterr().err
     assert "Carregamento concluído" in logs

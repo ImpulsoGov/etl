@@ -3,8 +3,6 @@
 # SPDX-License-Identifier: MIT
 
 
-from __future__ import annotations
-
 import urllib
 from datetime import date
 from io import StringIO
@@ -12,7 +10,9 @@ from typing import Final
 
 import pandas as pd
 import requests
+from prefect import task
 
+from impulsoetl.loggers import habilitar_suporte_loguru
 from impulsoetl.sisab.parametros_requisicao import head
 
 VISOES_EQUIPE_CODIGOS: Final[dict[str, str]] = {
@@ -58,11 +58,22 @@ def _extrair_cadastros_individuais(
     return response.text
 
 
+@task(
+    name="Extrair Cadastros Individuais",
+    description=(
+        "Extrai os dados de cadastros individuais a partir do portal público "
+        + "do Sistema de Informação em Saúde para a Atenção Básica do SUS."
+    ),
+    tags=["aps", "sisab", "cadastros_individuais", "extracao"],
+    retries=2,
+    retry_delay_seconds=120,
+)
 def extrair_cadastros_individuais(
     visao_equipe: str,
     com_ponderacao: bool,
     competencia: date,
 ) -> pd.DataFrame:
+    habilitar_suporte_loguru()
 
     resposta = _extrair_cadastros_individuais(
         visao_equipe=visao_equipe,

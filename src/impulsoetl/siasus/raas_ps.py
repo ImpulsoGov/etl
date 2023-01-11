@@ -5,8 +5,6 @@
 
 """Obtém dados dos Registros de Ações Ambulatoriais em Saúde (RAAS)."""
 
-from __future__ import annotations
-
 import os
 from datetime import date
 from typing import Final, Generator
@@ -15,16 +13,18 @@ import janitor  # noqa: F401  # nopycln: import
 import numpy as np
 import pandas as pd
 from frozendict import frozendict
+from prefect import flow, task
 from sqlalchemy.orm import Session
 from uuid6 import uuid7
 
+from impulsoetl import __VERSION__
 from impulsoetl.comum.datas import (
     agora_gmt_menos3,
     de_aaaammdd_para_timestamp,
     periodo_por_data,
 )
 from impulsoetl.comum.geografias import id_sus_para_id_impulso
-from impulsoetl.loggers import logger
+from impulsoetl.loggers import habilitar_suporte_loguru, logger
 from impulsoetl.utilitarios.bd import carregar_dataframe
 from impulsoetl.utilitarios.datasus_ftp import extrair_dbc_lotes
 
@@ -194,6 +194,17 @@ def extrair_raas_ps(
     )
 
 
+@task(
+    name="Transformar RAAS-PS's",
+    description=(
+        "Transforma os dados dos arquivos de disseminação dos Registros de "
+        + "Ações Ambulatoriais em Saúde - Psicossociais a partir do "
+        + "repositório público do Sistema de Informações Ambulatoriais do SUS."
+    ),
+    tags=["saude_mental", "siasus", "raas_ps", "transformacao"],
+    retries=0,
+    retry_delay_seconds=None,
+)
 def transformar_raas_ps(
     sessao: Session,
     raas_ps: pd.DataFrame,
@@ -228,7 +239,7 @@ def transformar_raas_ps(
     [`pandas.DataFrame.query()`]: https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.query.html
     [it-siasus]: https://drive.google.com/file/d/1DC5093njSQIhMHydYptlj2rMbrMF36y6
     """
-
+    habilitar_suporte_loguru()
     logger.info(
         "Transformando DataFrame com {num_registros_raas} registros de RAAS.",
         num_registros_raas=len(raas_ps),
@@ -327,9 +338,21 @@ def transformar_raas_ps(
         )
         .astype(TIPOS_RAAS_PS)
     )
-    breakpoint()
 
 
+@flow(
+    name="Obter RAAS-PS's",
+    description=(
+        "Extrai, transforma e carrega os dados dos arquivos de disseminação "
+        + "dos Registros de Ações Ambulatoriais em Saúde - Psicossociais a "
+        + "partir do repositório público do Sistema de Informações "
+        + "Ambulatoriais do SUS."
+    ),
+    retries=0,
+    retry_delay_seconds=None,
+    version=__VERSION__,
+    validate_parameters=False,
+)
 def obter_raas_ps(
     sessao: Session,
     uf_sigla: str,
@@ -362,6 +385,7 @@ def obter_raas_ps(
     [`sqlalchemy.engine.Row`]: https://docs.sqlalchemy.org/en/14/core/connections.html#sqlalchemy.engine.Row
     [`transformar_raas_ps()`]: impulsoetl.siasus.bpa_i.transformar_raas_ps
     """
+    habilitar_suporte_loguru()
     logger.info(
         "Iniciando captura de RAAS-Psicossociais para Unidade Federativa "
         + "Federativa '{}' na competencia de {:%m/%Y}.",

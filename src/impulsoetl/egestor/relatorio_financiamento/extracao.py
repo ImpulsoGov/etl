@@ -6,16 +6,15 @@
 """ Extrai relatório de financiamento a partir do e-Gestor."""
 
 
-from __future__ import annotations
-
 from datetime import date
 from functools import lru_cache
 
 import requests
 from bs4 import BeautifulSoup
 from frozenlist import FrozenList
+from prefect import task
 
-from impulsoetl.loggers import logger
+from impulsoetl.loggers import habilitar_suporte_loguru, logger
 
 
 MESES: FrozenList[str] = FrozenList([
@@ -36,6 +35,16 @@ MESES: FrozenList[str] = FrozenList([
 URL_BASE = "https://egestorab.saude.gov.br"
 
 
+@task(
+    name="Extrair Relatórios de Financiamento",
+    description=(
+        "Extrai os dados dos relatórios de financiamento da Atenção Primária "
+        + "à Saúde a partir do eGestor Atenção Básica."
+    ),
+    tags=["aps", "egestor", "financiamento", "extracao"],
+    retries=2,
+    retry_delay_seconds=120,
+)
 @lru_cache(12)
 def extrair(periodo_mes: date) -> bytes:
     """
@@ -45,6 +54,7 @@ def extrair(periodo_mes: date) -> bytes:
         Retorna:
             Objeto [`bytes`] com os dados extraidos.
     """
+    habilitar_suporte_loguru()
     logger.info(
         "Iniciando extração de dados de financiamento para o mês de {:%m/%Y}",
         periodo_mes,
@@ -67,7 +77,7 @@ def extrair(periodo_mes: date) -> bytes:
 
     logger.info("Iniciando sessão do e-Gestor...")
     with requests.Session() as sessao:
-        sessao.headers=cabecalhos
+        sessao.headers = cabecalhos
         url_consulta = URL_BASE + pagina_consulta_caminho
         pagina_consulta = sessao.get(url_consulta)
 
