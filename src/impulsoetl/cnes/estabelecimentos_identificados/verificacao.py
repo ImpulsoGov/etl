@@ -5,32 +5,40 @@
 """Verifica a qualidade dos dados dos estabelecimentos identificados pós processamento"""
 
 import warnings
+
 warnings.filterwarnings("ignore")
 
-import pandas as pd
 import numpy as np
+import pandas as pd
 from prefect import task
 
+from impulsoetl.cnes.estabelecimentos_identificados.extracao import (
+    extrair_informacoes_estabelecimentos,
+)
+from impulsoetl.cnes.estabelecimentos_identificados.tratamento import (
+    tratamento_dados,
+)
 from impulsoetl.cnes.extracao_lista_cnes import extrair_lista_cnes
-from impulsoetl.cnes.estabelecimentos_identificados.extracao import extrair_informacoes_estabelecimentos
-from impulsoetl.cnes.estabelecimentos_identificados.tratamento import tratamento_dados
+from impulsoetl.loggers import habilitar_suporte_loguru, logger
 
-from impulsoetl.loggers import logger, habilitar_suporte_loguru
 
 def verifica_diferenca_qtd_registros(
-    df_extraido:pd.DataFrame,
+    df_extraido: pd.DataFrame,
     df_tratado: pd.DataFrame,
-)-> bool:
+) -> bool:
     """Verifica se há diferença na contagem de registros"""
     return (
-        df_extraido['estabelecimento_cnes_id'].count() - df_tratado['estabelecimento_cnes_id'].count() == 0
+        df_extraido["estabelecimento_cnes_id"].count()
+        - df_tratado["estabelecimento_cnes_id"].count()
+        == 0
     )
+
 
 @task(
     name="Validar dados dos Estabelecimentos Identificados",
     description=(
         "Realiza a validacao dos dados dos estabelecimentos de saúde "
-        +"pós tratamento dos dados extraídos a partir da página do CNES"
+        + "pós tratamento dos dados extraídos a partir da página do CNES"
     ),
     tags=["cnes", "estabelecimentos", "validacao"],
     retries=0,
@@ -50,14 +58,12 @@ def verificar_informacoes_estabelecimentos_identicados(
             (conforme retornado pela função [`tratamento_dados()`][]).
 
      Exceções:
-        Levanta um erro da classe [`AssertionError`][] quando uma das condições testadas não é 
+        Levanta um erro da classe [`AssertionError`][] quando uma das condições testadas não é
         considerada válida.
 
     [`AssertionError`]: https://docs.python.org/3/library/exceptions.html#AssertionError
     """
     habilitar_suporte_loguru()
     logger.info("Iniciando a verificação dos dados ... ")
-    assert verifica_diferenca_qtd_registros(df_extraido,df_tratado)
+    assert verifica_diferenca_qtd_registros(df_extraido, df_tratado)
     logger.info("Dados verificados corretamente")
-
-    

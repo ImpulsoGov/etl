@@ -273,7 +273,7 @@ def transformar_pa(
     )
     logger.debug(
         "Memória ocupada pelo DataFrame original:  {memoria_usada:.2f} mB.",
-        memoria_usada=pa.memory_usage(deep=True).sum() / 10 ** 6,
+        memoria_usada=pa.memory_usage(deep=True).sum() / 10**6,
     )
 
     # aplica condições de filtragem dos registros
@@ -416,7 +416,7 @@ def transformar_pa(
     logger.debug(
         "Memória ocupada pelo DataFrame transformado: {memoria_usada:.2f} mB.",
         memoria_usada=(
-            pa_transformada.memory_usage(deep=True).sum() / 10 ** 6
+            pa_transformada.memory_usage(deep=True).sum() / 10**6
         ),
     )
     return pa_transformada
@@ -438,15 +438,15 @@ def validar_pa(pa_transformada: pd.DataFrame) -> pd.DataFrame:
     assert isinstance(pa_transformada, pd.DataFrame), "Não é um DataFrame"
     assert len(pa_transformada) > 0, "DataFrame vazio."
     nulos_por_coluna = pa_transformada.applymap(pd.isna).sum()
-    assert nulos_por_coluna["quantidade_apresentada"] == 0, (
-        "A quantidade apresentada é um valor nulo."
-    )
-    assert nulos_por_coluna["quantidade_aprovada"] == 0, (
-        "A quantidade aprovada é um valor nulo."
-    )
-    assert nulos_por_coluna["realizacao_periodo_data_inicio"] == 0, (
-        "A competência de realização é um valor nulo."
-    )
+    assert (
+        nulos_por_coluna["quantidade_apresentada"] == 0
+    ), "A quantidade apresentada é um valor nulo."
+    assert (
+        nulos_por_coluna["quantidade_aprovada"] == 0
+    ), "A quantidade aprovada é um valor nulo."
+    assert (
+        nulos_por_coluna["realizacao_periodo_data_inicio"] == 0
+    ), "A competência de realização é um valor nulo."
 
 
 @flow(
@@ -515,7 +515,7 @@ def obter_pa(
     contador = 0
     for pa_lote in pa_lotes:
         pa_transformada = transformar_pa(
-            sessao=sessao, 
+            sessao=sessao,
             pa=pa_lote,
             condicoes=kwargs.get("condicoes"),
         )

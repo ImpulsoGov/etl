@@ -17,15 +17,14 @@ from prefect.flows import Flow
 from prefect.infrastructure.docker import (
     DockerContainer,
     DockerRegistry,
-    ImagePullPolicy
+    ImagePullPolicy,
 )
 from prefect.orion.schemas.schedules import CronSchedule
 
 from impulsoetl import __VERSION__ as impulsoetl_versao
-from impulsoetl.bd import BD_HOST, BD_PORTA, BD_NOME, BD_USUARIO, BD_SENHA
+from impulsoetl.bd import BD_HOST, BD_NOME, BD_PORTA, BD_SENHA, BD_USUARIO
 from impulsoetl.loggers import logger
 from impulsoetl.utilitarios.textos import normalizar_texto
-
 
 logger.info("Lendo configurações a partir de variáveis de ambiente...")
 load_dotenv()
@@ -90,7 +89,8 @@ if __name__ == "__main__":
         modulo_localizacao = Path(modulo.__spec__.origin)
         fila_trabalho = modulo.__name__.split(".")[-1].replace("_", "-")
         fluxos = [
-            atributo for atributo in modulo.__dict__.values()
+            atributo
+            for atributo in modulo.__dict__.values()
             if isinstance(atributo, Flow)
             # evita importações indiretas
             and atributo.__module__ == modulo.__name__

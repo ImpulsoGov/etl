@@ -8,17 +8,17 @@
 """Scripts para a obtenção de dados de uso geral entre produtos da Impulso."""
 
 from prefect import flow
-
 from sqlalchemy.orm import Session
 
 from impulsoetl.bd import Sessao, tabelas
 from impulsoetl.brasilapi.cep import obter_cep
+from impulsoetl.cnes.estabelecimentos_identificados.principal import (
+    obter_informacoes_estabelecimentos_identificados,
+)
 from impulsoetl.loggers import habilitar_suporte_loguru, logger
 from impulsoetl.scnes.habilitacoes import obter_habilitacoes
 from impulsoetl.scnes.vinculos import obter_vinculos
 from impulsoetl.sim.do import obter_do
-
-from impulsoetl.cnes.estabelecimentos_identificados.principal import obter_informacoes_estabelecimentos_identificados
 
 agendamentos = tabelas["configuracoes.capturas_agendamentos"]
 capturas_historico = tabelas["configuracoes.capturas_historico"]
@@ -237,7 +237,6 @@ def principal(sessao: Session, teste: bool = False) -> None:
     vinculos_disseminacao(sessao=sessao, teste=teste)
     # ceps(sessao=sessao, teste=teste)
     # outros scripts de uso geral aqui...
-
 
     with Sessao() as sessao:
         ceps_pendentes_query = sessao.query(

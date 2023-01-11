@@ -5,6 +5,7 @@
 """ Extrai informações dos estabelecimentos de saúde a partir da página do CNES """
 
 import warnings
+
 warnings.filterwarnings("ignore")
 import json
 
@@ -14,54 +15,52 @@ import requests
 from prefect import task
 
 from impulsoetl.cnes.extracao_lista_cnes import extrair_lista_cnes
-from impulsoetl.loggers import logger, habilitar_suporte_loguru
+from impulsoetl.loggers import habilitar_suporte_loguru, logger
 
 COLUNAS_FICHA_VAZIA = [
-        "id",
-        "noEmpresarial",
-        "natJuridica",
-        "natJuridicaMant",
-        "cnpj",
-        "tpPessoa",
-        "nvDependencia",
-        "nuAlvara",
-        "dtExpAlvara",
-        "orgExpAlvara",
-        "dsTpUnidade",
-        "dsStpUnidade",
-        "noLogradouro",
-        "nuEndereco",
-        "cep",
-        "regionalSaude",
-        "bairro",
-        "noComplemento",
-        "municipio",
-        "noMunicipio",
-        "uf",
-        "tpGestao",
-        "nuTelefone",
-        "tpSempreAberto",
-        "coMotivoDesab",
-        "dsMotivoDesab",
-        "cpfDiretorCln",
-        "stContratoFormalizado",
-        "nuCompDesab",
-        "dtCarga",
-        "dtAtualizacaoOrigem",
-        "dtAtualizacao",
-    ]
+    "id",
+    "noEmpresarial",
+    "natJuridica",
+    "natJuridicaMant",
+    "cnpj",
+    "tpPessoa",
+    "nvDependencia",
+    "nuAlvara",
+    "dtExpAlvara",
+    "orgExpAlvara",
+    "dsTpUnidade",
+    "dsStpUnidade",
+    "noLogradouro",
+    "nuEndereco",
+    "cep",
+    "regionalSaude",
+    "bairro",
+    "noComplemento",
+    "municipio",
+    "noMunicipio",
+    "uf",
+    "tpGestao",
+    "nuTelefone",
+    "tpSempreAberto",
+    "coMotivoDesab",
+    "dsMotivoDesab",
+    "cpfDiretorCln",
+    "stContratoFormalizado",
+    "nuCompDesab",
+    "dtCarga",
+    "dtAtualizacaoOrigem",
+    "dtAtualizacao",
+]
 
-def tratar_ficha_vazia(
-    cnes: str, 
-    codigo_municipio: str
-    ) -> pd.DataFrame:
+
+def tratar_ficha_vazia(cnes: str, codigo_municipio: str) -> pd.DataFrame:
     """
     Realiza tratamento para os estabelecimentos cujas fichas contendo as informações estão vazias.
-     
-     Argumentos: 
+
+     Argumentos:
         cnes: Código CNES dos estabelecimentos.
         codigo_municipio: Id sus do municipio.
-     
+
      Retorna:
         Objeto [`pandas.DataFrame`] com os dados extraídos e tratados para os estabelecimendos com ficha vazia.
     """
@@ -92,8 +91,7 @@ def tratar_ficha_vazia(
     retry_delay_seconds=120,
 )
 def extrair_informacoes_estabelecimentos(
-    codigo_municipio: str, 
-    lista_cnes: list
+    codigo_municipio: str, lista_cnes: list
 ) -> pd.DataFrame:
     """
     Extrai informaçãoes dos estabelecimentos de saúde a partir da página do CNES
@@ -102,11 +100,11 @@ def extrair_informacoes_estabelecimentos(
         codigo_municipio: Id sus do municipio.
         lista_cnes: Lista contento os códigos CNES dos estabelecimentos presentes no município
                     (conforme retornado pela função [`extrair_lista_cnes()`][]).
-     
+
      Retorna:
         Objeto [`pandas.DataFrame`] com os dados extraídos.
     """
-
+    habilitar_suporte_loguru()
     df_extraido = pd.DataFrame()
 
     for cnes in lista_cnes:
@@ -136,7 +134,6 @@ def extrair_informacoes_estabelecimentos(
             df_extraido = df_extraido.append(df_parcial)
 
         except json.JSONDecodeError:
-            habilitar_suporte_loguru()
             logger.info(
                 "Não foi possível extrair as informações para o estabelecimento: "
                 + cnes
