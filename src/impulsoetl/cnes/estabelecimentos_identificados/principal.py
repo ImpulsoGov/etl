@@ -14,7 +14,7 @@ from prefect import task
 
 
 from impulsoetl.loggers import logger
-#from impulsoetl import __VERSION__
+from impulsoetl import __VERSION__
 
 from impulsoetl.cnes.extracao_lista_cnes import extrair_lista_cnes
 from impulsoetl.cnes.estabelecimentos_identificados.extracao import extrair_informacoes_estabelecimentos
@@ -30,8 +30,8 @@ from impulsoetl.cnes.estabelecimentos_identificados.verificacao import verificar
     ),
     retries=0,
     retry_delay_seconds=None,
-    #version=__VERSION__,
-    #validate_parameters=False
+    version=__VERSION__,
+    validate_parameters=False
 )
 def obter_informacoes_estabelecimentos_identificados(
     sessao: Session,
