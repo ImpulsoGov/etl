@@ -140,7 +140,6 @@ def tratar_tipos(df_extraido:pd.DataFrame) -> pd.DataFrame:
         df_extraido[coluna] = pd.to_datetime(df_extraido[coluna],infer_datetime_format=True)
 
     df_extraido = df_extraido.astype(COLUNAS_TIPOS, errors = 'ignore').where(df_extraido.notna(), None)
-    #rint(df_extraido.info())
 
     return df_extraido
 
@@ -171,7 +170,7 @@ def tratamento_dados(
      Retorna:
         Objeto [`pandas.DataFrame`] com os dados enriquecidos e tratados.
     """
-
+    habilitar_suporte_loguru()
     logger.info("Iniciando o tratamento dos dados ...")
 
     df_extraido = renomear_colunas(df_extraido)
@@ -184,7 +183,6 @@ def tratamento_dados(
     df_extraido = df_extraido.reset_index(drop=True)
 
     logger.info("Dados transformados ...")
-    print(df_extraido)
 
     return df_extraido
 

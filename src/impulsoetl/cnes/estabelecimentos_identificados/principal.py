@@ -13,7 +13,7 @@ from sqlalchemy.orm import Session
 from prefect import task
 
 
-from impulsoetl.loggers import logger
+from impulsoetl.loggers import logger, habilitar_suporte_loguru
 from impulsoetl import __VERSION__
 
 from impulsoetl.cnes.extracao_lista_cnes import extrair_lista_cnes

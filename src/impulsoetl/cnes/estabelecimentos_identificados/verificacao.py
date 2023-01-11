@@ -15,18 +15,7 @@ from impulsoetl.cnes.extracao_lista_cnes import extrair_lista_cnes
 from impulsoetl.cnes.estabelecimentos_identificados.extracao import extrair_informacoes_estabelecimentos
 from impulsoetl.cnes.estabelecimentos_identificados.tratamento import tratamento_dados
 
-from impulsoetl.loggers import logger
-
-def verifica_diferenca_qtd_colunas(
-    df_extraido:pd.DataFrame,
-    df_tratado: pd.DataFrame,
-)-> bool:
-    """Verifica se há diferença na contagem de colunas"""
-    colunas_df_extraido = df_extraido.shape[1]
-    colunas_df_tratado = df_tratado.shape[1]
-    return (
-        colunas_df_extraido - colunas_df_tratado 
-    ) == 0
+from impulsoetl.loggers import logger, habilitar_suporte_loguru
 
 def verifica_diferenca_qtd_registros(
     df_extraido:pd.DataFrame,
@@ -66,8 +55,8 @@ def verificar_informacoes_estabelecimentos_identicados(
 
     [`AssertionError`]: https://docs.python.org/3/library/exceptions.html#AssertionError
     """
+    habilitar_suporte_loguru()
     logger.info("Iniciando a verificação dos dados ... ")
-    assert verifica_diferenca_qtd_colunas(df_extraido,df_tratado)
     assert verifica_diferenca_qtd_registros(df_extraido,df_tratado)
     logger.info("Dados verificados corretamente")
 

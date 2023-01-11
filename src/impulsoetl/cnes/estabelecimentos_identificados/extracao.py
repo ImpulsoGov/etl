@@ -14,27 +14,9 @@ import requests
 from prefect import task
 
 from impulsoetl.cnes.extracao_lista_cnes import extrair_lista_cnes
-from impulsoetl.loggers import logger
+from impulsoetl.loggers import logger, habilitar_suporte_loguru
 
-
-def tratar_ficha_vazia(
-    cnes: str, 
-    codigo_municipio: str
-    ) -> pd.DataFrame:
-    """
-    Realiza tratamento para os estabelecimentos cujas fichas contendo as informações estão vazias.
-     
-     Argumentos: 
-        cnes: Código CNES dos estabelecimentos.
-        codigo_municipio: Id sus do municipio.
-     
-     Retorna:
-        Objeto [`pandas.DataFrame`] com os dados extraídos e tratados para os estabelecimendos com ficha vazia.
-
-:  
-    """
-
-    colunas = [
+COLUNAS_FICHA_VAZIA = [
         "id",
         "noEmpresarial",
         "natJuridica",
@@ -69,12 +51,27 @@ def tratar_ficha_vazia(
         "dtAtualizacao",
     ]
 
+def tratar_ficha_vazia(
+    cnes: str, 
+    codigo_municipio: str
+    ) -> pd.DataFrame:
+    """
+    Realiza tratamento para os estabelecimentos cujas fichas contendo as informações estão vazias.
+     
+     Argumentos: 
+        cnes: Código CNES dos estabelecimentos.
+        codigo_municipio: Id sus do municipio.
+     
+     Retorna:
+        Objeto [`pandas.DataFrame`] com os dados extraídos e tratados para os estabelecimendos com ficha vazia.
+    """
+
     dados = list()
 
-    for coluna in colunas:
+    for coluna in COLUNAS_FICHA_VAZIA:
         dados.append(np.nan)
 
-    df = dict(zip(colunas, dados))
+    df = dict(zip(COLUNAS_FICHA_VAZIA, dados))
     df_sem_ficha = pd.DataFrame([df])
 
     df_sem_ficha["noFantasia"] = "NAO IDENTIFICADO"
@@ -112,11 +109,6 @@ def extrair_informacoes_estabelecimentos(
 
     df_extraido = pd.DataFrame()
 
-    logger.info(
-        "Iniciando a extração das informações dos estabelecimentos do município: "
-        + codigo_municipio
-    )
-
     for cnes in lista_cnes:
         try:
             url = (
@@ -144,6 +136,7 @@ def extrair_informacoes_estabelecimentos(
             df_extraido = df_extraido.append(df_parcial)
 
         except json.JSONDecodeError:
+            habilitar_suporte_loguru()
             logger.info(
                 "Não foi possível extrair as informações para o estabelecimento: "
                 + cnes
