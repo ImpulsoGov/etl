@@ -14,7 +14,7 @@ import pandas as pd
 import requests
 from prefect import task
 
-from impulsoetl.cnes.extracao_lista_cnes import extrair_lista_cnes
+from impulsoetl.scnes.extracao_lista_cnes import extrair_lista_cnes
 from impulsoetl.loggers import habilitar_suporte_loguru, logger
 
 COLUNAS_FICHA_VAZIA = [

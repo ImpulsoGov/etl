@@ -19,10 +19,10 @@ from prefect import task
 from sqlalchemy.orm import Session
 
 from impulsoetl.bd import Sessao
-from impulsoetl.cnes.estabelecimentos_identificados.extracao import (
+from impulsoetl.scnes.estabelecimentos_identificados.extracao import (
     extrair_informacoes_estabelecimentos,
 )
-from impulsoetl.cnes.extracao_lista_cnes import extrair_lista_cnes
+from impulsoetl.scnes.extracao_lista_cnes import extrair_lista_cnes
 from impulsoetl.comum.geografias import id_sus_para_id_impulso
 from impulsoetl.loggers import habilitar_suporte_loguru, logger
 

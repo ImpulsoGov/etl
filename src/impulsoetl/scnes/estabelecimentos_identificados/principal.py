@@ -14,19 +14,19 @@ from sqlalchemy.orm import Session
 
 from impulsoetl import __VERSION__
 from impulsoetl.bd import Sessao
-from impulsoetl.cnes.estabelecimentos_identificados.carregamento import (
+from impulsoetl.scnes.estabelecimentos_identificados.carregamento import (
     carregar_dados,
 )
-from impulsoetl.cnes.estabelecimentos_identificados.extracao import (
+from impulsoetl.scnes.estabelecimentos_identificados.extracao import (
     extrair_informacoes_estabelecimentos,
 )
-from impulsoetl.cnes.estabelecimentos_identificados.tratamento import (
+from impulsoetl.scnes.estabelecimentos_identificados.tratamento import (
     tratamento_dados,
 )
-from impulsoetl.cnes.estabelecimentos_identificados.verificacao import (
+from impulsoetl.scnes.estabelecimentos_identificados.verificacao import (
     verificar_informacoes_estabelecimentos_identicados,
 )
-from impulsoetl.cnes.extracao_lista_cnes import extrair_lista_cnes
+from impulsoetl.scnes.extracao_lista_cnes import extrair_lista_cnes
 from impulsoetl.loggers import habilitar_suporte_loguru, logger
 
 

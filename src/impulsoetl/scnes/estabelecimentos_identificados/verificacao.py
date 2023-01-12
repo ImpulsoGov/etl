@@ -12,13 +12,13 @@ import numpy as np
 import pandas as pd
 from prefect import task
 
-from impulsoetl.cnes.estabelecimentos_identificados.extracao import (
+from impulsoetl.scnes.estabelecimentos_identificados.extracao import (
     extrair_informacoes_estabelecimentos,
 )
-from impulsoetl.cnes.estabelecimentos_identificados.tratamento import (
+from impulsoetl.scnes.estabelecimentos_identificados.tratamento import (
     tratamento_dados,
 )
-from impulsoetl.cnes.extracao_lista_cnes import extrair_lista_cnes
+from impulsoetl.scnes.extracao_lista_cnes import extrair_lista_cnes
 from impulsoetl.loggers import habilitar_suporte_loguru, logger
 
 
