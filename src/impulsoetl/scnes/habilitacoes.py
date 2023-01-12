@@ -357,7 +357,7 @@ def obter_habilitacoes(
     Argumentos:
         sessao: objeto [`sqlalchemy.orm.session.Session`][] que permite
             acessar a base de dados da ImpulsoGov.
-        uf_sigla: Sigla da Unidade Federativa onde se encontram os 
+        uf_sigla: Sigla da Unidade Federativa onde se encontram os
             estabelecimentos cujas habilitações se pretende obter.
         periodo_data_inicio: Dia de início da competência desejada,
             representado como um objeto [`datetime.date`][].

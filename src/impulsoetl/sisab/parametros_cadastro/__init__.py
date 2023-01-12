@@ -4,5 +4,5 @@
 
 
 from impulsoetl.sisab.parametros_cadastro.principal import (  # noqa: F401
-    obter_parametros
+    obter_parametros,
 )

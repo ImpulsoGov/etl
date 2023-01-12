@@ -39,6 +39,6 @@ def teste_e_cid10_nao(texto):
         ("M45.X3", "M45X3"),
     ],
 )
-def teste_remover_ponto_cid10(texto,resultado_esperado):
+def teste_remover_ponto_cid10(texto, resultado_esperado):
     """Testa identificar que um texto é um CID10 válido."""
     assert remover_ponto_cid10(texto) == resultado_esperado

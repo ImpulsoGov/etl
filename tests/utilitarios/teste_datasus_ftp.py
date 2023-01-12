@@ -31,7 +31,7 @@ def cliente_ftp_siasus():
 
 @pytest.mark.parametrize(
     "arquivo_nome_ou_padrao",
-    ["PARR2108.dbc", re.compile("PASP1112[a-z]?.dbc", re.IGNORECASE)]
+    ["PARR2108.dbc", re.compile("PASP1112[a-z]?.dbc", re.IGNORECASE)],
 )
 def teste_listar_arquivos_existentes(
     cliente_ftp_siasus,
@@ -48,7 +48,7 @@ def teste_listar_arquivos_existentes(
 
 @pytest.mark.parametrize(
     "arquivo_nome_ou_padrao",
-    ["PAZZ2108.dbc", re.compile("PAZZ1112[a-z]?.dbc", re.IGNORECASE)]
+    ["PAZZ2108.dbc", re.compile("PAZZ1112[a-z]?.dbc", re.IGNORECASE)],
 )
 def teste_listar_arquivos_inexistentes(
     cliente_ftp_siasus,
@@ -63,11 +63,13 @@ def teste_listar_arquivos_inexistentes(
 
 @pytest.mark.parametrize(
     "ftp,caminho_diretorio,arquivo_nome",
-    [(
-        "ftp.datasus.gov.br",
-        "/dissemin/publicos/SIASUS/200801_/Dados",
-        "SADPE1508.dbc",
-    )]
+    [
+        (
+            "ftp.datasus.gov.br",
+            "/dissemin/publicos/SIASUS/200801_/Dados",
+            "SADPE1508.dbc",
+        )
+    ],
 )
 def teste_extrair_dbc_lotes(ftp, caminho_diretorio, arquivo_nome, passo):
     lotes = extrair_dbc_lotes(

@@ -10,13 +10,12 @@ from typing import Final
 
 import pandas as pd
 from frozendict import frozendict
-from impulsoetl.loggers import logger
 from prefect import task
 from sqlalchemy.orm import Session
 
 from impulsoetl.comum.datas import periodo_por_codigo, periodo_por_data
 from impulsoetl.comum.geografias import id_sus_para_id_impulso
-from impulsoetl.loggers import habilitar_suporte_loguru
+from impulsoetl.loggers import habilitar_suporte_loguru, logger
 from impulsoetl.sisab.indicadores_municipios.modelos import indicadores_regras
 
 TIPOS: Final[frozendict] = frozendict(

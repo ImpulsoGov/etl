@@ -8,8 +8,8 @@
 from datetime import date
 from typing import Final
 
-from sqlalchemy.orm import Session
 from prefect import flow
+from sqlalchemy.orm import Session
 
 from impulsoetl import __VERSION__
 from impulsoetl.loggers import habilitar_suporte_loguru
@@ -19,13 +19,12 @@ from impulsoetl.sisab.indicadores_municipios.carregamento import (
 from impulsoetl.sisab.indicadores_municipios.extracao import (
     extrair_indicadores,
 )
-from impulsoetl.sisab.indicadores_municipios.verificacao import (
-    verificar_indicadores_municipios
-)
 from impulsoetl.sisab.indicadores_municipios.tratamento import (
     transformar_indicadores,
 )
-
+from impulsoetl.sisab.indicadores_municipios.verificacao import (
+    verificar_indicadores_municipios,
+)
 
 INDICADORES_CODIGOS: Final[dict[str, str]] = {
     "Pré-Natal (6 consultas)": "1",

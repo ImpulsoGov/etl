@@ -228,7 +228,7 @@ def transformar_vinculos(
     )
     logger.debug(
         "Memória ocupada pelo DataFrame original:  {memoria_usada:.2f} mB.",
-        memoria_usada=vinculos.memory_usage(deep=True).sum() / 10 ** 6,
+        memoria_usada=vinculos.memory_usage(deep=True).sum() / 10**6,
     )
     vinculos_transformado = (
         vinculos  # noqa: WPS221  # ignorar linha complexa no pipeline
@@ -344,7 +344,7 @@ def transformar_vinculos(
     logger.debug(
         "Memória ocupada pelo DataFrame transformado: {memoria_usada:.2f} mB.",
         memoria_usada=(
-            vinculos_transformado.memory_usage(deep=True).sum() / 10 ** 6
+            vinculos_transformado.memory_usage(deep=True).sum() / 10**6
         ),
     )
     return vinculos_transformado

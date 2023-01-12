@@ -106,9 +106,7 @@ def teste_colunas_datas():
 )
 def teste_extrair_pa(uf_sigla, periodo_data_inicio, passo):
     iterador_registros_procedimentos = extrair_vinculos(
-        uf_sigla=uf_sigla,
-        periodo_data_inicio=periodo_data_inicio,
-        passo=passo
+        uf_sigla=uf_sigla, periodo_data_inicio=periodo_data_inicio, passo=passo
     )
     lote_1 = next(iterador_registros_procedimentos)
     assert isinstance(lote_1, pd.DataFrame)

@@ -10,7 +10,10 @@
 from prefect import flow
 
 from impulsoetl import __VERSION__
-from impulsoetl.bd import tabelas, Sessao
+from impulsoetl.bd import Sessao, tabelas
+from impulsoetl.egestor.relatorio_financiamento.principal import (
+    obter_relatorio_financiamento,
+)
 from impulsoetl.loggers import habilitar_suporte_loguru, logger
 from impulsoetl.sisab.cadastros_individuais import obter_cadastros_individuais
 from impulsoetl.sisab.indicadores_municipios.principal import (
@@ -19,9 +22,6 @@ from impulsoetl.sisab.indicadores_municipios.principal import (
 from impulsoetl.sisab.parametros_cadastro.principal import obter_parametros
 from impulsoetl.sisab.relatorio_validacao_producao.principal import (
     obter_validacao_producao,
-)
-from impulsoetl.egestor.relatorio_financiamento.principal import (
-    obter_relatorio_financiamento,
 )
 
 agendamentos = tabelas["configuracoes.capturas_agendamentos"]

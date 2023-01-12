@@ -9,7 +9,7 @@ import pytest
 from dotenv import load_dotenv
 from prefect.testing.utilities import prefect_test_harness
 from sqlalchemy import create_engine
-from sqlalchemy.engine import Engine, URL
+from sqlalchemy.engine import URL, Engine
 from sqlalchemy.orm import sessionmaker
 
 
