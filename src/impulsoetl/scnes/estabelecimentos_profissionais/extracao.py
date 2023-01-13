@@ -11,7 +11,6 @@ from scnes.estabelecimentos_equipes.extracao import extrair_equipes
 #from impulsoetl.loggers import logger
 
 
-
 def extrair_profissionais_por_equipe(codigo_municipio,lista_codigos):
 
     df_extraido = pd.DataFrame()
@@ -43,18 +42,59 @@ def extrair_profissionais_por_equipe(codigo_municipio,lista_codigos):
             df = pd.DataFrame(parsed)
             df['INE'] = coEquipe
             df['coArea'] = coArea
-            df['CNES'] = cnes
+            df['estabelecimento_cnes_id'] = cnes
 
             df_extraido = df_extraido.append(df)
 
-    print(df.columns)
 
-    df_extraido =df_extraido[['cns','CNES','coArea','INE']]
+    df_extraido =df_extraido[['cns','estabelecimento_cnes_id','coArea','INE']]
     return df_extraido    
+
+def extrair_profissionais_geral (codigo_municipio, lista_codigos):
+    df_extraido = pd.DataFrame()
+
+    for cnes in lista_codigos:
+        try:
+            url = "http://cnes.datasus.gov.br/services/estabelecimentos-profissionais/"+codigo_municipio+cnes
+    
+            payload={}
+            headers = {
+                'Accept': 'application/json, text/plain, */*',
+                'Accept-Language': 'pt-BR,pt;q=0.9,en-US;q=0.8,en;q=0.7',
+            'Connection': 'keep-alive',
+            'Referer': 'http://cnes.datasus.gov.br/pages/estabelecimentos/ficha/equipes/',
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/105.0.0.0 Safari/537.36'
+            }
+    
+            response = requests.request("GET", url, headers=headers, data=payload)
+            res = response.text
+
+            parsed = json.loads(res)
+            df = pd.DataFrame(parsed)
+            df['municipio_id_sus'] = codigo_municipio
+            df['estabelecimento_cnes_id'] = cnes
+
+            df_extraido = df_extraido.append(df)
+
+        
+        except:
+            pass
+    
+    #print(df.columns)
+    df_extraido = df_extraido[['nome', 'cns','municipio_id_sus','estabelecimento_cnes_id']]
+
+    return df_extraido
 
 
 codigo_municipio = '120001'
 lista_codigos = extrair_lista_cnes(codigo_municipio)
-profissionais = extrair_profissionais_por_equipe(codigo_municipio, lista_codigos)
-print("---------------------------------------------------------profissionais por equipe---------------------------------------------------------")
-print(profissionais)
+profissionais_ine = extrair_profissionais_por_equipe(codigo_municipio, lista_codigos)
+profissionais_geral = extrair_profissionais_geral(codigo_municipio, lista_codigos)
+
+print(profissionais_ine.info())
+print(profissionais_geral.info())
+df = pd.merge(profissionais_ine, profissionais_geral, how='outer', on=['cns','estabelecimento_cnes_id'])
+print(df.info())
+
+#print("---------------------------------------------------------profissionais por equipe---------------------------------------------------------")
+print(df)

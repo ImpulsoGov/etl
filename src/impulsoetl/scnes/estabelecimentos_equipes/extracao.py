@@ -48,12 +48,12 @@ def extrair_equipes(codigo_municipio: str, lista_cnes: list) -> pd.DataFrame:
     #logger.info("Extração concluída")
 
 
-equipes = extrair_equipes(codigo_municipio, lista_codigos)
-equipes = equipes[['municipio_id_sus', 'estabelecimento_cnes_id','coEquipe','coArea']]
+#equipes = extrair_equipes(codigo_municipio, lista_codigos)
+##equipes = equipes[['municipio_id_sus', 'estabelecimento_cnes_id','coEquipe','coArea']]
 #data = equipamentos[['municipio_id_sus','estabelecimento_cnes_id','dsTpEquip','qtExiste','qtUso','tpSus','dsEquipamento']]
 #teste = data.loc[data['estabelecimento_cnes_id']=='5701929']
-print("---------------------------------------------------------EQUIPES---------------------------------------------------------")
-print(equipes)
+#print("---------------------------------------------------------EQUIPES---------------------------------------------------------")
+#print(equipes)
 
 #colunas = ['municipio_id_sus', 'estabelecimento_cnes_id', 'tpEquipe', 'dsEquipe','coEquipe', 'nomeEquipe', 'seqEquipe', 'coArea', 'coMunicipio','dsArea', 'quilombola', 'assentada', 'geral', 'escola', 'pronasci','indigena', 'ribeirinha', 'complem', 'dtAtivacao', 'dtDesativacao']
 
