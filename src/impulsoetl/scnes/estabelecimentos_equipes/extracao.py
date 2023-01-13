@@ -4,13 +4,8 @@ import requests
 import pandas as pd
 import json
 
-import sys
-sys.path.append(r'C:\Users\maira\Impulso\etl\src\impulsoetl')
-from scnes.extracao_lista_cnes import extrair_lista_cnes
-#from impulsoetl.loggers import logger
+from impulsoetl.scnes.extracao_lista_cnes import extrair_lista_cnes
 
-codigo_municipio = '120001'
-lista_codigos = extrair_lista_cnes(codigo_municipio)
 
 def extrair_equipes(codigo_municipio: str, lista_cnes: list) -> pd.DataFrame:
     
@@ -33,27 +28,22 @@ def extrair_equipes(codigo_municipio: str, lista_cnes: list) -> pd.DataFrame:
         
             response = requests.request("GET", url, headers=headers, data=payload)
             res = response.text
-        
+
             parsed = json.loads(res)
             df = pd.DataFrame(parsed)
             df['municipio_id_sus']=codigo_municipio
             df['estabelecimento_cnes_id']=cnes
             df_extraido = df_extraido.append(df)
-        
+            
         except:
             pass
 
     return df_extraido
 
-    #logger.info("Extração concluída")
 
+codigo_municipio = '351570'
+lista_codigos = extrair_lista_cnes(codigo_municipio)
+data = extrair_equipes(codigo_municipio, lista_codigos)
+#print(data)
 
-#equipes = extrair_equipes(codigo_municipio, lista_codigos)
-##equipes = equipes[['municipio_id_sus', 'estabelecimento_cnes_id','coEquipe','coArea']]
-#data = equipamentos[['municipio_id_sus','estabelecimento_cnes_id','dsTpEquip','qtExiste','qtUso','tpSus','dsEquipamento']]
-#teste = data.loc[data['estabelecimento_cnes_id']=='5701929']
-#print("---------------------------------------------------------EQUIPES---------------------------------------------------------")
-#print(equipes)
-
-#colunas = ['municipio_id_sus', 'estabelecimento_cnes_id', 'tpEquipe', 'dsEquipe','coEquipe', 'nomeEquipe', 'seqEquipe', 'coArea', 'coMunicipio','dsArea', 'quilombola', 'assentada', 'geral', 'escola', 'pronasci','indigena', 'ribeirinha', 'complem', 'dtAtivacao', 'dtDesativacao']
 
