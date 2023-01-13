@@ -4,14 +4,12 @@ import requests
 import pandas as pd
 import json
 
-import sys
-sys.path.append(r'C:\Users\maira\Impulso\etl\src\impulsoetl')
-from scnes.extracao_lista_cnes import extrair_lista_cnes
-from scnes.estabelecimentos_equipes.extracao import extrair_equipes
+from impulsoetl.scnes.extracao_lista_cnes import extrair_lista_cnes
+from impulsoetl.scnes.estabelecimentos_equipes.extracao import extrair_equipes
 #from impulsoetl.loggers import logger
 
 
-def extrair_profissionais_por_equipe(codigo_municipio,lista_codigos):
+def extrair_profissionais_com_ine (codigo_municipio,lista_codigos):
 
     df_extraido = pd.DataFrame()
 
@@ -45,12 +43,10 @@ def extrair_profissionais_por_equipe(codigo_municipio,lista_codigos):
             df['estabelecimento_cnes_id'] = cnes
 
             df_extraido = df_extraido.append(df)
-
-
-    df_extraido =df_extraido[['cns','estabelecimento_cnes_id','coArea','INE']]
+    
     return df_extraido    
 
-def extrair_profissionais_geral (codigo_municipio, lista_codigos):
+def extrair_profissionais (codigo_municipio, lista_codigos):
     df_extraido = pd.DataFrame()
 
     for cnes in lista_codigos:
@@ -76,25 +72,24 @@ def extrair_profissionais_geral (codigo_municipio, lista_codigos):
 
             df_extraido = df_extraido.append(df)
 
-        
         except:
             pass
     
-    #print(df.columns)
-    df_extraido = df_extraido[['nome', 'cns','municipio_id_sus','estabelecimento_cnes_id']]
+    df_ine = extrair_profissionais_com_ine(codigo_municipio,lista_codigos)
+    df_ine = df_ine.add_suffix('_INE')
+    df_ine = df_ine.rename(
+        columns={
+            'INE_INE':'INE',
+            'estabelecimento_cnes_id_INE': 'estabelecimento_cnes_id',
+            'cns_INE':'cns',
+            })
+    df = pd.merge(df_extraido, df_ine, how='outer', on=['cns','estabelecimento_cnes_id'])
 
-    return df_extraido
+    return df
 
 
-codigo_municipio = '120001'
+codigo_municipio = '120025'
 lista_codigos = extrair_lista_cnes(codigo_municipio)
-profissionais_ine = extrair_profissionais_por_equipe(codigo_municipio, lista_codigos)
-profissionais_geral = extrair_profissionais_geral(codigo_municipio, lista_codigos)
+data = extrair_profissionais(codigo_municipio, lista_codigos)
 
-print(profissionais_ine.info())
-print(profissionais_geral.info())
-df = pd.merge(profissionais_ine, profissionais_geral, how='outer', on=['cns','estabelecimento_cnes_id'])
-print(df.info())
-
-#print("---------------------------------------------------------profissionais por equipe---------------------------------------------------------")
-print(df)
+#print(data)
