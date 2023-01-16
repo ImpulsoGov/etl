@@ -9,7 +9,7 @@ import warnings
 
 warnings.filterwarnings("ignore")
 import pandas as pd
-from prefect import task
+from prefect import flow
 from sqlalchemy.orm import Session
 
 from impulsoetl import __VERSION__
