@@ -18,7 +18,7 @@ from impulsoetl.loggers import habilitar_suporte_loguru, logger
 from impulsoetl.scnes.habilitacoes import obter_habilitacoes
 from impulsoetl.scnes.vinculos import obter_vinculos
 from impulsoetl.sim.do import obter_do
-from impulsoetl.cnes.estabelecimentos_identificados.principal import obter_informacoes_estabelecimentos_identificados
+from impulsoetl.scnes.estabelecimentos_identificados.principal import obter_informacoes_estabelecimentos_identificados
 
 agendamentos = tabelas["configuracoes.capturas_agendamentos"]
 capturas_historico = tabelas["configuracoes.capturas_historico"]
@@ -214,7 +214,7 @@ def ceps(teste: bool = False) -> None:
 
     tabela_ceps_pendentes = tabelas["configuracoes.ceps_pendentes"]
 
-   with Sessao() as sessao: 
+    with Sessao() as sessao: 
         ceps_pendentes_query = sessao.query(
             tabela_ceps_pendentes.c.id_cep,
         )
@@ -236,9 +236,8 @@ def ceps(teste: bool = False) -> None:
     version=__VERSION__,
     validate_parameters=False,
 )
-def cnes_estabelecimentos_identificados(
-    teste: bool = True,
-)-> None:
+def cnes_estabelecimentos_identificados(teste: bool = True,)-> None:
+    
     habilitar_suporte_loguru()
 
     operacao_id  = "063b5cf8-34d1-744d-8f96-353d4f199171"
