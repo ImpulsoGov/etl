@@ -30,7 +30,7 @@ from impulsoetl.scnes.extracao_lista_cnes import extrair_lista_cnes
 from impulsoetl.loggers import habilitar_suporte_loguru, logger
 
 
-@task(
+@flow(
     name="Obter dados dos Estabelecimentos Identificados",
     description=(
         "Extrai, transforma e carrega os dados dos estabelecimentos de saúde "
