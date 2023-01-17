@@ -8,7 +8,6 @@
 import warnings
 
 warnings.filterwarnings("ignore")
-#from prefect import task
 from sqlalchemy.orm import Session
 
 from impulsoetl import __VERSION__
@@ -28,7 +27,7 @@ from impulsoetl.scnes.verificacao_etls_scnes import (
 )
 from impulsoetl.scnes.extracao_lista_cnes import extrair_lista_cnes
 
-def obter_profissionais_cnes(
+def obter_equipes_cnes(
     sessao: Session,
     tabela_destino: str,
     codigo_municipio: str,
@@ -53,7 +52,6 @@ def obter_profissionais_cnes(
 
     df_tratado = tratamento_dados(
         df_extraido=df_extraido,
-        sessao=sessao,
         periodo_id=periodo_id,
         unidade_geografica_id=unidade_geografica_id,
     )
@@ -62,7 +60,7 @@ def obter_profissionais_cnes(
         df_extraido=df_extraido, df_tratado=df_tratado
     )
     carregar_dados(
-        sessao=sessao, df_verificado=df_tratado, tabela_destino=tabela_destino
+        sessao=sessao, df_tratado=df_tratado, tabela_destino=tabela_destino
     )
 
-    return df_extraido
+    return df_tratado

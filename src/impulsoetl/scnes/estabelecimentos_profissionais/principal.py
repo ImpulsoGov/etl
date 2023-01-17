@@ -26,7 +26,7 @@ from impulsoetl.scnes.estabelecimentos_profissionais.extracao import (
 from impulsoetl.scnes.estabelecimentos_profissionais.tratamento import (
     tratamento_dados,
 )
-from impulsoetl.scnes.verificacao_etls_scnes import (
+from impulsoetl.scnes.estabelecimentos_profissionais import (
     verificar_dados,
 )
 from impulsoetl.scnes.extracao_lista_cnes import extrair_lista_cnes

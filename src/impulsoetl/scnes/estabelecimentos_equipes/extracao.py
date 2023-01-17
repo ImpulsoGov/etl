@@ -5,10 +5,11 @@ import pandas as pd
 import json
 
 from impulsoetl.scnes.extracao_lista_cnes import extrair_lista_cnes
-
+from impulsoetl.loggers import logger
 
 def extrair_equipes(codigo_municipio: str, lista_cnes: list) -> pd.DataFrame:
     
+    logger.info("Iniciando extração das equipes ...")
     df_extraido = pd.DataFrame()
 
     for cnes in lista_cnes:
@@ -35,15 +36,19 @@ def extrair_equipes(codigo_municipio: str, lista_cnes: list) -> pd.DataFrame:
             df['estabelecimento_cnes_id']=cnes
             df_extraido = df_extraido.append(df)
             
-        except:
+        except Exception as e:
+            print(e)
             pass
+    
+    logger.info("Equipes do município " +  cnes + "extraídas com sucesso ...")
+
 
     return df_extraido
 
 
-codigo_municipio = '351570'
-lista_codigos = extrair_lista_cnes(codigo_municipio)
-data = extrair_equipes(codigo_municipio, lista_codigos)
+#codigo_municipio = '120025'
+#lista_codigos = extrair_lista_cnes(codigo_municipio)
+#data = extrair_equipes(codigo_municipio, lista_codigos)
 #print(data)
 
 

@@ -7,10 +7,13 @@ import numpy as np
 from frozendict import frozendict
 from typing import Final
 from datetime import date
+from sqlalchemy.orm import Session
+
+from impulsoetl.bd import Sessao
 
 from impulsoetl.scnes.extracao_lista_cnes import extrair_lista_cnes
 from impulsoetl.scnes.estabelecimentos_equipes.extracao import extrair_equipes
-#from impulsoetl.loggers import logger
+from impulsoetl.loggers import logger
 
 COLUNAS_EXCLUIR = [
     'coArea', 
@@ -94,7 +97,8 @@ def tratamento_dados(
     df_extraido: pd.DataFrame, periodo_id: str, unidade_geografica_id: str
 ) -> pd.DataFrame:
 
-    df_extraido = extrair_equipes(codigo_municipio, lista_codigos)
+    logger.info("Iniciando o tratamento dos dados ...")
+
     df_extraido = excluir_colunas(df_extraido)
     df_extraido = renomear_colunas(df_extraido)
     df_extraido = ordenar_colunas(df_extraido, COLUNAS_TIPOS)
@@ -103,14 +107,16 @@ def tratamento_dados(
     df_extraido["unidade_geografica_id"] = unidade_geografica_id
     df_extraido = df_extraido.reset_index(drop=True)
 
+    logger.info("Dados transformados ...")
+
     return df_extraido
 
 
-codigo_municipio = '120025'
-periodo_id = '2023'
-unidade_geografica_id = 'brasil00000'
-lista_codigos = extrair_lista_cnes(codigo_municipio)
-df_extraido = extrair_equipes(codigo_municipio, lista_codigos)
-df_tratado = tratamento_dados(df_extraido, periodo_id, unidade_geografica_id)
+#codigo_municipio = '120025'
+#periodo_id = '2023'
+#unidade_geografica_id = 'brasil00000'
+#lista_codigos = extrair_lista_cnes(codigo_municipio)
+#df_extraido = extrair_equipes(codigo_municipio, lista_codigos)
+#df_tratado = tratamento_dados(df_extraido, periodo_id, unidade_geografica_id)
 
 #print(df_tratado)

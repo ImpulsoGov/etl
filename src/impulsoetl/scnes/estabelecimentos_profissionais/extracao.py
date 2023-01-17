@@ -6,7 +6,7 @@ import json
 
 from impulsoetl.scnes.extracao_lista_cnes import extrair_lista_cnes
 from impulsoetl.scnes.estabelecimentos_equipes.extracao import extrair_equipes
-#from impulsoetl.loggers import logger
+from impulsoetl.loggers import logger
 
 
 def extrair_profissionais_com_ine (codigo_municipio,lista_codigos):
@@ -43,10 +43,14 @@ def extrair_profissionais_com_ine (codigo_municipio,lista_codigos):
             df['estabelecimento_cnes_id'] = cnes
 
             df_extraido = df_extraido.append(df)
+
     
     return df_extraido    
 
 def extrair_profissionais (codigo_municipio, lista_codigos):
+
+    logger.info("Iniciando extração dos profissionais ...")
+
     df_extraido = pd.DataFrame()
 
     for cnes in lista_codigos:
@@ -72,24 +76,21 @@ def extrair_profissionais (codigo_municipio, lista_codigos):
 
             df_extraido = df_extraido.append(df)
 
-        except:
+        except Exception as e:
+            logger.info(e)
             pass
     
     df_ine = extrair_profissionais_com_ine(codigo_municipio,lista_codigos)
-    df_ine = df_ine.add_suffix('_INE')
-    df_ine = df_ine.rename(
-        columns={
-            'INE_INE':'INE',
-            'estabelecimento_cnes_id_INE': 'estabelecimento_cnes_id',
-            'cns_INE':'cns',
-            })
+    df_ine  =df_ine[['estabelecimento_cnes_id','INE','dtEntrada','dtDesligamento','cns']]
     df = pd.merge(df_extraido, df_ine, how='outer', on=['cns','estabelecimento_cnes_id'])
+
+    logger.info("Extração concluída ...")
 
     return df
 
 
-codigo_municipio = '120025'
-lista_codigos = extrair_lista_cnes(codigo_municipio)
-data = extrair_profissionais(codigo_municipio, lista_codigos)
+#codigo_municipio = '120025'
+#lista_codigos = extrair_lista_cnes(codigo_municipio)
+#data = extrair_profissionais(codigo_municipio, lista_codigos)
 
-#print(data)
+#print(data.columns)

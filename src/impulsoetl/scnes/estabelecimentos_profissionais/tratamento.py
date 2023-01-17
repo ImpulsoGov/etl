@@ -1,8 +1,6 @@
 import warnings
 warnings.filterwarnings("ignore")
-import requests
 import pandas as pd
-import json
 import numpy as np
 from frozendict import frozendict
 from typing import Final
@@ -13,23 +11,17 @@ from impulsoetl.scnes.estabelecimentos_equipes.extracao import extrair_equipes
 from impulsoetl.scnes.estabelecimentos_profissionais.extracao import extrair_profissionais
 #from impulsoetl.loggers import logger
 
+['tpSusNaoSus', 'cbo', 'dsCbo', 'chOutros', 'chAmb', 'chHosp',
+       'vinculacao', 'vinculo', 'subVinculo', 'nome', 'cns', 'cnsMaster',
+       'artigo2', 'artigo3', 'artigo5', 'dtEntrada_x', 'municipio_id_sus',
+       'estabelecimento_cnes_id', 'INE', 'dtEntrada_y', 'dtDesligamento']
 
 COLUNAS_EXCLUIR = [
     'tpSusNaoSus',
     'artigo2', 
     'artigo3', 
     'artigo5',
-    'coArea_INE',
-    'cbo_INE',
-    'dsCbo_INE',
-    'chOutros_INE',
-    'chAmb_INE', 
-    'chHosp_INE',
-    'noProfissional_INE',
-    'stEquipeMinima_INE',
-    'diferenciada_INE',
-    'complementar_INE',
-    'dtEntrada',
+    'dtEntrada_x',
     'cnsMaster'
 ]
 
@@ -45,8 +37,8 @@ COLUNAS_RENOMEAR: Final[dict[str, str]] = {
     'chHosp':'carga_horaria_hospitalar',
     'chAmb':'carga_horaria_ambulatorial', 
     'chOutros':'carga_horaria_outras', 
-    'dtEntrada_INE':'periodo_data_entrada', 
-    'dtDesligamento_INE':'periodo_data_desligamento',
+    'dtEntrada_y':'periodo_data_entrada', 
+    'dtDesligamento':'periodo_data_desligamento',
 }
 
 COLUNAS_TIPOS: Final[frozendict] = frozendict(
@@ -130,13 +122,14 @@ def tratamento_dados(
     return df_extraido
 
 
-codigo_municipio = '120025'
-periodo_id = '2023'
-unidade_geografica_id = 'brasil00000'
-lista_codigos = extrair_lista_cnes(codigo_municipio)
-df_extraido = extrair_profissionais(codigo_municipio, lista_codigos)
-df_tratado = tratamento_dados(df_extraido, periodo_id, unidade_geografica_id)
+#codigo_municipio = '120025'
+#periodo_id = '2023'
+#unidade_geografica_id = 'brasil00000'
+#lista_codigos = extrair_lista_cnes(codigo_municipio)
+#df_extraido = extrair_profissionais(codigo_municipio, lista_codigos)
+#df_tratado = tratamento_dados(df_extraido, periodo_id, unidade_geografica_id)
 
 
 #print(df_tratado)
+
 

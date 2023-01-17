@@ -12,7 +12,7 @@ import pandas as pd
 #from prefect import task
 from sqlalchemy.orm import Session
 
-#from impulsoetl.loggers import logger, habilitar_suporte_loguru
+from impulsoetl.loggers import logger, habilitar_suporte_loguru
 from impulsoetl.utilitarios.bd import carregar_dataframe
 
 def carregar_dados(
@@ -33,17 +33,17 @@ def carregar_dados(
     """
     #habilitar_suporte_loguru()
 
-    #logger.info("Carregando dados em tabela...")
+    logger.info("Carregando dados em tabela...")
 
     carregar_dataframe(
         sessao=sessao, df=df_tratado, tabela_destino=tabela_destino
     )
 
-    #logger.info(
-    #    "Carregamento concluído para a tabela `{tabela_nome}`: "
-    #    + "adicionadas {linhas_adicionadas} novas linhas.",
-    #    tabela_nome=tabela_destino,
-    #    linhas_adicionadas=len(df_tratado),
-    #)
+    logger.info(
+        "Carregamento concluído para a tabela `{tabela_nome}`: "
+        + "adicionadas {linhas_adicionadas} novas linhas.",
+        tabela_nome=tabela_destino,
+        linhas_adicionadas=len(df_tratado),
+    )
 
     return 0
