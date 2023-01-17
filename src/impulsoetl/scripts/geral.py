@@ -9,6 +9,7 @@
 
 
 from prefect import flow
+from sqlalchemy.orm import Session
 
 from impulsoetl import __VERSION__
 from impulsoetl.bd import tabelas, Sessao
@@ -17,6 +18,7 @@ from impulsoetl.loggers import habilitar_suporte_loguru, logger
 from impulsoetl.scnes.habilitacoes import obter_habilitacoes
 from impulsoetl.scnes.vinculos import obter_vinculos
 from impulsoetl.sim.do import obter_do
+from impulsoetl.scnes.estabelecimentos_identificados.principal import obter_informacoes_estabelecimentos_identificados
 
 agendamentos = tabelas["configuracoes.capturas_agendamentos"]
 capturas_historico = tabelas["configuracoes.capturas_historico"]
@@ -212,7 +214,7 @@ def ceps(teste: bool = False) -> None:
 
     tabela_ceps_pendentes = tabelas["configuracoes.ceps_pendentes"]
 
-    with Sessao() as sessao:
+    with Sessao() as sessao: 
         ceps_pendentes_query = sessao.query(
             tabela_ceps_pendentes.c.id_cep,
         )
@@ -221,3 +223,61 @@ def ceps(teste: bool = False) -> None:
         ceps_pendentes = ceps_pendentes_query.all()
 
         obter_cep(sessao=sessao, ceps_pendentes=ceps_pendentes, teste=teste)
+
+@flow(
+    name="Rodar Agendamentos de Estabelecimentos Identificados "
+    + "(por município)",
+    description=(
+        "Lê os agendamentos para obter as informações dos estabelecimentos "
+        + "de saúde por município na página do CNES"
+    ),
+    retries=0,
+    retry_delay_seconds=None,
+    version=__VERSION__,
+    validate_parameters=False,
+)
+def cnes_estabelecimentos_identificados(teste: bool = True,)-> None:
+    
+    habilitar_suporte_loguru()
+
+    operacao_id  = "063b5cf8-34d1-744d-8f96-353d4f199171"
+
+    with Sessao() as sessao:
+        agendamentos_cnes = (
+            sessao.query(agendamentos)
+            .filter(agendamentos.c.operacao_id == operacao_id)
+            .all()
+        )
+
+        for agendamento in agendamentos_cnes:
+            periodo_id = agendamento.periodo_id
+            unidade_geografica_id = agendamento.unidade_geografica_id
+            tabela_destino = agendamento.tabela_destino
+            codigo_sus_municipio = agendamento.unidade_geografica_id_sus
+
+            obter_informacoes_estabelecimentos_identificados(
+                sessao=sessao,
+                tabela_destino=tabela_destino,
+                codigo_municipio=codigo_sus_municipio,
+                periodo_id=periodo_id,
+                unidade_geografica_id=unidade_geografica_id
+            )
+
+            if teste: 
+                sessao.rollback()
+                break
+
+            logger.info("Registrando captura bem-sucedida...")
+
+            requisicao_inserir_historico = capturas_historico.insert(
+                {
+                    "operacao_id": operacao_id,
+                    "periodo_id": agendamento.periodo_id,
+                    "unidade_geografica_id": agendamento.unidade_geografica_id,
+                }
+            )
+            conector = sessao.connection()
+            conector.execute(requisicao_inserir_historico)
+            sessao.commit()
+            logger.info("OK.")
+

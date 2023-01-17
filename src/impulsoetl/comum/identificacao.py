@@ -21,7 +21,7 @@ class RacaCor(Enum):
 
 
 class Sexo(Enum):
-    """"Classificação do sexo biológico, segundo a SIGTAP."""
+    """ "Classificação do sexo biológico, segundo a SIGTAP."""
 
     FEMININO = "F"
     IGNORADO = "I"

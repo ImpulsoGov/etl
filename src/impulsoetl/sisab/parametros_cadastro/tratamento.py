@@ -9,9 +9,9 @@ import pandas as pd
 from prefect import task
 from sqlalchemy.orm import Session
 
-from impulsoetl.loggers import habilitar_suporte_loguru
 from impulsoetl.comum.datas import periodo_por_codigo, periodo_por_data
 from impulsoetl.comum.geografias import id_sus_para_id_impulso
+from impulsoetl.loggers import habilitar_suporte_loguru
 
 
 @task(

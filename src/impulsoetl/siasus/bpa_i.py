@@ -219,7 +219,7 @@ def transformar_bpa_i(
     )
     logger.debug(
         "Memória ocupada pelo DataFrame original:  {memoria_usada:.2f} mB.",
-        memoria_usada=bpa_i.memory_usage(deep=True).sum() / 10 ** 6,
+        memoria_usada=bpa_i.memory_usage(deep=True).sum() / 10**6,
     )
 
     # aplica condições de filtragem dos registros
@@ -308,7 +308,7 @@ def transformar_bpa_i(
     logger.debug(
         "Memória ocupada pelo DataFrame transformado: {memoria_usada:.2f} mB.",
         memoria_usada=(
-            bpa_i_transformada.memory_usage(deep=True).sum() / 10 ** 6
+            bpa_i_transformada.memory_usage(deep=True).sum() / 10**6
         ),
     )
     return bpa_i_transformada

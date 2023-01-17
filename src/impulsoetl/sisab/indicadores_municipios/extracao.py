@@ -94,7 +94,8 @@ def extrair_indicadores(
     headers = hd[0]
     logger.info("Iniciando extração do relatório...")
     response = requests.request(
-        "POST", url,
+        "POST",
+        url,
         headers=headers,
         data=payload,
         timeout=120,

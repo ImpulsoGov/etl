@@ -11,7 +11,7 @@
 from prefect import flow
 
 from impulsoetl import __VERSION__
-from impulsoetl.bd import tabelas, Sessao
+from impulsoetl.bd import Sessao, tabelas
 from impulsoetl.loggers import habilitar_suporte_loguru, logger
 from impulsoetl.siasus.bpa_i import obter_bpa_i
 from impulsoetl.siasus.procedimentos import obter_pa

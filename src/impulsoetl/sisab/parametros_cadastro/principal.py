@@ -10,11 +10,11 @@ from sqlalchemy.orm import Session
 
 from impulsoetl import __VERSION__
 from impulsoetl.loggers import habilitar_suporte_loguru
-from impulsoetl.sisab.parametros_cadastro.tratamento import tratamento_dados
 from impulsoetl.sisab.parametros_cadastro.carregamento import (
     carregar_parametros,
 )
 from impulsoetl.sisab.parametros_cadastro.extracao import extrair_parametros
+from impulsoetl.sisab.parametros_cadastro.tratamento import tratamento_dados
 from impulsoetl.sisab.parametros_cadastro.verificacao import (
     verificar_parametros_cadastro,
 )

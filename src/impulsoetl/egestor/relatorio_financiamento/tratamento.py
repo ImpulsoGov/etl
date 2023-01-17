@@ -187,7 +187,7 @@ TIPOS_EGESTOR_FINANCIAMENTO: Final[frozendict] = frozendict(
         "easfr_pagamento_vulneravel": float,
         "easfr_pagamento_nao_vulneravel": float,
         "pagamento_capitacao_ponderada": float,
-        "pagamento_complementacao_financeira": float
+        "pagamento_complementacao_financeira": float,
     },
 )
 
@@ -361,7 +361,7 @@ EGESTOR_FINANCIAMENTO_COLUNAS: Final[dict[str, str]] = {
     "Unnamed: 61": "easfr_pagamento_nao_vulneravel",
     "Valor da Capitação Ponderada": "pagamento_capitacao_ponderada",
     "Valor da Complementação Financeira": "pagamento_complementacao_financeira",
-    "Unnamed: 65": "pagamento_desconto"
+    "Unnamed: 65": "pagamento_desconto",
 }
 
 COLUNAS_NUMERICAS_DECIMAIS = [
@@ -488,8 +488,7 @@ def formata_valores_monetarios(
 
 
 def renomeia_colunas_repetidas(
-    df_extraido: pd.DataFrame, 
-    aba: str
+    df_extraido: pd.DataFrame, aba: str
 ) -> pd.DataFrame:
 
     if aba in ["Ações Est. - SB"]:
@@ -553,24 +552,25 @@ def renomeia_colunas_repetidas(
             columns={
                 "Unnamed: 9": "eap_credenciadas",
                 "Unnamed: 11": "eap_homologadas",
-                "Unnamed: 13" : "eap_20h_pagas",
-                "Unnamed: 14" : "eap_30h_pagas",
-                "Unnamed: 16" : "cadastro_potencial",
-                "Unnamed: 17" : "esf_quadrimestre",
-                "Unnamed: 19" : "eap_30h_quadrimestre",
-                "Unnamed: 20" : "populacao_vulneravel",
+                "Unnamed: 13": "eap_20h_pagas",
+                "Unnamed: 14": "eap_30h_pagas",
+                "Unnamed: 16": "cadastro_potencial",
+                "Unnamed: 17": "esf_quadrimestre",
+                "Unnamed: 19": "eap_30h_quadrimestre",
+                "Unnamed: 20": "populacao_vulneravel",
             },
             inplace=True,
         )
     return df_extraido
 
-def garantir_tipos_dados(
-    df_extraido: pd.DataFrame
-)-> pd.DataFrame:
+
+def garantir_tipos_dados(df_extraido: pd.DataFrame) -> pd.DataFrame:
 
     for coluna in TIPOS_EGESTOR_FINANCIAMENTO:
         if coluna in df_extraido.columns:
-            df_tipos = dict(zip([coluna], [TIPOS_EGESTOR_FINANCIAMENTO[coluna]]))
+            df_tipos = dict(
+                zip([coluna], [TIPOS_EGESTOR_FINANCIAMENTO[coluna]])
+            )
             df_extraido = df_extraido.astype(df_tipos)
     return df_extraido
 
@@ -594,21 +594,21 @@ def tratamento_dados(
 ) -> pd.DataFrame:
     """Trata dados capturados do relatório de financiamento APS do egestor
 
-        Argumentos:
-            sessao: objeto [`sqlalchemy.orm.session.Session`][] que permite
-                acessar a base de dados da ImpulsoGov.
-            df_extraido: [`DataFrame`][] contendo os dados capturados no relatório de Indicadores do Sisab
-            (conforme retornado pela função
-                [`extrair_dados()`][]).
-            aba: Nome da aba do relatório
-            periodo_data_inicio: Data do mês da competência em referência
-            periodo_id: Código de identificação do período
+    Argumentos:
+        sessao: objeto [`sqlalchemy.orm.session.Session`][] que permite
+            acessar a base de dados da ImpulsoGov.
+        df_extraido: [`DataFrame`][] contendo os dados capturados no relatório de Indicadores do Sisab
+        (conforme retornado pela função
+            [`extrair_dados()`][]).
+        aba: Nome da aba do relatório
+        periodo_data_inicio: Data do mês da competência em referência
+        periodo_id: Código de identificação do período
 
-        Retorna:
-            Objeto [`pandas.DataFrame`] com os dados enriquecidos e tratados.
+    Retorna:
+        Objeto [`pandas.DataFrame`] com os dados enriquecidos e tratados.
 
-                [`sqlalchemy.orm.session.Session`]: https://docs.sqlalchemy.org/en/14/orm/session_api.html#sqlalchemy.orm.Session
-                [`pandas.DataFrame`]: https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html
+            [`sqlalchemy.orm.session.Session`]: https://docs.sqlalchemy.org/en/14/orm/session_api.html#sqlalchemy.orm.Session
+            [`pandas.DataFrame`]: https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html
     """
 
     habilitar_suporte_loguru()
@@ -635,7 +635,7 @@ def tratamento_dados(
             sessao=sessao, id_sus=municipio_id_sus
         )
     )
-    
+
     logger.info("Checa os tipos dos dados ...")
     df_extraido = garantir_tipos_dados(df_extraido=df_extraido)
 
@@ -643,5 +643,3 @@ def tratamento_dados(
     logger.info("Dados transformados ...")
 
     return df_extraido
-
-

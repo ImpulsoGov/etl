@@ -13,7 +13,6 @@ from loguru import logger
 from prefect import get_run_logger
 from prefect.exceptions import MissingContextError
 
-
 _destino = os.getenv("IMPULSOETL_LOG_DESTINO", sys.stderr)
 _nivel = os.getenv("IMPULSOETL_LOG_DESTINO", "WARNING")
 
