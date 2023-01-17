@@ -13,11 +13,14 @@ from sqlalchemy.orm import Session
 
 from impulsoetl import __VERSION__
 from impulsoetl.bd import tabelas, Sessao
+
+from impulsoetl.loggers import habilitar_suporte_loguru, logger
+"""
 from impulsoetl.brasilapi.cep import obter_cep
 from impulsoetl.loggers import habilitar_suporte_loguru, logger
 from impulsoetl.scnes.habilitacoes import obter_habilitacoes
 from impulsoetl.scnes.vinculos import obter_vinculos
-from impulsoetl.sim.do import obter_do
+from impulsoetl.sim.do import obter_do """
 from impulsoetl.scnes.estabelecimentos_identificados.principal import obter_informacoes_estabelecimentos_identificados
 from impulsoetl.scnes.estabelecimentos_equipes.principal import obter_equipes_cnes
 
@@ -282,6 +285,16 @@ def cnes_estabelecimentos_identificados(teste: bool = True,)-> None:
             sessao.commit()
             logger.info("OK.")
 
+@flow(
+    name="Rodar Agendamentos de Equipes do SCNES",
+    description=(
+        "Lê as capturas agendadas para ficha de equipes de saúde "
+    ),
+    retries=0,
+    retry_delay_seconds=None,
+    version=__VERSION__,
+    validate_parameters=False,
+)
 def cnes_equipes(
     teste: bool = True,
     )-> None:
@@ -326,3 +339,6 @@ def cnes_equipes(
             conector.execute(requisicao_inserir_historico)
             sessao.commit()
             logger.info("OK.")
+
+if __name__ == '__main__':
+    cnes_equipes()

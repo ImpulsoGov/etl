@@ -9,6 +9,7 @@ import warnings
 
 warnings.filterwarnings("ignore")
 from sqlalchemy.orm import Session
+from prefect import flow
 
 from impulsoetl import __VERSION__
 from impulsoetl.bd import Sessao
@@ -27,6 +28,17 @@ from impulsoetl.scnes.verificacao_etls_scnes import (
 )
 from impulsoetl.scnes.extracao_lista_cnes import extrair_lista_cnes
 
+@flow(
+    name="Obter dados da Ficha de Equipes de Saúde por Estabelecimento",
+    description=(
+        "Extrai, transforma e carrega os dados dos equipes de saúde "
+        + "a partir da página do CNES"
+    ),
+    retries=0,
+    retry_delay_seconds=None,
+    version=__VERSION__,
+    validate_parameters=False,
+)
 def obter_equipes_cnes(
     sessao: Session,
     tabela_destino: str,
