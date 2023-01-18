@@ -296,7 +296,7 @@ def cnes_estabelecimentos_identificados(teste: bool = True,)-> None:
     validate_parameters=False,
 )
 def cnes_equipes(
-    teste: bool = True,
+    teste: bool = False,
     )-> None:
 
     operacao_id  = "063c6b40-ab9a-7459-b59c-6ebaa34f1bfd"
@@ -313,6 +313,8 @@ def cnes_equipes(
             unidade_geografica_id = agendamento.unidade_geografica_id
             tabela_destino = agendamento.tabela_destino
             codigo_sus_municipio = agendamento.unidade_geografica_id_sus
+
+            #print(codigo_sus_municipio)
 
             obter_equipes_cnes(
                 sessao=sessao,
@@ -340,5 +342,5 @@ def cnes_equipes(
             sessao.commit()
             logger.info("OK.")
 
-if __name__ == '__main__':
-    cnes_equipes()
+        
+
