@@ -37,18 +37,20 @@ def extrair_equipes(codigo_municipio: str, lista_cnes: list) -> pd.DataFrame:
             df_extraido = df_extraido.append(df)
             
         except Exception as e:
-            print(e)
+            logger.info(e)
+            logger.info("Erro ao tentar extrair equipes para o estabelecimento " + cnes)
             pass
     
-    logger.info("Equipes do município " +  cnes + "extraídas com sucesso ...")
+    logger.info("Equipes do município " +  codigo_municipio + " extraídas com sucesso ...")
 
 
     return df_extraido
 
 
-#codigo_municipio = '120025'
+#codigo_municipio = '130380'
 #lista_codigos = extrair_lista_cnes(codigo_municipio)
 #data = extrair_equipes(codigo_municipio, lista_codigos)
+
 #print(data)
 
 
