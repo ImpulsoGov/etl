@@ -207,7 +207,7 @@ def carregar_dataframe(
     schema_nome, tabela_nome = tabela_destino.split(".", maxsplit=1)
 
     logger.info(
-        "Carregando {num_registros} registros de procedimentos ambulatoriais "
+        "Carregando {num_registros} registros "
         "para a tabela `{tabela_destino}`...",
         num_registros=num_registros,
         tabela_destino=tabela_destino,
@@ -241,9 +241,10 @@ def carregar_dataframe(
             erro.hide_parameters = True
             erro = cast(Psycopg2Error, erro.orig)
         logger.error(
-            "Erro ao inserir registros na tabela `{}` (Código {})",
+            "Erro ao inserir registros na tabela `{}` (Código {}, erro {})",
             tabela_destino,
             erro.pgcode,
+            erro
         )
         logger.debug(
             "({}.{}) {}",
