@@ -13,6 +13,7 @@ from prefect import flow
 
 from impulsoetl import __VERSION__
 from impulsoetl.bd import Sessao
+from impulsoetl.loggers import logger
 
 from impulsoetl.scnes.carregamento_etls_scnes import (
     carregar_dados,
@@ -55,7 +56,7 @@ def obter_equipes_cnes(
         periodo_id: Código de identificação do período .
         unidade_geografica_id: Código de identificação da unidade geográfica.
     """
-
+   
     lista_cnes = extrair_lista_cnes(codigo_municipio=codigo_municipio)
 
     df_extraido = extrair_equipes(
@@ -71,8 +72,10 @@ def obter_equipes_cnes(
     verificar_dados(
         df_extraido=df_extraido, df_tratado=df_tratado
     )
+    
     carregar_dados(
         sessao=sessao, df_tratado=df_tratado, tabela_destino=tabela_destino
     )
+   
 
     return df_tratado
