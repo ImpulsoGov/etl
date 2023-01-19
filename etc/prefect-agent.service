@@ -14,7 +14,7 @@ StartLimitIntervalSec=500
 StartLimitBurst=5
 
 [Service]
-Restart=always
+Restart=on-failure
 RestartSec=5
 
 ExecStart=/home/prefect/agent-start.sh

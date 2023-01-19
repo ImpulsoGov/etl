@@ -571,9 +571,7 @@ def garantir_tipos_dados(df_extraido: pd.DataFrame) -> pd.DataFrame:
             df_tipos = dict(
                 zip([coluna], [TIPOS_EGESTOR_FINANCIAMENTO[coluna]])
             )
-            df_extraido = df_extraido.astype(df_tipos, errors="ignore").where(
-            df_extraido.notna(), None
-            )
+            df_extraido = df_extraido.astype(df_tipos)
     return df_extraido
 
 

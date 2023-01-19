@@ -159,7 +159,6 @@ def postgresql_copiar_dados(
         + "em memória, tendo como destino o banco de dados da Impulso Gov."
     ),
     tags=["carregamento"],
-    timeout_seconds=14400,  # 4h
     retries=0,
     retry_delay_seconds=None,
 )
