@@ -56,8 +56,8 @@ COLUNAS_TIPOS: Final[frozendict] = frozendict(
     'carga_horaria_hospitalar':'int',
     'carga_horaria_ambulatorial':'int', 
     'carga_horaria_outras':'int', 
-    'periodo_data_entrada':'int', 
-    'periodo_data_desligamento':'int',
+    'periodo_data_entrada':'str', 
+    'periodo_data_desligamento':'str',
     }
 )
 
@@ -77,20 +77,7 @@ def excluir_colunas(df_extraido: pd.DataFrame) -> pd.DataFrame:
 def tratar_tipos(df_extraido: pd.DataFrame) -> pd.DataFrame:
     for coluna in COLUNAS_DATA:
         df_extraido[coluna] = pd.to_datetime(
-            df_extraido[coluna], infer_datetime_format=True
-        )
-
-    df_extraido = df_extraido.astype(COLUNAS_TIPOS, errors="ignore").where(
-        df_extraido.notna(), None
-    )
-
-    return df_extraido
-
-
-def tratar_tipos(df_extraido: pd.DataFrame) -> pd.DataFrame:
-    for coluna in COLUNAS_DATA:
-        df_extraido[coluna] = pd.to_datetime(
-            df_extraido[coluna], infer_datetime_format=True
+            df_extraido[coluna], infer_datetime_format=True, errors="coerce"
         )
 
     df_extraido = df_extraido.astype(COLUNAS_TIPOS, errors="ignore").where(
@@ -110,7 +97,6 @@ def tratamento_dados(
     df_extraido: pd.DataFrame, periodo_id: str, unidade_geografica_id: str
 ) -> pd.DataFrame:
 
-    df_extraido = extrair_profissionais(codigo_municipio, lista_codigos)
     df_extraido = excluir_colunas(df_extraido)
     df_extraido = renomear_colunas(df_extraido)
     df_extraido = ordenar_colunas(df_extraido, COLUNAS_TIPOS)
@@ -119,17 +105,8 @@ def tratamento_dados(
     df_extraido["unidade_geografica_id"] = unidade_geografica_id
     df_extraido = df_extraido.reset_index(drop=True)
 
+
     return df_extraido
 
-
-#codigo_municipio = '120025'
-#periodo_id = '2023'
-#unidade_geografica_id = 'brasil00000'
-#lista_codigos = extrair_lista_cnes(codigo_municipio)
-#df_extraido = extrair_profissionais(codigo_municipio, lista_codigos)
-#df_tratado = tratamento_dados(df_extraido, periodo_id, unidade_geografica_id)
-
-
-#print(df_tratado)
 
 
