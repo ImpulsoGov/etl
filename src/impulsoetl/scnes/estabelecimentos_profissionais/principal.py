@@ -26,7 +26,7 @@ from impulsoetl.scnes.estabelecimentos_profissionais.extracao import (
 from impulsoetl.scnes.estabelecimentos_profissionais.tratamento import (
     tratamento_dados,
 )
-from impulsoetl.scnes.estabelecimentos_profissionais import (
+from impulsoetl.scnes.estabelecimentos_profissionais.verificacao import (
     verificar_dados,
 )
 from impulsoetl.scnes.extracao_lista_cnes import extrair_lista_cnes
@@ -53,12 +53,11 @@ def obter_profissionais_cnes(
     lista_cnes = extrair_lista_cnes(codigo_municipio=codigo_municipio)
 
     df_extraido = extrair_profissionais(
-        codigo_municipio=codigo_municipio, lista_cnes=lista_cnes
+        codigo_municipio=codigo_municipio, lista_codigos=lista_cnes
     )
 
     df_tratado = tratamento_dados(
         df_extraido=df_extraido,
-        sessao=sessao,
         periodo_id=periodo_id,
         unidade_geografica_id=unidade_geografica_id,
     )
@@ -67,7 +66,7 @@ def obter_profissionais_cnes(
         df_extraido=df_extraido, df_tratado=df_tratado
     )
     carregar_dados(
-        sessao=sessao, df_verificado=df_tratado, tabela_destino=tabela_destino
+        sessao=sessao, df_tratado=df_tratado, tabela_destino=tabela_destino
     )
 
     return df_extraido
