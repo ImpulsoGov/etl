@@ -47,7 +47,7 @@ def extrair_profissionais_com_ine (codigo_municipio,lista_codigos):
     
     return df_extraido    
 
-def extrair_profissionais (codigo_municipio, lista_codigos):
+def extrair_profissionais (codigo_municipio:str, lista_codigos:list):
 
     logger.info("Iniciando extração dos profissionais ...")
 
@@ -87,10 +87,3 @@ def extrair_profissionais (codigo_municipio, lista_codigos):
     logger.info("Extração concluída ...")
 
     return df
-
-
-#codigo_municipio = '120025'
-#lista_codigos = extrair_lista_cnes(codigo_municipio)
-#data = extrair_profissionais(codigo_municipio, lista_codigos)
-
-#print(data.columns)
