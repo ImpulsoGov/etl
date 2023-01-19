@@ -14,9 +14,7 @@ from prefect import flow
 from sqlalchemy.orm import Session
 
 from impulsoetl import __VERSION__
-from impulsoetl.egestor.relatorio_financiamento.carregamento import (
-    carregar_dados,
-)
+from impulsoetl.utilitarios.bd import carregar_dataframe
 from impulsoetl.egestor.relatorio_financiamento.extracao import extrair
 from impulsoetl.egestor.relatorio_financiamento.tratamento import (
     tratamento_dados,
@@ -89,6 +87,6 @@ def obter_relatorio_financiamento(
         df_tratado=df_tratado,
     )
 
-    carregar_dados(
-        sessao=sessao, df_tratado=df_tratado, tabela_destino=tabela_destino
+    carregar_dataframe(
+        sessao=sessao, df=df_tratado, tabela_destino=tabela_destino
     )
