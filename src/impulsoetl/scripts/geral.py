@@ -9,7 +9,6 @@
 
 
 from prefect import flow
-from sqlalchemy.orm import Session
 
 from impulsoetl import __VERSION__
 from impulsoetl.bd import tabelas, Sessao
@@ -17,7 +16,6 @@ from impulsoetl.bd import tabelas, Sessao
 from impulsoetl.loggers import habilitar_suporte_loguru, logger
 """
 from impulsoetl.brasilapi.cep import obter_cep
-from impulsoetl.loggers import habilitar_suporte_loguru, logger
 from impulsoetl.scnes.habilitacoes import obter_habilitacoes
 from impulsoetl.scnes.vinculos import obter_vinculos
 from impulsoetl.sim.do import obter_do """
@@ -241,7 +239,7 @@ def ceps(teste: bool = False) -> None:
     version=__VERSION__,
     validate_parameters=False,
 )
-def cnes_estabelecimentos_identificados(teste: bool = True,)-> None:
+def cnes_estabelecimentos_identificados(teste: bool = False,)-> None:
     
     habilitar_suporte_loguru()
 
@@ -259,13 +257,15 @@ def cnes_estabelecimentos_identificados(teste: bool = True,)-> None:
             unidade_geografica_id = agendamento.unidade_geografica_id
             tabela_destino = agendamento.tabela_destino
             codigo_sus_municipio = agendamento.unidade_geografica_id_sus
+            periodo_data_inicio = agendamento.periodo_data_inicio
 
             obter_informacoes_estabelecimentos_identificados(
                 sessao=sessao,
                 tabela_destino=tabela_destino,
                 codigo_municipio=codigo_sus_municipio,
                 periodo_id=periodo_id,
-                unidade_geografica_id=unidade_geografica_id
+                unidade_geografica_id=unidade_geografica_id,
+                periodo_data_inicio=periodo_data_inicio,
             )
 
             if teste: 

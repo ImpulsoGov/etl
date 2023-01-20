@@ -31,40 +31,32 @@ def extrair_lista_cnes(codigo_municipio: str) -> list:
 
     df_extraido = pd.DataFrame()
 
-    try:
-        url = (
-            "http://cnes.datasus.gov.br/services/estabelecimentos"
-            + "?municipio="
-            + codigo_municipio
-        )
-        payload = {}
-        headers = {
-            "Accept": "application/json, text/plain, */*",
-            "Accept-Language": "pt-BR,pt;q=0.9,en-US;q=0.8,en;q=0.7",
-            "Connection": "keep-alive",
-            "Referer": "http://cnes.datasus.gov.br/pages/estabelecimentos/",
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/105.0.0.0 Safari/537.36",
-        }
+    url = (
+        "http://cnes.datasus.gov.br/services/estabelecimentos"
+        + "?municipio="
+        + codigo_municipio
+    )
+    payload = {}
+    headers = {
+        "Accept": "application/json, text/plain, */*",
+        "Accept-Language": "pt-BR,pt;q=0.9,en-US;q=0.8,en;q=0.7",
+        "Connection": "keep-alive",
+        "Referer": "http://cnes.datasus.gov.br/pages/estabelecimentos/",
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/105.0.0.0 Safari/537.36",
+    }
 
-        response = requests.request("GET", url, headers=headers, data=payload)
-        res = response.text
+    response = requests.request("GET", url, headers=headers, data=payload)
+    res = response.text
 
-        parsed = json.loads(res)
-        df_parcial = pd.DataFrame(parsed)
-        df_extraido = df_extraido.append(df_parcial)
-        lista_cnes = df_extraido["cnes"].value_counts().index.tolist()
+    parsed = json.loads(res)
+    df_parcial = pd.DataFrame(parsed)
+    df_extraido = df_extraido.append(df_parcial)
+    lista_cnes = df_extraido["cnes"].value_counts().index.tolist()
 
-        logger.info(
-            "Extração da lista dos códigos CNES do município "
-            + codigo_municipio
-            + " realizada com sucesso"
-        )
-
-    except:
-        logger.info(
-            "Erro ao realizar a requisição para o municipio: "
-            + codigo_municipio
-        )
-        pass
+    logger.info(
+        "Extração da lista dos códigos CNES do município "
+        + codigo_municipio
+        + " realizada com sucesso"
+    )
 
     return lista_cnes

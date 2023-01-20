@@ -9,24 +9,13 @@ import warnings
 
 warnings.filterwarnings("ignore")
 import pandas as pd
-from prefect import task
 from sqlalchemy.orm import Session
 
 from impulsoetl.loggers import habilitar_suporte_loguru, logger
 from impulsoetl.utilitarios.bd import carregar_dataframe
 
 
-@task(
-    name="Carregar dados dos Estabelecimentos Identificados",
-    description=(
-        "Realiza o carregamento dos dados dos estabelecimentos de saúde"
-        + "extraídos e transformados a partir da página do CNES "
-        + "com destino ao banco de dados da Impulso Gov"
-    ),
-    tags=["cnes", "estabelecimentos", "carregamento"],
-    retries=0,
-    retry_delay_seconds=None,
-)
+
 def carregar_dados(
     sessao: Session, df_tratado: pd.DataFrame, tabela_destino: str
 ) -> int:

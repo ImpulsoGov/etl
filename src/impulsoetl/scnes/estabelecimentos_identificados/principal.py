@@ -8,12 +8,11 @@
 import warnings
 
 warnings.filterwarnings("ignore")
-import pandas as pd
+from datetime import date
 from prefect import flow
 from sqlalchemy.orm import Session
 
 from impulsoetl import __VERSION__
-from impulsoetl.bd import Sessao
 from impulsoetl.scnes.estabelecimentos_identificados.carregamento import (
     carregar_dados,
 )
@@ -27,7 +26,6 @@ from impulsoetl.scnes.estabelecimentos_identificados.verificacao import (
     verificar_informacoes_estabelecimentos_identicados,
 )
 from impulsoetl.scnes.extracao_lista_cnes import extrair_lista_cnes
-from impulsoetl.loggers import habilitar_suporte_loguru, logger
 
 
 @flow(
@@ -47,6 +45,7 @@ def obter_informacoes_estabelecimentos_identificados(
     codigo_municipio: str,
     periodo_id: str,
     unidade_geografica_id: str,
+    periodo_data_inicio:date,
 ) -> None:
     """
     Extrai, transforma e carrega os dados dos estabelecimentos de saúde identificados na página do CNES
@@ -62,12 +61,11 @@ def obter_informacoes_estabelecimentos_identificados(
     lista_cnes = extrair_lista_cnes(codigo_municipio=codigo_municipio)
 
     df_extraido = extrair_informacoes_estabelecimentos(
-        codigo_municipio=codigo_municipio, lista_cnes=lista_cnes
+        codigo_municipio=codigo_municipio, lista_cnes=lista_cnes,periodo_data_inicio=periodo_data_inicio,
     )
 
     df_tratado = tratamento_dados(
         df_extraido=df_extraido,
-        sessao=sessao,
         periodo_id=periodo_id,
         unidade_geografica_id=unidade_geografica_id,
     )
@@ -76,7 +74,7 @@ def obter_informacoes_estabelecimentos_identificados(
         df_extraido=df_extraido, df_tratado=df_tratado
     )
     carregar_dados(
-        sessao=sessao, df_verificado=df_tratado, tabela_destino=tabela_destino
+        sessao=sessao, df_tratado=df_tratado, tabela_destino=tabela_destino
     )
 
     return df_tratado
