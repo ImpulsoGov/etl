@@ -13,9 +13,8 @@ from prefect import flow
 from sqlalchemy.orm import Session
 
 from impulsoetl import __VERSION__
-from impulsoetl.scnes.estabelecimentos_identificados.carregamento import (
-    carregar_dados,
-)
+from impulsoetl.utilitarios.bd import carregar_dataframe
+
 from impulsoetl.scnes.estabelecimentos_identificados.extracao import (
     extrair_informacoes_estabelecimentos,
 )
@@ -73,7 +72,7 @@ def obter_informacoes_estabelecimentos_identificados(
     verificar_informacoes_estabelecimentos_identicados(
         df_extraido=df_extraido, df_tratado=df_tratado
     )
-    carregar_dados(
+    carregar_dataframe(
         sessao=sessao, df_tratado=df_tratado, tabela_destino=tabela_destino
     )
 
