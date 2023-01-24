@@ -3,18 +3,20 @@ warnings.filterwarnings("ignore")
 import requests
 import pandas as pd
 import json
+from datetime import date
 
 from impulsoetl.scnes.extracao_lista_cnes import extrair_lista_cnes
 from impulsoetl.scnes.estabelecimentos_equipes.extracao import extrair_equipes
 from impulsoetl.loggers import logger
 
 
-def extrair_profissionais_com_ine (codigo_municipio,lista_codigos):
+def extrair_profissionais_com_ine (
+    codigo_municipio:str,lista_codigos:list,periodo_data_inicio:date):
 
     df_extraido = pd.DataFrame()
 
     lista_codigos = extrair_lista_cnes(codigo_municipio)
-    equipes = extrair_equipes(codigo_municipio, lista_codigos)
+    equipes = extrair_equipes(codigo_municipio, lista_codigos, periodo_data_inicio)
 
     for cnes in lista_codigos:
         equipes_cnes = equipes.loc[equipes['estabelecimento_cnes_id']==cnes]
@@ -22,8 +24,7 @@ def extrair_profissionais_com_ine (codigo_municipio,lista_codigos):
         for coEquipe in codigos:
             coArea = codigos[coEquipe]
             
-            url = "http://cnes.datasus.gov.br/services/estabelecimentos-equipes/profissionais/"+codigo_municipio+cnes+"?coMun="+codigo_municipio+"&coArea="+coArea+"&coEquipe="+coEquipe
-    
+            url = ("http://cnes.datasus.gov.br/services/estabelecimentos-equipes/profissionais/{}?coMun={}&coArea={}&coEquipe={}&competencia={:%Y%m}".format(codigo_municipio, cnes, codigo_municipio, coArea, coEquipe, periodo_data_inicio))
             payload={}
             headers = {
                 'Accept': 'application/json, text/plain, */*',
@@ -47,7 +48,7 @@ def extrair_profissionais_com_ine (codigo_municipio,lista_codigos):
     
     return df_extraido    
 
-def extrair_profissionais (codigo_municipio:str, lista_codigos:list):
+def extrair_profissionais (codigo_municipio:str, lista_codigos:list, periodo_data_inicio=date):
 
     logger.info("Iniciando extração dos profissionais ...")
 
@@ -55,7 +56,7 @@ def extrair_profissionais (codigo_municipio:str, lista_codigos:list):
 
     for cnes in lista_codigos:
         try:
-            url = "http://cnes.datasus.gov.br/services/estabelecimentos-profissionais/"+codigo_municipio+cnes
+            url = ("http://cnes.datasus.gov.br/services/estabelecimentos-profissionais/{}{}?competencia={:%Y%m}".format(codigo_municipio,cnes, periodo_data_inicio))
     
             payload={}
             headers = {
