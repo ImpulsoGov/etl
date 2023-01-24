@@ -125,12 +125,3 @@ def tratamento_dados(
 
 
     return df_extraido
-
-#codigo_municipio =  '110015'
-#periodo_id = '2023'
-#unidade_geografica_id = 'brasil00000'
-#lista_codigos = extrair_lista_cnes(codigo_municipio)
-#df_extraido = extrair_equipes(codigo_municipio, lista_codigos)
-#df_tratado = tratamento_dados(df_extraido, periodo_id, unidade_geografica_id)
-
-#print(df_tratado)

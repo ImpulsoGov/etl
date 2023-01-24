@@ -6,6 +6,7 @@
 """ETL dos profissionais dos estabelecimentos de saúde do CNES por município."""
 
 import warnings
+from datetime import date
 
 warnings.filterwarnings("ignore")
 #from prefect import task
@@ -13,9 +14,6 @@ from sqlalchemy.orm import Session
 
 from impulsoetl import __VERSION__
 from impulsoetl.bd import Sessao
-from impulsoetl.scnes.carregamento_etls_scnes import (
-    carregar_dados,
-)
 
 from impulsoetl.utilitarios.bd import carregar_dataframe
 
@@ -67,7 +65,7 @@ def obter_profissionais_cnes(
         df_extraido=df_extraido, df_tratado=df_tratado
     )
     carregar_dataframe(
-        sessao=sessao, df_tratado=df_tratado, tabela_destino=tabela_destino
+        sessao=sessao, df=df_tratado, tabela_destino=tabela_destino
     )
 
     return df_extraido

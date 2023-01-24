@@ -314,6 +314,9 @@ def cnes_equipes(
             unidade_geografica_id = agendamento.unidade_geografica_id
             tabela_destino = agendamento.tabela_destino
             codigo_sus_municipio = agendamento.unidade_geografica_id_sus
+            periodo_data_inicio = agendamento.periodo_data_inicio
+            
+
 
             #print(codigo_sus_municipio)
 
@@ -322,7 +325,9 @@ def cnes_equipes(
                 tabela_destino=tabela_destino,
                 codigo_municipio=codigo_sus_municipio,
                 periodo_id=periodo_id,
-                unidade_geografica_id=unidade_geografica_id
+                unidade_geografica_id=unidade_geografica_id,
+                periodo_data_inicio=periodo_data_inicio,
+
             )
 
             if teste: 
@@ -371,6 +376,7 @@ def cnes_profissionais(
             unidade_geografica_id = agendamento.unidade_geografica_id
             tabela_destino = agendamento.tabela_destino
             codigo_sus_municipio = agendamento.unidade_geografica_id_sus
+            periodo_data_inicio = agendamento.periodo_data_inicio
 
             #print(codigo_sus_municipio)
 
@@ -379,7 +385,9 @@ def cnes_profissionais(
                 tabela_destino=tabela_destino,
                 codigo_municipio=codigo_sus_municipio,
                 periodo_id=periodo_id,
-                unidade_geografica_id=unidade_geografica_id
+                unidade_geografica_id=unidade_geografica_id,
+                periodo_data_inicio=periodo_data_inicio,
+
             )
 
             if teste: 
@@ -400,7 +408,6 @@ def cnes_profissionais(
             sessao.commit()
             logger.info("OK.")
 
-
-
-        
+if __name__ == "__main__":
+    cnes_profissionais()
 

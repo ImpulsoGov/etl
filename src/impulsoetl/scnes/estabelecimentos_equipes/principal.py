@@ -6,6 +6,7 @@
 """ETL das equipes dos estabelecimentos de saúde do CNES por município."""
 
 import warnings
+from datetime import date
 
 warnings.filterwarnings("ignore")
 from sqlalchemy.orm import Session
@@ -45,7 +46,7 @@ def obter_equipes_cnes(
     codigo_municipio: str,
     periodo_id: str,
     unidade_geografica_id: str,
-    periodo_data_inicio: date,
+    periodo_data_inicio: date
 
 ) -> None:
     """

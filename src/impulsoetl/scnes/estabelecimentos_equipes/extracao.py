@@ -17,7 +17,7 @@ def extrair_equipes(codigo_municipio: str, lista_cnes: list, periodo_data_inicio
 
         try:
 
-            url = ("https://cnes.datasus.gov.br/services/estabelecimentos/{}{}?competencia={:%Y%m}".format(codigo_municipio,cnes,periodo_data_inicio))
+            url = ("https://cnes.datasus.gov.br/services/estabelecimentos-equipes/{}{}?competencia={:%Y%m}".format(codigo_municipio,cnes,periodo_data_inicio))
 
             payload={}
             headers = {
@@ -31,14 +31,16 @@ def extrair_equipes(codigo_municipio: str, lista_cnes: list, periodo_data_inicio
             response = requests.request("GET", url, headers=headers, data=payload)
             res = response.text
 
+
             parsed = json.loads(res)
+
             df = pd.DataFrame(parsed)
+
             df['municipio_id_sus']=codigo_municipio
             df['estabelecimento_cnes_id']=cnes
             df_extraido = df_extraido.append(df)
             
-        except Exception as e:
-            logger.info(e)
+        except json.JSONDecodeError:
             logger.info("Erro ao tentar extrair equipes para o estabelecimento " + cnes)
             pass
     

@@ -108,5 +108,3 @@ def tratamento_dados(
 
     return df_extraido
 
-
-
