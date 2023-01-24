@@ -15,9 +15,8 @@ from impulsoetl import __VERSION__
 from impulsoetl.bd import Sessao
 from impulsoetl.loggers import logger
 
-from impulsoetl.scnes.carregamento_etls_scnes import (
-    carregar_dados,
-)
+from impulsoetl.utilitarios.bd import carregar_dataframe
+
 from impulsoetl.scnes.estabelecimentos_equipes.extracao import (
     extrair_equipes
 )
@@ -46,6 +45,8 @@ def obter_equipes_cnes(
     codigo_municipio: str,
     periodo_id: str,
     unidade_geografica_id: str,
+    periodo_data_inicio: date,
+
 ) -> None:
     """
     Extrai, transforma e carrega os dados das equipes dos estabelecimentos de saúde identificados no CNES
@@ -60,7 +61,8 @@ def obter_equipes_cnes(
     lista_cnes = extrair_lista_cnes(codigo_municipio=codigo_municipio)
 
     df_extraido = extrair_equipes(
-        codigo_municipio=codigo_municipio, lista_cnes=lista_cnes
+        codigo_municipio=codigo_municipio, lista_cnes=lista_cnes, periodo_data_inicio=periodo_data_inicio
+
     )
 
     df_tratado = tratamento_dados(
@@ -73,7 +75,7 @@ def obter_equipes_cnes(
         df_extraido=df_extraido, df_tratado=df_tratado
     )
     
-    carregar_dados(
+    carregar_dataframe(
         sessao=sessao, df_tratado=df_tratado, tabela_destino=tabela_destino
     )
    
