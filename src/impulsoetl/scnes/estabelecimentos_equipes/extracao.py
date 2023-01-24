@@ -3,11 +3,12 @@ warnings.filterwarnings("ignore")
 import requests
 import pandas as pd
 import json
+from datetime import date
 
 from impulsoetl.scnes.extracao_lista_cnes import extrair_lista_cnes
 from impulsoetl.loggers import logger
 
-def extrair_equipes(codigo_municipio: str, lista_cnes: list) -> pd.DataFrame:
+def extrair_equipes(codigo_municipio: str, lista_cnes: list, periodo_data_inicio:date) -> pd.DataFrame:
     
     logger.info("Iniciando extração das equipes ...")
     df_extraido = pd.DataFrame()
@@ -16,7 +17,7 @@ def extrair_equipes(codigo_municipio: str, lista_cnes: list) -> pd.DataFrame:
 
         try:
 
-            url = "http://cnes.datasus.gov.br/services/estabelecimentos-equipes/"+codigo_municipio+cnes
+            url = ("https://cnes.datasus.gov.br/services/estabelecimentos/{}{}?competencia={:%Y%m}".format(codigo_municipio,cnes,periodo_data_inicio))
 
             payload={}
             headers = {
@@ -46,11 +47,5 @@ def extrair_equipes(codigo_municipio: str, lista_cnes: list) -> pd.DataFrame:
 
     return df_extraido
 
-
-#codigo_municipio = '130380'
-#lista_codigos = extrair_lista_cnes(codigo_municipio)
-#data = extrair_equipes(codigo_municipio, lista_codigos)
-
-#print(data)
 
 
