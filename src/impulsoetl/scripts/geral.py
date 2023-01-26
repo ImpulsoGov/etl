@@ -19,6 +19,7 @@ from impulsoetl.scnes.vinculos import obter_vinculos
 from impulsoetl.sim.do import obter_do 
 from impulsoetl.loggers import habilitar_suporte_loguru, logger
 from impulsoetl.scnes.estabelecimentos_identificados.principal import obter_informacoes_estabelecimentos_identificados
+from impulsoetl.scnes.estabelecimentos_horarios.principal import obter_horarios_estabelecimentos
 
 agendamentos = tabelas["configuracoes.capturas_agendamentos"]
 capturas_historico = tabelas["configuracoes.capturas_historico"]
@@ -282,3 +283,67 @@ def cnes_estabelecimentos_identificados(teste: bool = False,)-> None:
             conector.execute(requisicao_inserir_historico)
             sessao.commit()
             logger.info("OK.")
+
+
+@flow(
+    name="Rodar Agendamentos dos Horários de Funcionamento dos Estabelecimentos "
+    + "(por município)",
+    description=(
+        "Lê os agendamentos para obter as informações dos horários de funcionamento estabelecimentos "
+        + "de saúde por município na página do CNES"
+    ),
+    retries=0,
+    retry_delay_seconds=None,
+    version=__VERSION__,
+    validate_parameters=False,
+)
+def cnes_estabelecimentos_horarios(teste: bool = True,)-> None:
+    
+    habilitar_suporte_loguru()
+
+    operacao_id  = "063d29a0-a77c-7f0b-b4d2-1274ffe59619"
+
+    with Sessao() as sessao:
+        agendamentos_cnes = (
+            sessao.query(agendamentos)
+            .filter(agendamentos.c.operacao_id == operacao_id)
+            .all()
+        )
+
+        for agendamento in agendamentos_cnes:
+            periodo_id = agendamento.periodo_id
+            unidade_geografica_id = agendamento.unidade_geografica_id
+            tabela_destino = agendamento.tabela_destino
+            codigo_sus_municipio = agendamento.unidade_geografica_id_sus
+            periodo_data_inicio = agendamento.periodo_data_inicio
+
+            obter_horarios_estabelecimentos(
+                sessao=sessao,
+                tabela_destino=tabela_destino,
+                codigo_municipio=codigo_sus_municipio,
+                periodo_id=periodo_id,
+                unidade_geografica_id=unidade_geografica_id,
+                periodo_data_inicio=periodo_data_inicio,
+            )
+
+            if teste: 
+                sessao.rollback()
+                break
+
+            logger.info("Registrando captura bem-sucedida...")
+
+            requisicao_inserir_historico = capturas_historico.insert(
+                {
+                    "operacao_id": operacao_id,
+                    "periodo_id": agendamento.periodo_id,
+                    "unidade_geografica_id": agendamento.unidade_geografica_id,
+                }
+            )
+            conector = sessao.connection()
+            conector.execute(requisicao_inserir_historico)
+            sessao.commit()
+            logger.info("OK.")
+
+#if __name__ == "__main__":
+ #   cnes_estabelecimentos_horarios()
+
