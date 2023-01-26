@@ -8,12 +8,12 @@ import warnings
 
 warnings.filterwarnings("ignore")
 import json
+from datetime import date
 
 import numpy as np
 import pandas as pd
 import requests
 from prefect import task
-from datetime import date
 
 from impulsoetl.loggers import habilitar_suporte_loguru, logger
 

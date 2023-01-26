@@ -9,12 +9,11 @@ import warnings
 
 warnings.filterwarnings("ignore")
 from datetime import date
+
 from prefect import flow
 from sqlalchemy.orm import Session
 
 from impulsoetl import __VERSION__
-from impulsoetl.utilitarios.bd import carregar_dataframe
-
 from impulsoetl.scnes.estabelecimentos_identificados.extracao import (
     extrair_informacoes_estabelecimentos,
 )
@@ -25,6 +24,7 @@ from impulsoetl.scnes.estabelecimentos_identificados.verificacao import (
     verificar_informacoes_estabelecimentos_identicados,
 )
 from impulsoetl.scnes.extracao_lista_cnes import extrair_lista_cnes
+from impulsoetl.utilitarios.bd import carregar_dataframe
 
 
 @flow(

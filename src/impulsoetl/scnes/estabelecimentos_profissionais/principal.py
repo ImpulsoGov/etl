@@ -14,9 +14,6 @@ from sqlalchemy.orm import Session
 
 from impulsoetl import __VERSION__
 from impulsoetl.bd import Sessao
-
-from impulsoetl.utilitarios.bd import carregar_dataframe
-
 from impulsoetl.scnes.estabelecimentos_profissionais.extracao import (
     extrair_profissionais,
 )
@@ -27,6 +24,8 @@ from impulsoetl.scnes.estabelecimentos_profissionais.verificacao import (
     verificar_dados,
 )
 from impulsoetl.scnes.extracao_lista_cnes import extrair_lista_cnes
+from impulsoetl.utilitarios.bd import carregar_dataframe
+
 #from impulsoetl.loggers import habilitar_suporte_loguru, logger
 
 

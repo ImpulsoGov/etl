@@ -11,17 +11,23 @@
 from prefect import flow
 
 from impulsoetl import __VERSION__
-from impulsoetl.bd import tabelas, Sessao
-
+from impulsoetl.bd import Sessao, tabelas
 from impulsoetl.loggers import habilitar_suporte_loguru, logger
+
 """
 from impulsoetl.brasilapi.cep import obter_cep
 from impulsoetl.scnes.habilitacoes import obter_habilitacoes
 from impulsoetl.scnes.vinculos import obter_vinculos
 from impulsoetl.sim.do import obter_do """
-from impulsoetl.scnes.estabelecimentos_identificados.principal import obter_informacoes_estabelecimentos_identificados
-from impulsoetl.scnes.estabelecimentos_equipes.principal import obter_equipes_cnes
-from impulsoetl.scnes.estabelecimentos_profissionais.principal import obter_profissionais_cnes
+from impulsoetl.scnes.estabelecimentos_equipes.principal import (
+    obter_equipes_cnes,
+)
+from impulsoetl.scnes.estabelecimentos_identificados.principal import (
+    obter_informacoes_estabelecimentos_identificados,
+)
+from impulsoetl.scnes.estabelecimentos_profissionais.principal import (
+    obter_profissionais_cnes,
+)
 
 agendamentos = tabelas["configuracoes.capturas_agendamentos"]
 capturas_historico = tabelas["configuracoes.capturas_historico"]
@@ -316,10 +322,6 @@ def cnes_equipes(
             codigo_sus_municipio = agendamento.unidade_geografica_id_sus
             periodo_data_inicio = agendamento.periodo_data_inicio
             
-
-
-            #print(codigo_sus_municipio)
-
             obter_equipes_cnes(
                 sessao=sessao,
                 tabela_destino=tabela_destino,
@@ -378,7 +380,6 @@ def cnes_profissionais(
             codigo_sus_municipio = agendamento.unidade_geografica_id_sus
             periodo_data_inicio = agendamento.periodo_data_inicio
 
-            #print(codigo_sus_municipio)
 
             obter_profissionais_cnes(
                 sessao=sessao,
@@ -408,6 +409,5 @@ def cnes_profissionais(
             sessao.commit()
             logger.info("OK.")
 
-if __name__ == "__main__":
-    cnes_profissionais()
+
 

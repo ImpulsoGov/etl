@@ -1,15 +1,38 @@
 import warnings
+
 warnings.filterwarnings("ignore")
-import requests
-import pandas as pd
 import json
 from datetime import date
+from prefect import task
 
+import pandas as pd
+import requests
+
+from impulsoetl.loggers import logger, habilitar_suporte_loguru
 from impulsoetl.scnes.extracao_lista_cnes import extrair_lista_cnes
-from impulsoetl.loggers import logger
 
+@task(
+    name="Extrair Informações das Equipes",
+    description=(
+        "Extrai os dados das equipes dos estabelecimentos de saúde"
+        + "a partir da página do CNES."
+    ),
+    tags=["cnes", "equipes", "extracao"],
+    retries=2,
+    retry_delay_seconds=120,
+)
 def extrair_equipes(codigo_municipio: str, lista_cnes: list, periodo_data_inicio:date) -> pd.DataFrame:
-    
+    """
+    Extrai informaçãoes das equipes de saúde dos estabelecimentos a partir da página do CNES
+     Argumentos:
+        codigo_municipio: Id sus do municipio.
+        lista_cnes: Lista contento os códigos CNES dos estabelecimentos presentes no município
+                    (conforme retornado pela função [`extrair_lista_cnes()`][]).
+        periodo_data_inicipio: Data da competência atual
+     Retorna:
+        Objeto [`pandas.DataFrame`] com os dados extraídos.
+    """
+    habilitar_suporte_loguru()
     logger.info("Iniciando extração das equipes ...")
     df_extraido = pd.DataFrame()
 

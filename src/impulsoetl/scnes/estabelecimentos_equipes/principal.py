@@ -9,25 +9,20 @@ import warnings
 from datetime import date
 
 warnings.filterwarnings("ignore")
-from sqlalchemy.orm import Session
 from prefect import flow
+from sqlalchemy.orm import Session
 
 from impulsoetl import __VERSION__
 from impulsoetl.bd import Sessao
 from impulsoetl.loggers import logger
-
-from impulsoetl.utilitarios.bd import carregar_dataframe
-
-from impulsoetl.scnes.estabelecimentos_equipes.extracao import (
-    extrair_equipes
-)
+from impulsoetl.scnes.estabelecimentos_equipes.extracao import extrair_equipes
 from impulsoetl.scnes.estabelecimentos_equipes.tratamento import (
     tratamento_dados,
 )
-from impulsoetl.scnes.verificacao_etls_scnes import (
-    verificar_dados,
-)
 from impulsoetl.scnes.extracao_lista_cnes import extrair_lista_cnes
+from impulsoetl.scnes.verificacao_etls_scnes import verificar_dados
+from impulsoetl.utilitarios.bd import carregar_dataframe
+
 
 @flow(
     name="Obter dados da Ficha de Equipes de Saúde por Estabelecimento",
@@ -77,7 +72,7 @@ def obter_equipes_cnes(
     )
     
     carregar_dataframe(
-        sessao=sessao, df_tratado=df_tratado, tabela_destino=tabela_destino
+        sessao=sessao, df=df_tratado, tabela_destino=tabela_destino
     )
    
 

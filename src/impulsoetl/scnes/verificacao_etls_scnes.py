@@ -10,9 +10,11 @@ warnings.filterwarnings("ignore")
 
 import numpy as np
 import pandas as pd
-#from prefect import task
 
 from impulsoetl.loggers import habilitar_suporte_loguru, logger
+
+#from prefect import task
+
 
 
 def verifica_diferenca_qtd_registros(
