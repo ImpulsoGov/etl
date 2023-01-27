@@ -1,8 +1,12 @@
+import warnings
+
+warnings.filterwarnings("ignore")
 import json
 
 import pandas as pd
 import requests
 import sys
+import json
 
 from datetime import date
 from prefect import task
@@ -11,8 +15,8 @@ from impulsoetl.scnes.extracao_lista_cnes import extrair_lista_cnes
 from impulsoetl.loggers import logger, habilitar_suporte_loguru
 
 
-def extrair_horarios_estabelecimentos (
-    codigo_municipio: str, lista_cnes: list, periodo_data_inicio:date
+def extrair_horarios_estabelecimentos(
+    codigo_municipio: str, lista_cnes: list, periodo_data_inicio: date
 ) -> pd.DataFrame:
     """
     Extrai os horários de funcionamento dos estabelecimentos de saúde ATIVOS presentes no município
@@ -25,7 +29,7 @@ def extrair_horarios_estabelecimentos (
     Retorna:
         Objeto [`pandas.DataFrame`] com os dados extraídos.
     """
-    
+
     habilitar_suporte_loguru()
     logger.info(
         "Iniciando a extração dos horários dos estabelecimentos do município: "
@@ -33,10 +37,16 @@ def extrair_horarios_estabelecimentos (
     )
 
     df_extraido = pd.DataFrame()
-    
+
     for cnes in lista_cnes:
         try:
-            url = "http://cnes.datasus.gov.br/services/estabelecimentos/atendimento/"+codigo_municipio+cnes+"?competencia={:%Y%m}".format(periodo_data_inicio)
+            url = (
+                "http://cnes.datasus.gov.br/services/estabelecimentos/atendimento/"
+                + codigo_municipio
+                + cnes
+                + "?competencia={:%Y%m}".format(periodo_data_inicio)
+            )
+            # url = "http://cnes.datasus.gov.br/services/estabelecimentos/atendimento/"+codigo_municipio+cnes
             payload = {}
             headers = {
                 "Accept": "application/json, text/plain, */*",
