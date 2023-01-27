@@ -122,7 +122,7 @@ def extrair_profissionais (
             logger.error("Erro ao extrair os profissionais")
             pass
     
-    df_ine = extrair_profissionais_com_ine(codigo_municipio=codigo_municipio,lista_codigos=lista_codigos, periodo_data_inicio)=periodo_data_inicio
+    df_ine = extrair_profissionais_com_ine(codigo_municipio=codigo_municipio,lista_codigos=lista_codigos, periodo_data_inicio=periodo_data_inicio)
     df_ine = df_ine[['estabelecimento_cnes_id','INE','dtEntrada','dtDesligamento','cns']]
     df_consolidado = pd.merge(df_parcial, df_ine, how='outer', on=['cns','estabelecimento_cnes_id'])
 
