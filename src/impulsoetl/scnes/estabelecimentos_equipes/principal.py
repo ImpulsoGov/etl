@@ -3,34 +3,31 @@
 # SPDX-License-Identifier: MIT
 
 
-"""ETL dos estabelecimentos de saúde identificados na página do CNES por município."""
+"""ETL das equipes dos estabelecimentos de saúde do CNES por município."""
 
 import warnings
-
-warnings.filterwarnings("ignore")
 from datetime import date
 
+warnings.filterwarnings("ignore")
 from prefect import flow
 from sqlalchemy.orm import Session
 
 from impulsoetl import __VERSION__
-from impulsoetl.scnes.estabelecimentos_identificados.extracao import (
-    extrair_informacoes_estabelecimentos,
-)
-from impulsoetl.scnes.estabelecimentos_identificados.tratamento import (
+from impulsoetl.bd import Sessao
+from impulsoetl.loggers import logger
+from impulsoetl.scnes.estabelecimentos_equipes.extracao import extrair_equipes
+from impulsoetl.scnes.estabelecimentos_equipes.tratamento import (
     tratamento_dados,
 )
-from impulsoetl.scnes.estabelecimentos_identificados.verificacao import (
-    verificar_informacoes_estabelecimentos_identicados,
-)
 from impulsoetl.scnes.extracao_lista_cnes import extrair_lista_cnes
+from impulsoetl.scnes.verificacao_etls_scnes import verificar_dados
 from impulsoetl.utilitarios.bd import carregar_dataframe
 
 
 @flow(
-    name="Obter dados dos Estabelecimentos Identificados",
+    name="Obter dados da Ficha de Equipes de Saúde por Estabelecimento",
     description=(
-        "Extrai, transforma e carrega os dados dos estabelecimentos de saúde "
+        "Extrai, transforma e carrega os dados dos equipes de saúde "
         + "a partir da página do CNES"
     ),
     retries=0,
@@ -38,7 +35,7 @@ from impulsoetl.utilitarios.bd import carregar_dataframe
     version=__VERSION__,
     validate_parameters=False,
 )
-def obter_informacoes_estabelecimentos_identificados(
+def obter_equipes_cnes(
     sessao: Session,
     tabela_destino: str,
     codigo_municipio: str,
@@ -47,8 +44,7 @@ def obter_informacoes_estabelecimentos_identificados(
     periodo_data_inicio: date,
 ) -> None:
     """
-    Extrai, transforma e carrega os dados dos estabelecimentos de saúde identificados na página do CNES
-
+    Extrai, transforma e carrega os dados das equipes dos estabelecimentos de saúde identificados no CNES
      Argumentos:
         sessao: objeto [`sqlalchemy.orm.session.Session`][] que permite acessar a base de dados da ImpulsoGov.
         tabela_destino: Nome da tabela de destino a ser carregada com os dados extraidos e tratados.
@@ -59,7 +55,7 @@ def obter_informacoes_estabelecimentos_identificados(
 
     lista_cnes = extrair_lista_cnes(codigo_municipio=codigo_municipio)
 
-    df_extraido = extrair_informacoes_estabelecimentos(
+    df_extraido = extrair_equipes(
         codigo_municipio=codigo_municipio,
         lista_cnes=lista_cnes,
         periodo_data_inicio=periodo_data_inicio,
@@ -71,11 +67,10 @@ def obter_informacoes_estabelecimentos_identificados(
         unidade_geografica_id=unidade_geografica_id,
     )
 
-    verificar_informacoes_estabelecimentos_identicados(
-        df_extraido=df_extraido, df_tratado=df_tratado
-    )
+    verificar_dados(df_extraido=df_extraido, df_tratado=df_tratado)
+
     carregar_dataframe(
-        sessao=sessao, df_tratado=df_tratado, tabela_destino=tabela_destino
+        sessao=sessao, df=df_tratado, tabela_destino=tabela_destino
     )
 
     return df_tratado
