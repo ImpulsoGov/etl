@@ -18,13 +18,10 @@ from impulsoetl.loggers import logger
 def extrair_lista_cnes(codigo_municipio: str) -> list:
     """
     Extrai a lista dos códigos CNES dos estabelecimentos presentes no município.
-
      Argumentos:
       codigo_municipio: Id sus do municipio.
-
     Retorna:
       Lista contendo os códigos CNES dos estabelecimentos de saúde.
-
     """
 
     logger.info(
