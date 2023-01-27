@@ -5,7 +5,7 @@ import numpy as np
 import pandas as pd
 from prefect import task
 
-from impulsoetl.loggers import logger, habilitar_suporte_loguru
+from impulsoetl.loggers import habilitar_suporte_loguru, logger
 from impulsoetl.scnes.estabelecimentos_equipes.extracao import extrair_equipes
 from impulsoetl.scnes.estabelecimentos_profissionais.extracao import (
     extrair_profissionais,
@@ -26,6 +26,7 @@ def verifica_diferenca_qtd_registros(
         - df_tratado["estabelecimento_cnes_id"].count()
         == 0
     )
+
 
 @task(
     name="Validar dados dos Profissionais de Saúde",
@@ -53,9 +54,8 @@ def verificar_dados(
         considerada válida.
     [`AssertionError`]: https://docs.python.org/3/library/exceptions.html#AssertionError
     """
-    
+
     habilitar_suporte_loguru()
     logger.info("Iniciando a verificação dos dados ... ")
     assert verifica_diferenca_qtd_registros(df_extraido, df_tratado)
     logger.info("Dados verificados corretamente")
-

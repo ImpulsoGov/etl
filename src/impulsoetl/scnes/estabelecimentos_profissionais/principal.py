@@ -9,7 +9,7 @@ import warnings
 from datetime import date
 
 warnings.filterwarnings("ignore")
-#from prefect import task
+# from prefect import task
 from sqlalchemy.orm import Session
 
 from impulsoetl import __VERSION__
@@ -26,7 +26,7 @@ from impulsoetl.scnes.estabelecimentos_profissionais.verificacao import (
 from impulsoetl.scnes.extracao_lista_cnes import extrair_lista_cnes
 from impulsoetl.utilitarios.bd import carregar_dataframe
 
-#from impulsoetl.loggers import habilitar_suporte_loguru, logger
+# from impulsoetl.loggers import habilitar_suporte_loguru, logger
 
 
 def obter_profissionais_cnes(
@@ -35,7 +35,7 @@ def obter_profissionais_cnes(
     codigo_municipio: str,
     periodo_id: str,
     unidade_geografica_id: str,
-    periodo_data_inicio : date
+    periodo_data_inicio: date,
 ) -> None:
     """
     Extrai, transforma e carrega os dados dos profissionais dos estabelecimentos de saúde identificados no CNES
@@ -50,8 +50,9 @@ def obter_profissionais_cnes(
     lista_cnes = extrair_lista_cnes(codigo_municipio=codigo_municipio)
 
     df_extraido = extrair_profissionais(
-        codigo_municipio=codigo_municipio, lista_codigos=lista_cnes,periodo_data_inicio=periodo_data_inicio
-
+        codigo_municipio=codigo_municipio,
+        lista_codigos=lista_cnes,
+        periodo_data_inicio=periodo_data_inicio,
     )
 
     df_tratado = tratamento_dados(
@@ -60,9 +61,7 @@ def obter_profissionais_cnes(
         unidade_geografica_id=unidade_geografica_id,
     )
 
-    verificar_dados(
-        df_extraido=df_extraido, df_tratado=df_tratado
-    )
+    verificar_dados(df_extraido=df_extraido, df_tratado=df_tratado)
     carregar_dataframe(
         sessao=sessao, df=df_tratado, tabela_destino=tabela_destino
     )

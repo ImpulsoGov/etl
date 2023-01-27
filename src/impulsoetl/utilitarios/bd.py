@@ -244,7 +244,7 @@ def carregar_dataframe(
             "Erro ao inserir registros na tabela `{}` (Código {}, erro {})",
             tabela_destino,
             erro.pgcode,
-            erro
+            erro,
         )
         logger.debug(
             "({}.{}) {}",

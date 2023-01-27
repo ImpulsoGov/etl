@@ -44,7 +44,7 @@ def obter_informacoes_estabelecimentos_identificados(
     codigo_municipio: str,
     periodo_id: str,
     unidade_geografica_id: str,
-    periodo_data_inicio:date,
+    periodo_data_inicio: date,
 ) -> None:
     """
     Extrai, transforma e carrega os dados dos estabelecimentos de saúde identificados na página do CNES
@@ -60,7 +60,9 @@ def obter_informacoes_estabelecimentos_identificados(
     lista_cnes = extrair_lista_cnes(codigo_municipio=codigo_municipio)
 
     df_extraido = extrair_informacoes_estabelecimentos(
-        codigo_municipio=codigo_municipio, lista_cnes=lista_cnes,periodo_data_inicio=periodo_data_inicio,
+        codigo_municipio=codigo_municipio,
+        lista_cnes=lista_cnes,
+        periodo_data_inicio=periodo_data_inicio,
     )
 
     df_tratado = tratamento_dados(

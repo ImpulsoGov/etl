@@ -13,8 +13,7 @@ import pandas as pd
 
 from impulsoetl.loggers import habilitar_suporte_loguru, logger
 
-#from prefect import task
-
+# from prefect import task
 
 
 def verifica_diferenca_qtd_registros(
@@ -27,6 +26,7 @@ def verifica_diferenca_qtd_registros(
         - df_tratado["estabelecimento_cnes_id"].count()
         == 0
     )
+
 
 def verificar_dados(
     df_extraido: pd.DataFrame,
@@ -44,7 +44,7 @@ def verificar_dados(
         considerada válida.
     [`AssertionError`]: https://docs.python.org/3/library/exceptions.html#AssertionError
     """
-    #habilitar_suporte_loguru()
+    # habilitar_suporte_loguru()
     logger.info("Iniciando a verificação dos dados ... ")
     assert verifica_diferenca_qtd_registros(df_extraido, df_tratado)
     logger.info("Dados verificados corretamente")

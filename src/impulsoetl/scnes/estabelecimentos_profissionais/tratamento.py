@@ -3,71 +3,89 @@ import warnings
 warnings.filterwarnings("ignore")
 from datetime import date
 from typing import Final
-from prefect import task
 
 import numpy as np
 import pandas as pd
 from frozendict import frozendict
+from prefect import task
 
+from impulsoetl.loggers import habilitar_suporte_loguru, logger
 from impulsoetl.scnes.estabelecimentos_equipes.extracao import extrair_equipes
 from impulsoetl.scnes.estabelecimentos_profissionais.extracao import (
     extrair_profissionais,
 )
 from impulsoetl.scnes.extracao_lista_cnes import extrair_lista_cnes
 
-from impulsoetl.loggers import logger, habilitar_suporte_loguru
-
-['tpSusNaoSus', 'cbo', 'dsCbo', 'chOutros', 'chAmb', 'chHosp',
-       'vinculacao', 'vinculo', 'subVinculo', 'nome', 'cns', 'cnsMaster',
-       'artigo2', 'artigo3', 'artigo5', 'dtEntrada_x', 'municipio_id_sus',
-       'estabelecimento_cnes_id', 'INE', 'dtEntrada_y', 'dtDesligamento']
+[
+    "tpSusNaoSus",
+    "cbo",
+    "dsCbo",
+    "chOutros",
+    "chAmb",
+    "chHosp",
+    "vinculacao",
+    "vinculo",
+    "subVinculo",
+    "nome",
+    "cns",
+    "cnsMaster",
+    "artigo2",
+    "artigo3",
+    "artigo5",
+    "dtEntrada_x",
+    "municipio_id_sus",
+    "estabelecimento_cnes_id",
+    "INE",
+    "dtEntrada_y",
+    "dtDesligamento",
+]
 
 COLUNAS_EXCLUIR = [
-    'tpSusNaoSus',
-    'artigo2', 
-    'artigo3', 
-    'artigo5',
-    'dtEntrada_x',
-    'cnsMaster'
+    "tpSusNaoSus",
+    "artigo2",
+    "artigo3",
+    "artigo5",
+    "dtEntrada_x",
+    "cnsMaster",
 ]
 
 COLUNAS_RENOMEAR: Final[dict[str, str]] = {
-    'INE':'equipe_id_ine',
-    'nome':'profissional_nome',
-    'cns':'profissional_cns', 
-    'cbo':'profissional_cbo',
-    'dsCbo':'profissional_ocupacao', 
-    'vinculacao':'profissional_vinculacao', 
-    'vinculo':'profissional_vinculo_tipo',
-    'subVinculo':'profissional_vinculo_subptipo', 
-    'chHosp':'carga_horaria_hospitalar',
-    'chAmb':'carga_horaria_ambulatorial', 
-    'chOutros':'carga_horaria_outras', 
-    'dtEntrada_y':'periodo_data_entrada', 
-    'dtDesligamento':'periodo_data_desligamento',
+    "INE": "equipe_id_ine",
+    "nome": "profissional_nome",
+    "cns": "profissional_cns",
+    "cbo": "profissional_cbo",
+    "dsCbo": "profissional_ocupacao",
+    "vinculacao": "profissional_vinculacao",
+    "vinculo": "profissional_vinculo_tipo",
+    "subVinculo": "profissional_vinculo_subptipo",
+    "chHosp": "carga_horaria_hospitalar",
+    "chAmb": "carga_horaria_ambulatorial",
+    "chOutros": "carga_horaria_outras",
+    "dtEntrada_y": "periodo_data_entrada",
+    "dtDesligamento": "periodo_data_desligamento",
 }
 
 COLUNAS_TIPOS: Final[frozendict] = frozendict(
     {
-    'municipio_id_sus':'str',
-    'estabelecimento_cnes_id':'str',
-    'equipe_id_ine':'str',
-    'profissional_nome':'str',
-    'profissional_cns':'str', 
-    'profissional_cbo':'str',
-    'profissional_ocupacao':'str', 
-    'profissional_vinculacao':'str', 
-    'profissional_vinculo_tipo':'str',
-    'profissional_vinculo_subptipo':'str', 
-    'carga_horaria_hospitalar':'int',
-    'carga_horaria_ambulatorial':'int', 
-    'carga_horaria_outras':'int', 
-    'periodo_data_entrada':'str', 
-    'periodo_data_desligamento':'str',
+        "municipio_id_sus": "str",
+        "estabelecimento_cnes_id": "str",
+        "equipe_id_ine": "str",
+        "profissional_nome": "str",
+        "profissional_cns": "str",
+        "profissional_cbo": "str",
+        "profissional_ocupacao": "str",
+        "profissional_vinculacao": "str",
+        "profissional_vinculo_tipo": "str",
+        "profissional_vinculo_subptipo": "str",
+        "carga_horaria_hospitalar": "int",
+        "carga_horaria_ambulatorial": "int",
+        "carga_horaria_outras": "int",
+        "periodo_data_entrada": "str",
+        "periodo_data_desligamento": "str",
     }
 )
 
-COLUNAS_DATA = ['periodo_data_entrada','periodo_data_desligamento']
+COLUNAS_DATA = ["periodo_data_entrada", "periodo_data_desligamento"]
 
 
 def renomear_colunas(df_extraido: pd.DataFrame) -> pd.DataFrame:
@@ -93,11 +111,13 @@ def tratar_tipos(df_extraido: pd.DataFrame) -> pd.DataFrame:
     return df_extraido
 
 
-def ordenar_colunas(df_extraido: pd.DataFrame, COLUNAS_TIPOS:dict):
+def ordenar_colunas(df_extraido: pd.DataFrame, COLUNAS_TIPOS: dict):
     ordem_colunas = list(COLUNAS_TIPOS.keys())
     df_extraido = df_extraido[ordem_colunas]
 
     return df_extraido
+
+
 @task(
     name="Tratar Informações dos Profissionais de Saúde",
     description=(
@@ -135,4 +155,3 @@ def tratamento_dados(
     logger.info("Dados tratados com sucesso ...")
 
     return df_extraido
-

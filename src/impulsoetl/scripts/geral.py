@@ -223,7 +223,7 @@ def ceps(teste: bool = False) -> None:
 
     tabela_ceps_pendentes = tabelas["configuracoes.ceps_pendentes"]
 
-    with Sessao() as sessao: 
+    with Sessao() as sessao:
         ceps_pendentes_query = sessao.query(
             tabela_ceps_pendentes.c.id_cep,
         )
@@ -232,6 +232,7 @@ def ceps(teste: bool = False) -> None:
         ceps_pendentes = ceps_pendentes_query.all()
 
         obter_cep(sessao=sessao, ceps_pendentes=ceps_pendentes, teste=teste)
+
 
 @flow(
     name="Rodar Agendamentos de Estabelecimentos Identificados "
@@ -245,11 +246,13 @@ def ceps(teste: bool = False) -> None:
     version=__VERSION__,
     validate_parameters=False,
 )
-def cnes_estabelecimentos_identificados(teste: bool = False,)-> None:
-    
+def cnes_estabelecimentos_identificados(
+    teste: bool = False,
+) -> None:
+
     habilitar_suporte_loguru()
 
-    operacao_id  = "063b5cf8-34d1-744d-8f96-353d4f199171"
+    operacao_id = "063b5cf8-34d1-744d-8f96-353d4f199171"
 
     with Sessao() as sessao:
         agendamentos_cnes = (
@@ -274,7 +277,7 @@ def cnes_estabelecimentos_identificados(teste: bool = False,)-> None:
                 periodo_data_inicio=periodo_data_inicio,
             )
 
-            if teste: 
+            if teste:
                 sessao.rollback()
                 break
 
@@ -292,11 +295,10 @@ def cnes_estabelecimentos_identificados(teste: bool = False,)-> None:
             sessao.commit()
             logger.info("OK.")
 
+
 @flow(
     name="Rodar Agendamentos de Equipes do SCNES",
-    description=(
-        "Lê as capturas agendadas para ficha de equipes de saúde "
-    ),
+    description=("Lê as capturas agendadas para ficha de equipes de saúde "),
     retries=0,
     retry_delay_seconds=None,
     version=__VERSION__,
@@ -304,9 +306,9 @@ def cnes_estabelecimentos_identificados(teste: bool = False,)-> None:
 )
 def cnes_equipes(
     teste: bool = False,
-    )-> None:
+) -> None:
 
-    operacao_id  = "063c6b40-ab9a-7459-b59c-6ebaa34f1bfd"
+    operacao_id = "063c6b40-ab9a-7459-b59c-6ebaa34f1bfd"
 
     with Sessao() as sessao:
         agendamentos_cnes = (
@@ -321,7 +323,7 @@ def cnes_equipes(
             tabela_destino = agendamento.tabela_destino
             codigo_sus_municipio = agendamento.unidade_geografica_id_sus
             periodo_data_inicio = agendamento.periodo_data_inicio
-            
+
             obter_equipes_cnes(
                 sessao=sessao,
                 tabela_destino=tabela_destino,
@@ -329,10 +331,9 @@ def cnes_equipes(
                 periodo_id=periodo_id,
                 unidade_geografica_id=unidade_geografica_id,
                 periodo_data_inicio=periodo_data_inicio,
-
             )
 
-            if teste: 
+            if teste:
                 sessao.rollback()
                 break
 
@@ -349,6 +350,7 @@ def cnes_equipes(
             conector.execute(requisicao_inserir_historico)
             sessao.commit()
             logger.info("OK.")
+
 
 @flow(
     name="Rodar Agendamentos de Profissionais do SCNES",
@@ -362,9 +364,9 @@ def cnes_equipes(
 )
 def cnes_profissionais(
     teste: bool = False,
-    )-> None:
+) -> None:
 
-    operacao_id  = "063c94ab-a2f5-7504-866c-4a5d0d854105"
+    operacao_id = "063c94ab-a2f5-7504-866c-4a5d0d854105"
 
     with Sessao() as sessao:
         agendamentos_cnes = (
@@ -380,7 +382,6 @@ def cnes_profissionais(
             codigo_sus_municipio = agendamento.unidade_geografica_id_sus
             periodo_data_inicio = agendamento.periodo_data_inicio
 
-
             obter_profissionais_cnes(
                 sessao=sessao,
                 tabela_destino=tabela_destino,
@@ -388,10 +389,9 @@ def cnes_profissionais(
                 periodo_id=periodo_id,
                 unidade_geografica_id=unidade_geografica_id,
                 periodo_data_inicio=periodo_data_inicio,
-
             )
 
-            if teste: 
+            if teste:
                 sessao.rollback()
                 break
 
@@ -408,6 +408,3 @@ def cnes_profissionais(
             conector.execute(requisicao_inserir_historico)
             sessao.commit()
             logger.info("OK.")
-
-
-

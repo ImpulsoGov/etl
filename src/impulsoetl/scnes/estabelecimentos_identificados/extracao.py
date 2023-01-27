@@ -91,7 +91,9 @@ def tratar_ficha_vazia(cnes: str, codigo_municipio: str) -> pd.DataFrame:
     retry_delay_seconds=120,
 )
 def extrair_informacoes_estabelecimentos(
-    codigo_municipio: str, lista_cnes: list, periodo_data_inicio:date,
+    codigo_municipio: str,
+    lista_cnes: list,
+    periodo_data_inicio: date,
 ) -> pd.DataFrame:
     """
     Extrai informaçãoes dos estabelecimentos de saúde a partir da página do CNES
@@ -109,7 +111,9 @@ def extrair_informacoes_estabelecimentos(
 
     for cnes in lista_cnes:
         try:
-            url = ("https://cnes.datasus.gov.br/services/estabelecimentos/{}{}?competencia={:%Y%m}".format(codigo_municipio,cnes,periodo_data_inicio))
+            url = "https://cnes.datasus.gov.br/services/estabelecimentos/{}{}?competencia={:%Y%m}".format(
+                codigo_municipio, cnes, periodo_data_inicio
+            )
             payload = {}
             headers = {
                 "Accept": "application/json, text/plain, */*",

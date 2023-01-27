@@ -3,14 +3,15 @@ import warnings
 warnings.filterwarnings("ignore")
 import json
 from datetime import date
-from prefect import task
 
 import pandas as pd
 import requests
+from prefect import task
 
-from impulsoetl.loggers import logger,habilitar_suporte_loguru
+from impulsoetl.loggers import habilitar_suporte_loguru, logger
 from impulsoetl.scnes.estabelecimentos_equipes.extracao import extrair_equipes
 from impulsoetl.scnes.extracao_lista_cnes import extrair_lista_cnes
+
 
 def extrair_profissionais_com_ine (
     codigo_municipio:str,lista_codigos:list,periodo_data_inicio:date
@@ -117,8 +118,8 @@ def extrair_profissionais (
 
             df_parcial = df_parcial.append(df)
 
-        except Exception as e:
-            logger.info(e)
+        except json.JSONDecodeError:
+            logger.error("Erro ao extrair os profissionais")
             pass
     
     df_ine = extrair_profissionais_com_ine(codigo_municipio=codigo_municipio,lista_codigos=lista_codigos, periodo_data_inicio)=periodo_data_inicio
