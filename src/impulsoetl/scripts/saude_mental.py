@@ -34,6 +34,7 @@ capturas_historico = tabelas["configuracoes.capturas_historico"]
     ),
     retries=0,
     retry_delay_seconds=None,
+    timeout_seconds=14400,
     version=__VERSION__,
     validate_parameters=False,
 )
@@ -95,6 +96,7 @@ def resolutividade_aps_por_condicao(
     ),
     retries=0,
     retry_delay_seconds=None,
+    timeout_seconds=14400,
     version=__VERSION__,
     validate_parameters=False,
 )
@@ -155,6 +157,7 @@ def tipo_equipe_por_tipo_producao(
     ),
     retries=0,
     retry_delay_seconds=None,
+    timeout_seconds=14400,
     version=__VERSION__,
     validate_parameters=False,
 )
@@ -215,6 +218,7 @@ def raas_disseminacao(
     ),
     retries=0,
     retry_delay_seconds=None,
+    timeout_seconds=14400,
     version=__VERSION__,
     validate_parameters=False,
 )
@@ -278,6 +282,7 @@ def bpa_i_disseminacao(
     ),
     retries=0,
     retry_delay_seconds=None,
+    timeout_seconds=14400,
     version=__VERSION__,
     validate_parameters=False,
 )
@@ -339,6 +344,7 @@ def procedimentos_disseminacao(
     ),
     retries=0,
     retry_delay_seconds=None,
+    timeout_seconds=14400,
     version=__VERSION__,
     validate_parameters=False,
 )
@@ -398,6 +404,7 @@ def aih_reduzida_disseminacao(
     ),
     retries=0,
     retry_delay_seconds=None,
+    timeout_seconds=14400,
     version=__VERSION__,
     validate_parameters=False,
 )

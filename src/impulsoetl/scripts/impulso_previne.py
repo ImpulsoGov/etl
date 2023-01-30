@@ -36,6 +36,7 @@ capturas_historico = tabelas["configuracoes.capturas_historico"]
     ),
     retries=0,
     retry_delay_seconds=None,
+    timeout_seconds=14400,
     version=__VERSION__,
     validate_parameters=False,
 )
@@ -95,6 +96,7 @@ def cadastros_municipios_equipe_validas(
     ),
     retries=0,
     retry_delay_seconds=None,
+    timeout_seconds=14400,
     version=__VERSION__,
     validate_parameters=False,
 )
@@ -154,6 +156,7 @@ def cadastros_municipios_equipe_homologada(
     ),
     retries=0,
     retry_delay_seconds=None,
+    timeout_seconds=14400,
     version=__VERSION__,
     validate_parameters=False,
 )
@@ -216,6 +219,7 @@ def cadastros_municipios_equipe_todas(
     ),
     retries=0,
     retry_delay_seconds=None,
+    timeout_seconds=14400,
     version=__VERSION__,
     validate_parameters=False,
 )
@@ -281,6 +285,7 @@ def parametros_municipios_equipes_validas(
     ),
     retries=0,
     retry_delay_seconds=None,
+    timeout_seconds=14400,
     version=__VERSION__,
     validate_parameters=False,
 )
@@ -346,6 +351,7 @@ def parametros_municipios_equipes_homologada(
     ),
     retries=0,
     retry_delay_seconds=None,
+    timeout_seconds=14400,
     version=__VERSION__,
     validate_parameters=False,
 )
@@ -411,6 +417,7 @@ def parametros_cne_ine_equipes_homologada(
     ),
     retries=0,
     retry_delay_seconds=None,
+    timeout_seconds=14400,
     version=__VERSION__,
     validate_parameters=False,
 )
@@ -473,6 +480,7 @@ def parametros_cnes_ine_equipes_validas(
     ),
     retries=0,
     retry_delay_seconds=None,
+    timeout_seconds=14400,
     version=__VERSION__,
     validate_parameters=False,
 )
@@ -536,6 +544,7 @@ def indicadores_municipios_equipe_validas(
     ),
     retries=0,
     retry_delay_seconds=None,
+    timeout_seconds=14400,
     version=__VERSION__,
     validate_parameters=False,
 )
@@ -596,6 +605,7 @@ def indicadores_municipios_equipes_homologadas(
     ),
     retries=0,
     retry_delay_seconds=None,
+    timeout_seconds=14400,
     version=__VERSION__,
     validate_parameters=False,
 )
@@ -656,6 +666,7 @@ def indicadores_municipios_equipe_todas(
     ),
     retries=0,
     retry_delay_seconds=None,
+    timeout_seconds=14400,
     version=__VERSION__,
     validate_parameters=False,
 )
@@ -718,6 +729,7 @@ def validacao_producao(
     ),
     retries=0,
     retry_delay_seconds=None,
+    timeout_seconds=14400,
     version=__VERSION__,
     validate_parameters=False,
 )

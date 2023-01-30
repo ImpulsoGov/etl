@@ -38,6 +38,7 @@ capturas_historico = tabelas["configuracoes.capturas_historico"]
     ),
     retries=0,
     retry_delay_seconds=None,
+    timeout_seconds=14400,
     version=__VERSION__,
     validate_parameters=False,
 )
@@ -94,6 +95,7 @@ def habilitacoes_disseminacao(
     ),
     retries=0,
     retry_delay_seconds=None,
+    timeout_seconds=14400,
     version=__VERSION__,
     validate_parameters=False,
 )
@@ -150,6 +152,7 @@ def vinculos_disseminacao(
     ),
     retries=0,
     retry_delay_seconds=None,
+    timeout_seconds=14400,
     version=__VERSION__,
     validate_parameters=False,
 )
@@ -207,6 +210,7 @@ def obitos_disseminacao(
     ),
     retries=0,
     retry_delay_seconds=None,
+    timeout_seconds=14400,
     version=__VERSION__,
     validate_parameters=False,
 )
@@ -238,6 +242,7 @@ def ceps(teste: bool = False) -> None:
     ),
     retries=0,
     retry_delay_seconds=None,
+    timeout_seconds=14400,
     version=__VERSION__,
     validate_parameters=False,
 )
@@ -293,6 +298,7 @@ def cnes_estabelecimentos_identificados(teste: bool = False,)-> None:
     description=("Lê as capturas agendadas para ficha de equipes de saúde "),
     retries=0,
     retry_delay_seconds=None,
+    timeout_seconds=14400,
     version=__VERSION__,
     validate_parameters=False,
 )
@@ -351,6 +357,7 @@ def cnes_equipes(
     ),
     retries=0,
     retry_delay_seconds=None,
+    timeout_seconds=14400,
     version=__VERSION__,
     validate_parameters=False,
 )
@@ -411,6 +418,7 @@ def cnes_profissionais(
     ),
     retries=0,
     retry_delay_seconds=None,
+    timeout_seconds=14400,
     version=__VERSION__,
     validate_parameters=False,
 )
