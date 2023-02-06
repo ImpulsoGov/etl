@@ -6,7 +6,7 @@ from datetime import date
 
 import pandas as pd
 import requests
-from prefect import task
+#from prefect import task
 
 from impulsoetl.loggers import habilitar_suporte_loguru, logger
 from impulsoetl.scnes.estabelecimentos_equipes.extracao import extrair_equipes
@@ -69,7 +69,7 @@ def extrair_profissionais_com_ine (
                 df_extraido = df_extraido.append(df)
             
     return df_extraido    
-
+"""
 @task(
     name="Extrair Informações dos Profissionais de Saúde",
     description=(
@@ -80,6 +80,7 @@ def extrair_profissionais_com_ine (
     retries=2,
     retry_delay_seconds=120,
 )
+"""
 def extrair_profissionais (
     codigo_municipio:str, 
     lista_codigos:list, 
@@ -127,7 +128,6 @@ def extrair_profissionais (
             pass
     
     df_ine = extrair_profissionais_com_ine(codigo_municipio=codigo_municipio,lista_codigos=lista_codigos, periodo_data_inicio=periodo_data_inicio)
-
     df_ine = df_ine[['estabelecimento_cnes_id','INE','dtEntrada','dtDesligamento','cns','municipio_id_sus']]
     df_consolidado = pd.merge(df_parcial, df_ine, how='outer', on=['cns','estabelecimento_cnes_id','municipio_id_sus'])
 
