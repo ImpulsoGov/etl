@@ -8,12 +8,11 @@ import numpy as np
 import pandas as pd
 import math
 from frozendict import frozendict
-from prefect import task
+#from prefect import task
 
 from impulsoetl.loggers import habilitar_suporte_loguru, logger
 from impulsoetl.scnes.estabelecimentos_equipes.extracao import extrair_equipes
 from impulsoetl.scnes.extracao_lista_cnes import extrair_lista_cnes
-
 
 COLUNAS_EXCLUIR = [
     "tpSusNaoSus",
@@ -59,7 +58,6 @@ COLUNAS_DATA = ["periodo_data_entrada"]
 
 COLUNAS_CARGA_HORARIA = ["carga_horaria_hospitalar","carga_horaria_ambulatorial", "carga_horaria_outras"]
 
-
 def renomear_colunas(df_extraido: pd.DataFrame) -> pd.DataFrame:
     df_extraido.rename(columns=COLUNAS_RENOMEAR, inplace=True)
     return df_extraido
@@ -76,6 +74,9 @@ def tratar_tipos(df_extraido: pd.DataFrame) -> pd.DataFrame:
             df_extraido[coluna], infer_datetime_format=True, errors="coerce"
         )
     
+    for coluna in COLUNAS_CARGA_HORARIA:
+        df_extraido[coluna] =  df_extraido[coluna].round(0)
+
     for coluna in COLUNAS_CARGA_HORARIA:
         df_extraido[coluna] =  df_extraido[coluna].round(0)
 
