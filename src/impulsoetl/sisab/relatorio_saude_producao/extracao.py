@@ -1,3 +1,6 @@
+import warnings
+
+warnings.filterwarnings("ignore")
 from datetime import date
 
 import pandas as pd
@@ -6,6 +9,8 @@ import requests
 from impulsoetl.sisab.funcoes_obter_relatorio_producao import extrair_producao_por_municipio
 from impulsoetl.sisab.funcoes_obter_relatorio_producao import transformar_producao_por_municipio
 from impulsoetl.loggers import logger
+
+"""
 
 CONDICAO_AVALIADA = [
     'Asma',
@@ -83,31 +88,62 @@ TIPO_ATENDIMENTO = [
     'Dem. esp. consulta no dia',
     'Dem. esp. atendimento urgência'
     ]
+"""
 
-df_consolidado = pd.DataFrame()
+CONDICAO_AVALIADA = [
+    'Diabetes',
+    'Hipertensão'
+    ]
 
-for condicao in CONDICAO_AVALIADA:
-    for conduta in CONDUTAS:
-        for profissional in CATEGORIA_PROFISSIONAL:
-            for atendimento in TIPO_ATENDIMENTO:
-                try:
-                    df_parcial = extrair_producao_por_municipio(
-                        tipo_producao="Atendimento individual",
-                        competencias=[date(2022, 12, 1)],
-                        selecoes_adicionais={
-                            "Problema/Condição Avaliada": [condicao], 
-                            "Conduta":[conduta],
-                            "Categoria do Profissional":[profissional], 
-                            "Tipo de Atendimento":[atendimento], 
-                        },
-                        ).pipe(transformar_producao_por_municipio)
-                except ParserError:
-                    logger.info("Erro ao aplicar os seguintes filtros: " 
-                    +condicao
-                    +conduta
-                    +profissional
-                    +atendimento)
+CONDUTAS = [
+    'Alta do episódio',
+    'Encaminhamento interno no dia',
+    #'Retorno para consulta agendada'
+]
 
-                    df_consolidado = df_consolidado.append(df_parcial)
+CATEGORIA_PROFISSIONAL = [
+    'Médico',
+    #'Sanitarista',
+    'Arteterapeuta'
+]
 
-print(df_consolidado)
+TIPO_ATENDIMENTO = [
+    'Consulta agendada',
+    'Dem. esp. esc. inicial/orient.',
+]
+
+def extrair_relatorio_saude_producao (
+    periodo_competencia:date
+)-> pd.DataFrame:
+
+    df_consolidado = pd.DataFrame()
+
+    for condicao in CONDICAO_AVALIADA:
+        for conduta in CONDUTAS:
+            for profissional in CATEGORIA_PROFISSIONAL:
+                for atendimento in TIPO_ATENDIMENTO:
+                    try:
+                        df_parcial = extrair_producao_por_municipio(
+                            tipo_producao="Atendimento individual",
+                            competencias=[periodo_competencia],
+                            selecoes_adicionais={
+                                "Problema/Condição Avaliada": [condicao], 
+                                "Conduta":[conduta],
+                                "Categoria do Profissional":[profissional], 
+                                "Tipo de Atendimento":[atendimento], 
+                                "Tipo de Equipe":"Selecionar Todos"
+                            },
+                            ).pipe(transformar_producao_por_municipio)
+                        #logger.info("Filtros aplicados: {} + {} + {} + {}", condicao, conduta, profissional, atendimento)
+                        #print(df_parcial)
+                        df_consolidado = df_consolidado.append(df_parcial)
+
+                    except Exception as e:
+                        logger.error(e)
+                        logger.info("Erro ao aplicar os seguintes filtros: {} + {} + {} + {}", 
+                        condicao,
+                        conduta,
+                        profissional,
+                        atendimento)
+                        pass
+    return df_consolidado
