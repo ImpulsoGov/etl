@@ -41,32 +41,34 @@ def extrair_profissionais_com_ine (
         for seqEquipe in codigos_equipe_area:
             coArea = codigos_equipe_area[seqEquipe]
             for coEquipe in codigos_equipe_cnes:
-                    
                 coEquipe = codigos_equipe_cnes[coEquipe]
-                
-                url = "http://cnes.datasus.gov.br/services/estabelecimentos-equipes/profissionais/"+codigo_municipio+cnes+"?coMun="+codigo_municipio+"&coArea="+coArea+"&coEquipe="+seqEquipe+"&competencia={:%Y%m}".format(periodo_data_inicio)
 
-                payload={}
-                headers = {
+                try:
+                    url = "http://cnes.datasus.gov.br/services/estabelecimentos-equipes/profissionais/"+codigo_municipio+cnes+"?coMun="+codigo_municipio+"&coArea="+coArea+"&coEquipe="+seqEquipe+"&competencia={:%Y%m}".format(periodo_data_inicio)
+                    payload={}
+                    headers = {
                     'Accept': 'application/json, text/plain, */*',
                     'Accept-Language': 'pt-BR,pt;q=0.9,en-US;q=0.8,en;q=0.7',
                     'Connection': 'keep-alive',
                     'Referer': 'http://cnes.datasus.gov.br/pages/estabelecimentos/ficha/equipes/',
                     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/105.0.0.0 Safari/537.36'
-                }
+                    }
 
-                response = requests.request("GET", url, headers=headers, data=payload)
-                res = response.text
+                    response = requests.request("GET", url, headers=headers, data=payload)
+                    res = response.text
         
-                parsed = json.loads(res)
-                df = pd.DataFrame(parsed)
-                df['INE'] = coEquipe
-                df['coArea'] = coArea
-                df['estabelecimento_cnes_id'] = cnes
-                df['municipio_id_sus'] = codigo_municipio
+                    parsed = json.loads(res)
+                    df = pd.DataFrame(parsed)
+                    df['INE'] = coEquipe
+                    df['coArea'] = coArea
+                    df['estabelecimento_cnes_id'] = cnes
+                    df['municipio_id_sus'] = codigo_municipio
 
+                    df_extraido = df_extraido.append(df)
 
-                df_extraido = df_extraido.append(df)
+                except json.JSONDecodeError:
+                    logger.error("Erro ao extrair os profissionais com INE")
+                    pass
             
     return df_extraido    
 """
