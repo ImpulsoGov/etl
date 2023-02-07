@@ -88,6 +88,7 @@ TIPO_ATENDIMENTO = [
     'Dem. esp. consulta no dia',
     'Dem. esp. atendimento urgência'
     ]
+
 """
 
 CONDICAO_AVALIADA = [
@@ -98,13 +99,12 @@ CONDICAO_AVALIADA = [
 CONDUTAS = [
     'Alta do episódio',
     'Encaminhamento interno no dia',
-    #'Retorno para consulta agendada'
 ]
 
 CATEGORIA_PROFISSIONAL = [
     'Médico',
-    #'Sanitarista',
-    'Arteterapeuta'
+    'Psicólogo',
+    'Enfermeiro'
 ]
 
 TIPO_ATENDIMENTO = [
@@ -131,7 +131,7 @@ def extrair_relatorio_saude_producao (
                                 "Conduta":[conduta],
                                 "Categoria do Profissional":[profissional], 
                                 "Tipo de Atendimento":[atendimento], 
-                                "Tipo de Equipe":"Selecionar Todos"
+                                #"Tipo de Equipe":"Selecionar Todos"
                             },
                             ).pipe(transformar_producao_por_municipio)
                         #logger.info("Filtros aplicados: {} + {} + {} + {}", condicao, conduta, profissional, atendimento)
