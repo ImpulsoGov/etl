@@ -6,8 +6,8 @@ from datetime import date
 import pandas as pd
 import requests
 
-from impulsoetl.sisab.funcoes_obter_relatorio_producao import extrair_producao_por_municipio
-from impulsoetl.sisab.funcoes_obter_relatorio_producao import transformar_producao_por_municipio
+from impulsoetl.sisab.utilitarios_sisab_relatorio_producao import extrair_producao_por_municipio
+from impulsoetl.sisab.utilitarios_sisab_relatorio_producao import transformar_producao_por_municipio
 from impulsoetl.loggers import logger
 
 """
@@ -104,7 +104,8 @@ CONDUTAS = [
 CATEGORIA_PROFISSIONAL = [
     'Médico',
     'Psicólogo',
-    'Enfermeiro'
+    #'Enfermeiro',
+    'Arteterapeuta'
 ]
 
 TIPO_ATENDIMENTO = [
@@ -138,7 +139,16 @@ def extrair_relatorio_saude_producao (
                         #print(df_parcial)
                         df_consolidado = df_consolidado.append(df_parcial)
 
-                    except Exception as e:
+                    except pd.errors.ParserError as e:
+                        logger.error(e)
+                        logger.info("Erro ao aplicar os seguintes filtros: {} + {} + {} + {}", 
+                        condicao,
+                        conduta,
+                        profissional,
+                        atendimento)
+                        pass
+                    
+                    except TypeError as e:
                         logger.error(e)
                         logger.info("Erro ao aplicar os seguintes filtros: {} + {} + {} + {}", 
                         condicao,
