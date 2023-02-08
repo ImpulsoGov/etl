@@ -16,7 +16,7 @@ from bs4 import BeautifulSoup as bs
 from more_itertools import chunked
 from pandas.errors import ParserError
 
-from impulsoetl.sisab.sisab_producao_classe import SisabRelatorioProducao
+from impulsoetl.sisab.modelo_sisab_producao import SisabRelatorioProducao
 from impulsoetl.loggers import logger
 
 
