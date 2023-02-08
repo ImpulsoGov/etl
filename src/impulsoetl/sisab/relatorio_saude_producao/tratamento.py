@@ -10,9 +10,6 @@ import numpy as np
 
 from impulsoetl.loggers import logger
 
-from impulsoetl.sisab.funcoes_obter_relatorio_producao import extrair_producao_por_municipio
-from impulsoetl.sisab.funcoes_obter_relatorio_producao import transformar_producao_por_municipio
-
 
 COLUNAS_EXCLUIR = ['uf_sigla','municipio_nome']
 
