@@ -18,12 +18,14 @@ COLUNAS_RENOMEAR : Final[dict[str, str]] = {
     'Problema/Condição Avaliada':'problema_condicao_avaliada',
     'Tipo de Atendimento':'tipo_atendimento',
     'Conduta':'conduta',
-    'quantidade_aprovada':'quantidade'
+    'quantidade_aprovada':'quantidade',
+    'Tipo de Equipe':'equipe_tipo'
 }
 
 COLUNAS_TIPOS: Final[frozendict] = frozendict(
     {
     'municipio_id_sus':'str',
+    'equipe_tipo':'str',
     'periodo_data_inicio':'str',
     'categoria_profissional':'str',
     'problema_condicao_avaliada':'str',
@@ -74,4 +76,3 @@ def tratamento_dados(
     logger.info("Dados tratados com sucesso ...")
 
     return df_extraido
-
