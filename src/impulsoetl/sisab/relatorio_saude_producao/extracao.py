@@ -93,7 +93,7 @@ TIPO_ATENDIMENTO = [
 
 CONDICAO_AVALIADA = [
     'Diabetes',
-    'Hipertensão'
+    'Hipertensão Arterial'
     ]
 
 CONDUTAS = [
@@ -103,9 +103,9 @@ CONDUTAS = [
 
 CATEGORIA_PROFISSIONAL = [
     'Médico',
-    'Psicólogo',
-    #'Enfermeiro',
-    'Arteterapeuta'
+    #'Psicólogo',
+    'Enfermeiro',
+    #'Arteterapeuta'
 ]
 
 TIPO_ATENDIMENTO = [
@@ -113,9 +113,8 @@ TIPO_ATENDIMENTO = [
     'Dem. esp. esc. inicial/orient.',
 ]
 
-def extrair_relatorio_saude_producao (
-    periodo_competencia:date
-)-> pd.DataFrame:
+def obter_relatorio_saude_producao_com_equipes (
+    periodo_competencia:date)-> pd.DataFrame:
 
     df_consolidado = pd.DataFrame()
 
@@ -132,11 +131,11 @@ def extrair_relatorio_saude_producao (
                                 "Conduta":[conduta],
                                 "Categoria do Profissional":[profissional], 
                                 "Tipo de Atendimento":[atendimento], 
-                                #"Tipo de Equipe":"Selecionar Todos"
+                                "Tipo de Equipe":"Selecionar Todos"
                             },
+                            
                             ).pipe(transformar_producao_por_municipio)
-                        #logger.info("Filtros aplicados: {} + {} + {} + {}", condicao, conduta, profissional, atendimento)
-                        #print(df_parcial)
+                  
                         df_consolidado = df_consolidado.append(df_parcial)
 
                     except pd.errors.ParserError as e:
@@ -157,3 +156,73 @@ def extrair_relatorio_saude_producao (
                         atendimento)
                         pass
     return df_consolidado
+
+def obter_relatorio_saude_producao_sem_equipes (
+    periodo_competencia:date)-> pd.DataFrame:
+
+    df_consolidado = pd.DataFrame()
+
+    for condicao in CONDICAO_AVALIADA:
+        for conduta in CONDUTAS:
+            for profissional in CATEGORIA_PROFISSIONAL:
+                for atendimento in TIPO_ATENDIMENTO:
+                    try:
+                        df_parcial = extrair_producao_por_municipio(
+                            tipo_producao="Atendimento individual",
+                            competencias=[periodo_competencia],
+                            selecoes_adicionais={
+                                "Problema/Condição Avaliada": [condicao], 
+                                "Conduta":[conduta],
+                                "Categoria do Profissional":[profissional], 
+                                "Tipo de Atendimento":[atendimento], 
+                            },
+                            
+                            ).pipe(transformar_producao_por_municipio)
+                       
+                        df_consolidado = df_consolidado.append(df_parcial)
+
+                    except pd.errors.ParserError as e:
+                        logger.error(e)
+                        logger.info("Erro ao aplicar os seguintes filtros: {} + {} + {} + {}", 
+                        condicao,
+                        conduta,
+                        profissional,
+                        atendimento)
+                        pass
+                    
+                    except TypeError as e:
+                        logger.error(e)
+                        logger.info("Erro ao aplicar os seguintes filtros: {} + {} + {} + {}", 
+                        condicao,
+                        conduta,
+                        profissional,
+                        atendimento)
+                        pass
+    return df_consolidado
+
+def extrair_relatorio(
+    periodo_competencia: date)-> pd.DataFrame():
+
+    df_extraido_com_equipes = obter_relatorio_saude_producao_com_equipes(periodo_competencia)
+    df_extraido_com_equipes = df_extraido_com_equipes.rename(columns = {'quantidade_aprovada':'total_com_equipes'})
+
+    df_extraido_sem_equipes = obter_relatorio_saude_producao_sem_equipes(periodo_competencia)
+    df_extraido_sem_equipes = df_extraido_sem_equipes.rename(columns = {'quantidade_aprovada':'total_sem_equipes'})
+
+    agrupado_com_equipe = df_extraido_com_equipes.groupby(['uf_sigla','municipio_id_sus','municipio_nome','Conduta','Categoria do Profissional','Tipo de Atendimento'])['total_com_equipes'].sum().to_frame().reset_index()
+    agrupado_sem_equipe = df_extraido_sem_equipes.groupby(['uf_sigla','municipio_id_sus','municipio_nome','Conduta','Categoria do Profissional','Tipo de Atendimento'])['total_sem_equipes'].sum().to_frame().reset_index()
+   
+    df_parcial = agrupado_com_equipe.merge(agrupado_sem_equipe, how='right',on = ['uf_sigla','municipio_id_sus','municipio_nome','Conduta','Categoria do Profissional','Tipo de Atendimento'])
+    df_parcial['quantidade_aprovada'] = (df_parcial['total_sem_equipes'] - df_parcial['total_com_equipes']).round(0)
+    df_parcial['Tipo de Equipe'] = 'Equipe não identificada'
+    df_parcial['periodo_data_inicio'] = periodo_competencia
+    df_parcial = df_parcial[['uf_sigla','municipio_id_sus','municipio_nome','periodo_data_inicio','Tipo de Equipe','Conduta','Categoria do Profissional','Tipo de Atendimento','quantidade_aprovada']]
+
+    df_extraido_com_equipes = df_extraido_com_equipes.rename(columns = {'total_com_equipes':'quantidade_aprovada'})
+
+    df_extraido = pd.concat([df_extraido_com_equipes, df_parcial], ignore_index = True)
+
+    return df_extraido
+
+
+
