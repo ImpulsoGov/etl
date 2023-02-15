@@ -4,7 +4,7 @@ warnings.filterwarnings("ignore")
 from datetime import date
 
 import pandas as pd
-import requests
+import numpy as np
 
 from impulsoetl.sisab.utilitarios_sisab_relatorio_producao import extrair_producao_por_municipio
 from impulsoetl.sisab.utilitarios_sisab_relatorio_producao import transformar_producao_por_municipio
@@ -93,24 +93,24 @@ TIPO_ATENDIMENTO = [
 
 CONDICAO_AVALIADA = [
     'Diabetes',
-    'Hipertensão Arterial'
+    #'Hipertensão Arterial'
     ]
 
 CONDUTAS = [
     'Alta do episódio',
-    'Encaminhamento interno no dia',
+    #'Encaminhamento interno no dia',
 ]
 
 CATEGORIA_PROFISSIONAL = [
     'Médico',
     #'Psicólogo',
-    'Enfermeiro',
+    #'Enfermeiro',
     #'Arteterapeuta'
 ]
 
 TIPO_ATENDIMENTO = [
     'Consulta agendada',
-    'Dem. esp. esc. inicial/orient.',
+    #'Dem. esp. esc. inicial/orient.',
 ]
 
 def obter_relatorio_saude_producao_com_equipes (
@@ -207,17 +207,19 @@ def extrair_relatorio(
     df_extraido_com_equipes = df_extraido_com_equipes.rename(columns = {'quantidade_aprovada':'total_com_equipes'})
 
     df_extraido_sem_equipes = obter_relatorio_saude_producao_sem_equipes(periodo_competencia)
+    #print(df_extraido_sem_equipes.columns)
+
     df_extraido_sem_equipes = df_extraido_sem_equipes.rename(columns = {'quantidade_aprovada':'total_sem_equipes'})
 
-    agrupado_com_equipe = df_extraido_com_equipes.groupby(['uf_sigla','municipio_id_sus','municipio_nome','Conduta','Categoria do Profissional','Tipo de Atendimento'])['total_com_equipes'].sum().to_frame().reset_index()
-    agrupado_sem_equipe = df_extraido_sem_equipes.groupby(['uf_sigla','municipio_id_sus','municipio_nome','Conduta','Categoria do Profissional','Tipo de Atendimento'])['total_sem_equipes'].sum().to_frame().reset_index()
+    agrupado_com_equipe = df_extraido_com_equipes.groupby(['uf_sigla','municipio_id_sus','municipio_nome','Problema/Condição Avaliada','Conduta','Categoria do Profissional','Tipo de Atendimento'])['total_com_equipes'].sum().to_frame().reset_index()
+    agrupado_sem_equipe = df_extraido_sem_equipes.groupby(['uf_sigla','municipio_id_sus','municipio_nome','Problema/Condição Avaliada','Conduta','Categoria do Profissional','Tipo de Atendimento'])['total_sem_equipes'].sum().to_frame().reset_index()
    
-    df_parcial = agrupado_com_equipe.merge(agrupado_sem_equipe, how='right',on = ['uf_sigla','municipio_id_sus','municipio_nome','Conduta','Categoria do Profissional','Tipo de Atendimento'])
+    df_parcial = agrupado_com_equipe.merge(agrupado_sem_equipe, how='right',on = ['uf_sigla','municipio_id_sus','municipio_nome','Problema/Condição Avaliada','Conduta','Categoria do Profissional','Tipo de Atendimento'])
+    df_parcial['total_com_equipes'] = df_parcial['total_com_equipes'].replace(np.nan, 0)
     df_parcial['quantidade_aprovada'] = (df_parcial['total_sem_equipes'] - df_parcial['total_com_equipes']).round(0)
     df_parcial['Tipo de Equipe'] = 'Equipe não identificada'
     df_parcial['periodo_data_inicio'] = periodo_competencia
-    df_parcial = df_parcial[['uf_sigla','municipio_id_sus','municipio_nome','periodo_data_inicio','Tipo de Equipe','Conduta','Categoria do Profissional','Tipo de Atendimento','quantidade_aprovada']]
-
+    df_parcial = df_parcial[['uf_sigla','municipio_id_sus','municipio_nome','periodo_data_inicio','Tipo de Equipe','Problema/Condição Avaliada','Conduta','Categoria do Profissional','Tipo de Atendimento','quantidade_aprovada']]
     df_extraido_com_equipes = df_extraido_com_equipes.rename(columns = {'total_com_equipes':'quantidade_aprovada'})
 
     df_extraido = pd.concat([df_extraido_com_equipes, df_parcial], ignore_index = True)
