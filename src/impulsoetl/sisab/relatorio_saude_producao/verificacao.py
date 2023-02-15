@@ -11,7 +11,7 @@ def verifica_existencia_nulos(
 ) -> bool:
     """Verifica se há existencia de valores nulos no DataFrame"""
     return (
-        df.isnull().values.any()
+        not df.isnull().values.any()
     )
 
 def verifica_existencia_valores_negativos_quantidade(
