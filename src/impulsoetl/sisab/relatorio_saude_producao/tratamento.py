@@ -44,13 +44,15 @@ def excluir_colunas(df_extraido: pd.DataFrame) -> pd.DataFrame:
     df_extraido.drop(columns=COLUNAS_EXCLUIR, inplace=True)
     return df_extraido
 
+def tratamento_valores_negativos(df_extraido:pd.DataFrame) -> pd.DataFrame:
+    df_extraido['quantidade'] = df_extraido['quantidade'].abs()
+    return df_extraido
 
 def tratar_tipos(df_extraido: pd.DataFrame) -> pd.DataFrame:
     df_extraido = df_extraido.astype(COLUNAS_TIPOS, errors="ignore").where(
         df_extraido.notna(), None
     )
     return df_extraido
-
 
 def ordenar_colunas(df_extraido: pd.DataFrame, COLUNAS_TIPOS: dict):
     ordem_colunas = list(COLUNAS_TIPOS.keys())
@@ -67,6 +69,7 @@ def tratamento_dados(
 
     df_extraido = excluir_colunas(df_extraido)
     df_extraido = renomear_colunas(df_extraido)
+    df_extraido = tratamento_valores_negativos(df_extraido)
     df_extraido = ordenar_colunas(df_extraido, COLUNAS_TIPOS)
     df_extraido = tratar_tipos(df_extraido)
     df_extraido["periodo_id"] = periodo_id
