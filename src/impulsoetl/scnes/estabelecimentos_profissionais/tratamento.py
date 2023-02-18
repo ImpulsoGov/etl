@@ -86,7 +86,7 @@ def tratar_tipos(df_extraido: pd.DataFrame) -> pd.DataFrame:
         df_extraido[coluna] =  df_extraido[coluna].round(0)
 
     for coluna in COLUNAS_CARGA_HORARIA:
-        df_extraido[coluna] =  df_extraido[coluna].round(0)
+        df_extraido[coluna] =  df_extraido[coluna].astype(float).round(0)
 
     df_extraido = df_extraido.astype(COLUNAS_TIPOS, errors="ignore").where(
         df_extraido.notna(), None
