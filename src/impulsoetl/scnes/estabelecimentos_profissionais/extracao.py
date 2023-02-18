@@ -106,7 +106,7 @@ def extrair_profissionais (
     for cnes in lista_codigos:
         try:
             url = ("http://cnes.datasus.gov.br/services/estabelecimentos-profissionais/"+codigo_municipio+cnes+"?competencia={:%Y%m}".format(periodo_data_inicio))
-
+            print(url)
             payload={}
             headers = {
                 'Accept': 'application/json, text/plain, */*',
@@ -119,11 +119,20 @@ def extrair_profissionais (
             response = requests.request("GET", url, headers=headers, data=payload)
             res = response.text
             parsed = json.loads(res)
+                   
             df = pd.DataFrame(parsed)
             df['municipio_id_sus'] = codigo_municipio
             df['estabelecimento_cnes_id'] = cnes
 
             df_parcial = df_parcial.append(df)
+
+            if df.empty:
+                colunas = ['tpSusNaoSus', 'cbo', 'dsCbo', 'chOutros', 'chAmb', 'chHosp','vinculacao', 'vinculo', 'subVinculo', 'nome', 'cns', 'cnsMaster','artigo2', 'artigo3', 'artigo5', 'dtEntrada']
+                df_sem_profissionais = pd.DataFrame(columns = colunas)
+                df_sem_profissionais['municipio_id_sus'] = [codigo_municipio]
+                df_sem_profissionais['estabelecimento_cnes_id'] = [cnes]
+
+                df_parcial = df_parcial.append(df_sem_profissionais)
 
         except json.JSONDecodeError:
             logger.error("Erro ao extrair os profissionais")
