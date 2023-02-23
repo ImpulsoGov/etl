@@ -16,7 +16,7 @@ authors = ["ImpulsoGov <contato@impulsogov.org>"]
 [tool.poetry.dependencies]
 
 python = ">=3.10,<3.11"
-cryptography = ">=38.0.3"
+cryptography = ">=39.0.1"
 pandas = "1.4.2"
 selenium = "4.1.0"
 "psycopg2-binary" = "^2.9.3"
