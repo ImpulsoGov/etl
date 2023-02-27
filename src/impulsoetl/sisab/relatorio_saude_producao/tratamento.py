@@ -4,11 +4,12 @@ warnings.filterwarnings("ignore")
 from datetime import date
 from typing import Final
 from frozendict import frozendict
+from prefect import task
 
 import pandas as pd
 import numpy as np
 
-from impulsoetl.loggers import logger
+from impulsoetl.loggers import logger, habilitar_suporte_loguru
 
 
 COLUNAS_EXCLUIR = ['uf_sigla','municipio_nome']
@@ -60,11 +61,31 @@ def ordenar_colunas(df_extraido: pd.DataFrame, COLUNAS_TIPOS: dict):
 
     return df_extraido
 
+@task(
+    name="Transformar Relatório de Produção de Saúde ",
+    description=(
+        "Transforma os dados do relatório de Produção de Saúde extraído a partir da página do SISAB."
+    ),
+    tags=["sisab", "produção", "tratamento"],
+    retries=0,
+    retry_delay_seconds=None,
+)
 def tratamento_dados(
     df_extraido: pd.DataFrame, periodo_id: str, unidade_geografica_id: str
 ) -> pd.DataFrame:
+
+    """
+    Trata os dados do Relatório de Produção de Saúde do SISAB:
+     Argumentos:
+        df_extraido: [`DataFrame`][] contendo os dados extraídos do Relatório de Produção do SISAB
+            (conforme retornado pela função [`extrair_relatório()`][]).
+        periodo_id: Código de identificação do período.
+        unidade_geografica_id: Código de identificação da unidade geográfica.
+     Retorna:
+        Objeto [`pandas.DataFrame`] com os dados enriquecidos e tratados.
+    """
     
-    #habilitar_suporte_loguru()
+    habilitar_suporte_loguru()
     logger.info("Iniciando o tratamento dos dados...")
 
     df_extraido = excluir_colunas(df_extraido)

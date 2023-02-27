@@ -6,6 +6,7 @@ import pandas as pd
 
 from datetime import date
 from sqlalchemy.orm import Session
+from prefect import flow 
 
 from impulsoetl import __VERSION__
 from impulsoetl.bd import Sessao
@@ -15,6 +16,17 @@ from impulsoetl.sisab.relatorio_saude_producao.verificacao import verificar_info
 
 from impulsoetl.utilitarios.bd import carregar_dataframe
 
+
+@flow(
+    name="Obter Relatório de Produção de Saúde",
+    description=(
+        "Extrai, transforma e carrega os dados do relatório de Produção de Saúde extraído a partir da página do SISAB."
+    ),
+    retries=0,
+    retry_delay_seconds=None,
+    version=__VERSION__,
+    validate_parameters=False,
+)
 def obter_relatorio_producao_por_profissional_problema_conduta_atendimento(
     sessao: Session,
     tabela_destino: str,
@@ -23,6 +35,15 @@ def obter_relatorio_producao_por_profissional_problema_conduta_atendimento(
     unidade_geografica_id: str,
 ) -> None:
 
+    """
+    Extrai, transforma e carrega os dados do Relatório de Produção do SISAB
+     Argumentos:
+        sessao: objeto [`sqlalchemy.orm.session.Session`][] que permite acessar a base de dados da ImpulsoGov.
+        tabela_destino: Nome da tabela de destino a ser carregada com os dados extraidos e tratados.
+        periodo_competencia: Data do mês de referência da extração.
+        periodo_id: Código de identificação do período.
+        unidade_geografica_id: Código de identificação da unidade geográfica.
+    """
 
     df_extraido = extrair_relatorio(
         periodo_competencia = periodo_competencia

@@ -6,11 +6,12 @@ from datetime import date
 import pandas as pd
 import numpy as np
 
+from prefect import task
+
+from impulsoetl.loggers import logger, habilitar_suporte_loguru
 from impulsoetl.sisab.utilitarios_sisab_relatorio_producao import extrair_producao_por_municipio
 from impulsoetl.sisab.utilitarios_sisab_relatorio_producao import transformar_producao_por_municipio
-from impulsoetl.loggers import logger
 
-"""
 
 CONDICAO_AVALIADA = [
     'Asma',
@@ -89,32 +90,18 @@ TIPO_ATENDIMENTO = [
     'Dem. esp. atendimento urgência'
     ]
 
-"""
-
-CONDICAO_AVALIADA = [
-    'Diabetes',
-    #'Hipertensão Arterial'
-    ]
-
-CONDUTAS = [
-    'Alta do episódio',
-    #'Encaminhamento interno no dia',
-]
-
-CATEGORIA_PROFISSIONAL = [
-    'Médico',
-    #'Psicólogo',
-    #'Enfermeiro',
-    #'Arteterapeuta'
-]
-
-TIPO_ATENDIMENTO = [
-    'Consulta agendada',
-    #'Dem. esp. esc. inicial/orient.',
-]
 
 def obter_relatorio_saude_producao_com_equipes (
     periodo_competencia:date)-> pd.DataFrame:
+    
+    """
+    Captura dados do Relatório de Produção do SISAB selecionando todos os filtros para Tipo de equipe
+    Argumentos:
+        periodo_competencia: Mês da competência em referência
+    
+    Retorna:
+        Objeto [`pandas.DataFrame`] com os dados extraídos.
+    """
 
     df_consolidado = pd.DataFrame()
 
@@ -159,7 +146,15 @@ def obter_relatorio_saude_producao_com_equipes (
 
 def obter_relatorio_saude_producao_sem_equipes (
     periodo_competencia:date)-> pd.DataFrame:
-
+    
+    """
+    Captura dados do Relatório de Produção do SISAB sem filtros para Tipo de equipe
+    Argumentos:
+        periodo_competencia: Mês da competência em referência
+    
+    Retorna:
+        Objeto [`pandas.DataFrame`] com os dados extraídos.
+    """
     df_consolidado = pd.DataFrame()
 
     for condicao in CONDICAO_AVALIADA:
@@ -200,15 +195,34 @@ def obter_relatorio_saude_producao_sem_equipes (
                         pass
     return df_consolidado
 
+@task(
+    name="Extrair Relatório de Produção de Saúde ",
+    description=(
+        "Extrai o relatório de Produção de Saúde a partir da página do SISAB."
+    ),
+    tags=["sisab", "produção", "extracao"],
+    retries=2,
+    retry_delay_seconds=120,
+)
 def extrair_relatorio(
     periodo_competencia: date)-> pd.DataFrame():
+
+    """
+    Captura dados do Relatório de Produção do SISAB considerando os relatórios obtidos com e sem os filtros para Tipo de Equipe
+    Argumentos:
+        periodo_competencia: Mês da competência em referência
+    
+    Retorna:
+        Objeto [`pandas.DataFrame`] com os dados extraídos.
+    """
+
+    habilitar_suporte_loguru()
+    logger.info("Iniciando extraçção do relatório...")
 
     df_extraido_com_equipes = obter_relatorio_saude_producao_com_equipes(periodo_competencia)
     df_extraido_com_equipes = df_extraido_com_equipes.rename(columns = {'quantidade_aprovada':'total_com_equipes'})
 
     df_extraido_sem_equipes = obter_relatorio_saude_producao_sem_equipes(periodo_competencia)
-    #print(df_extraido_sem_equipes.columns)
-
     df_extraido_sem_equipes = df_extraido_sem_equipes.rename(columns = {'quantidade_aprovada':'total_sem_equipes'})
 
     agrupado_com_equipe = df_extraido_com_equipes.groupby(['uf_sigla','municipio_id_sus','municipio_nome','Problema/Condição Avaliada','Conduta','Categoria do Profissional','Tipo de Atendimento'])['total_com_equipes'].sum().to_frame().reset_index()
@@ -223,6 +237,8 @@ def extrair_relatorio(
     df_extraido_com_equipes = df_extraido_com_equipes.rename(columns = {'total_com_equipes':'quantidade_aprovada'})
 
     df_extraido = pd.concat([df_extraido_com_equipes, df_parcial], ignore_index = True)
+
+    logger.info("Extração concluída")
 
     return df_extraido
 

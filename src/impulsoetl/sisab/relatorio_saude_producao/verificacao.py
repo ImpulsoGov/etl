@@ -3,7 +3,8 @@ import numpy as np
 import datetime
 from datetime import date
 
-from impulsoetl.loggers import logger
+from prefect import task
+from impulsoetl.loggers import logger, habilitar_suporte_loguru
 
 
 def verifica_existencia_nulos(
@@ -22,9 +23,31 @@ def verifica_existencia_valores_negativos_quantidade(
         not (df['quantidade'] < 0).any().any()
         )
 
+@task(
+    name="Validar Relatório de Produção de Saúde ",
+    description=(
+        "Realizaça a verificalççao dos dados do relatório de Produção de Saúde extraído a partir da página do SISAB."
+    ),
+    tags=["sisab", "produção", "verificação"],
+    retries=0,
+    retry_delay_seconds=None,
+)
 def verificar_informacoes_relatorio_producao(
     df_tratado: pd.DataFrame,
 ) -> None:
+    """
+    Valida os dados extraídos do Relatório de Produção pós tratamento.
+     Argumentos:
+        df_extraido: df_extraido: [`DataFrame`][] contendo os dados extraídos no na página do CNES
+            (conforme retornado pela função [`extrair_relatório()`][]).
+        df_tratado: [`DataFrame`][] contendo os dados tratados
+            (conforme retornado pela função [`tratamento_dados()`][]).
+     Exceções:
+        Levanta um erro da classe [`AssertionError`][] quando uma das condições testadas não é
+        considerada válida.
+    [`AssertionError`]: https://docs.python.org/3/library/exceptions.html#AssertionError
+    """
+
     logger.info("Iniciando a verificação dos dados ... ")
     assert verifica_existencia_nulos(df_tratado)
     assert verifica_existencia_valores_negativos_quantidade(df_tratado)
