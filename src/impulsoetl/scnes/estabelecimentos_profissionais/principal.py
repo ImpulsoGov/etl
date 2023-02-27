@@ -9,7 +9,7 @@ import warnings
 from datetime import date
 
 warnings.filterwarnings("ignore")
-# from prefect import task
+from prefect import flow
 from sqlalchemy.orm import Session
 
 from impulsoetl import __VERSION__
@@ -26,9 +26,19 @@ from impulsoetl.scnes.estabelecimentos_profissionais.verificacao import (
 from impulsoetl.scnes.extracao_lista_cnes import extrair_lista_cnes
 from impulsoetl.utilitarios.bd import carregar_dataframe
 
-# from impulsoetl.loggers import habilitar_suporte_loguru, logger
+from impulsoetl.loggers import habilitar_suporte_loguru, logger
 
-
+@flow(
+    name="Obter dados da Ficha dos Profissionais de Saúde por Estabelecimento",
+    description=(
+        "Extrai, transforma e carrega os dados dos profissionais de saúde "
+        + "a partir da página do CNES"
+    ),
+    retries=0,
+    retry_delay_seconds=None,
+    version=__VERSION__,
+    validate_parameters=False,
+)
 def obter_profissionais_cnes(
     sessao: Session,
     tabela_destino: str,

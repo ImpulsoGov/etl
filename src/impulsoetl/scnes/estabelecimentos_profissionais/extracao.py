@@ -71,7 +71,7 @@ def extrair_profissionais_com_ine (
                     pass
             
     return df_extraido    
-"""
+
 @task(
     name="Extrair Informações dos Profissionais de Saúde",
     description=(
@@ -82,7 +82,6 @@ def extrair_profissionais_com_ine (
     retries=2,
     retry_delay_seconds=120,
 )
-"""
 def extrair_profissionais (
     codigo_municipio:str, lista_codigos:list, periodo_data_inicio:date
 )-> pd.DataFrame:

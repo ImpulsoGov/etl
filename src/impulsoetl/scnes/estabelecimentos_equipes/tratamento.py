@@ -109,8 +109,8 @@ def ordenar_colunas(df_extraido: pd.DataFrame, COLUNAS_TIPOS: dict):
         + "a partir da página do CNES."
     ),
     tags=["cnes", "equipes", "tratamento"],
-    retries=2,
-    retry_delay_seconds=120,
+    retries=0,
+    retry_delay_seconds=None,
 )
 def tratamento_dados(
     df_extraido: pd.DataFrame, periodo_id: str, unidade_geografica_id: str

@@ -15,8 +15,6 @@ from impulsoetl.scnes.estabelecimentos_horarios.tratamento import (
     tratamento_dados,
 )
 from impulsoetl.scnes.extracao_lista_cnes import extrair_lista_cnes
-
-# from impulsoetl.scnes.verificacao_etl_scnes import verificar_dados
 from impulsoetl.utilitarios.bd import carregar_dataframe
 
 
@@ -62,10 +60,6 @@ def obter_horarios_estabelecimentos(
         periodo_id=periodo_id,
         unidade_geografica_id=unidade_geografica_id,
     )
-
-    # verificar_dados(
-    #    df_extraido=df_extraido, df_tratado=df_tratado
-    # )
 
     carregar_dataframe(
         sessao=sessao, df=df_tratado, tabela_destino=tabela_destino
