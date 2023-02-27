@@ -101,7 +101,7 @@ def ordenar_colunas(df_extraido: pd.DataFrame, COLUNAS_TIPOS: dict):
 
     return df_extraido
 
-"""
+
 @task(
     name="Tratar Informações dos Profissionais de Saúde",
     description=(
@@ -112,7 +112,6 @@ def ordenar_colunas(df_extraido: pd.DataFrame, COLUNAS_TIPOS: dict):
     retries=2,
     retry_delay_seconds=120,
 )
-"""
 def tratamento_dados(
     df_extraido: pd.DataFrame, periodo_id: str, unidade_geografica_id: str
 ) -> pd.DataFrame:
