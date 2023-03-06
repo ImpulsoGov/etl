@@ -793,3 +793,61 @@ def egestor_financiamento(
                 conector.execute(requisicao_inserir_historico)
                 sessao.commit()
                 logger.info("OK.")
+
+@flow(
+    name=("Rodar Agendamentos do Relatório de Produção do SISAB"),
+    description=(
+        "Lê as capturas agendadas para obter o Relatório de Produção de Saúde do SISAB "
+        + "para todos os municípios, filtrados por Tipo de Equipe, Categoria Profissional,"
+        + "Condição Avaliada, Tipo de Atendimento e Conduta"
+    ),
+    retries=0,
+    retry_delay_seconds=None,
+    timeout_seconds=14400,
+    version=__VERSION__,
+    validate_parameters=False,
+)
+def relatorio_producao_saude(
+    teste: bool = True,
+) -> None:
+    habilitar_suporte_loguru()
+    operacao_id = "063e2878-3247-78a7-83dd-1d291156cdf6"
+
+    agendamentos = tabelas["configuracoes.capturas_agendamentos"]
+    with Sessao() as sessao:
+        agendamentos_relatorio_producao_saude = (
+            sessao.query(agendamentos)
+            .filter(agendamentos.c.operacao_id == operacao_id)
+            .all()
+        )
+        sessao.commit()
+
+        logger.info("Leitura dos Agendamentos ok!")
+
+        for agendamento in agendamentos_relatorio_producao_saude:
+            obter_relatorio_producao_por_profissional_problema_conduta_atendimento(
+                sessao=sessao,
+                tabela_destino=agendamento.tabela_destino,
+                periodo_competencia=date(2022,12,1),
+                periodo_id=agendamento.periodo_id,
+                unidade_geografica_id=agendamento.unidade_geografica_id
+            )
+
+            if teste:  
+                sessao.rollback()
+                break
+
+            logger.info("Registrando captura bem-sucedida...")
+            requisicao_inserir_historico = capturas_historico.insert(
+                {
+                    "operacao_id": operacao_id,
+                    "periodo_id": agendamento.periodo_id,
+                    "unidade_geografica_id": agendamento.unidade_geografica_id,
+                }
+            )
+            conector = sessao.connection()
+            conector.execute(requisicao_inserir_historico)
+            sessao.commit()
+            
+            logger.info("OK.")
+
