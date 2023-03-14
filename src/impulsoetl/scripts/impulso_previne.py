@@ -814,7 +814,7 @@ def egestor_financiamento(
 )
 
 def relatorio_producao_saude(
-    teste: bool = True,
+    teste: bool = False,
 ) -> None:
     habilitar_suporte_loguru()
     operacao_id = "063e2878-3247-78a7-83dd-1d291156cdf6"
