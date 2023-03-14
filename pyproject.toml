@@ -25,7 +25,6 @@ frozendict = "2.1.1"
 frozenlist = "1.2.0"
 loguru = "0.5.3"
 pyjanitor = "0.21.2"
-pysus = "~0.6.0"
 python-dotenv = "0.19.2"
 selenium-driver-updater = "5.1.3"
 SQLAlchemy = {extras = ["mypy"], version = "1.4.27"}
