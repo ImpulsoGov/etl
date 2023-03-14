@@ -11,6 +11,7 @@ from prefect import flow
 
 from impulsoetl import __VERSION__
 from impulsoetl.bd import Sessao, tabelas
+"""
 from impulsoetl.egestor.relatorio_financiamento.principal import (
     obter_relatorio_financiamento,
 )
@@ -23,11 +24,15 @@ from impulsoetl.sisab.parametros_cadastro.principal import obter_parametros
 from impulsoetl.sisab.relatorio_validacao_producao.principal import (
     obter_validacao_producao,
 )
+"""
+from impulsoetl.sisab.relatorio_saude_producao.principal import (
+    obter_relatorio_producao_por_profissional_problema_conduta_atendimento
+)
 
 agendamentos = tabelas["configuracoes.capturas_agendamentos"]
 capturas_historico = tabelas["configuracoes.capturas_historico"]
 
-
+"""
 @flow(
     name="Rodar Agendamentos de Cadastros das Equipes Válidas",
     description=(
@@ -793,7 +798,7 @@ def egestor_financiamento(
                 conector.execute(requisicao_inserir_historico)
                 sessao.commit()
                 logger.info("OK.")
-
+"""
 @flow(
     name=("Rodar Agendamentos do Relatório de Produção do SISAB"),
     description=(
@@ -807,6 +812,7 @@ def egestor_financiamento(
     version=__VERSION__,
     validate_parameters=False,
 )
+
 def relatorio_producao_saude(
     teste: bool = True,
 ) -> None:
@@ -828,7 +834,7 @@ def relatorio_producao_saude(
             obter_relatorio_producao_por_profissional_problema_conduta_atendimento(
                 sessao=sessao,
                 tabela_destino=agendamento.tabela_destino,
-                periodo_competencia=date(2022,12,1),
+                periodo_competencia=agendamento.periodo_data_inicio,
                 periodo_id=agendamento.periodo_id,
                 unidade_geografica_id=agendamento.unidade_geografica_id
             )

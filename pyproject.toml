@@ -24,7 +24,6 @@ frozendict = "2.1.1"
 frozenlist = "1.2.0"
 loguru = "0.5.3"
 pyjanitor = "0.21.2"
-pysus = "~0.6.0"
 python-dotenv = "0.19.2"
 SQLAlchemy = {extras = ["mypy"], version = "1.4.27"}
 toolz = "0.11.2"
@@ -37,6 +36,7 @@ more-itertools = "^8.12.0"
 uuid6 = "^2022.6.25"
 lxml = "^4.9.1"
 xlrd = "^2.0.1"
+beautifulsoup4 = "^4.11.2"
 
 
 [tool.poetry.group.dev.dependencies]
