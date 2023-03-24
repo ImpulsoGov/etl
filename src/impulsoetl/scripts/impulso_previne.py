@@ -12,6 +12,9 @@ from prefect import flow
 from impulsoetl import __VERSION__
 from impulsoetl.bd import Sessao, tabelas
 from impulsoetl.loggers import habilitar_suporte_loguru, logger
+from impulsoetl.egestor.relatorio_financiamento.principal import (
+    obter_relatorio_financiamento,
+)
 """
 from impulsoetl.egestor.relatorio_financiamento.principal import (
     obter_relatorio_financiamento,
@@ -724,8 +727,6 @@ def validacao_producao(
             conector.execute(requisicao_inserir_historico)
             sessao.commit()
             logger.info("OK.")
-
-
 @flow(
     name=("Rodar Agendamentos de Relatórios de Financiamento"),
     description=(
@@ -829,7 +830,6 @@ def relatorio_producao_saude(
         sessao.commit()
 
         logger.info("Leitura dos Agendamentos ok!")
-
         for agendamento in agendamentos_relatorio_producao_saude:
             obter_relatorio_producao_por_profissional_problema_conduta_atendimento(
                 sessao=sessao,
@@ -857,3 +857,4 @@ def relatorio_producao_saude(
             
             logger.info("OK.")
 
+relatorio_producao_saude()

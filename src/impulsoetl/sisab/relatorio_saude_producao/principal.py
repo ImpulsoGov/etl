@@ -15,6 +15,7 @@ from impulsoetl.sisab.relatorio_saude_producao.tratamento import tratamento_dado
 from impulsoetl.sisab.relatorio_saude_producao.verificacao import verificar_informacoes_relatorio_producao
 
 from impulsoetl.utilitarios.bd import carregar_dataframe
+from impulsoetl.loggers import logger
 
 
 @flow(
@@ -45,9 +46,12 @@ def obter_relatorio_producao_por_profissional_problema_conduta_atendimento(
         unidade_geografica_id: Código de identificação da unidade geográfica.
     """
 
+    logger.info("Extraindo relatório da competencia {}, ...".format(periodo_competencia))
+
     df_extraido = extrair_relatorio(
         periodo_competencia = periodo_competencia
     )
+    
         
     df_tratado = tratamento_dados(
         df_extraido=df_extraido,
@@ -60,5 +64,5 @@ def obter_relatorio_producao_por_profissional_problema_conduta_atendimento(
     carregar_dataframe(
         sessao=sessao, df=df_tratado, tabela_destino=tabela_destino
     )
+    print('Terminou carga')
 
-    return df_tratado

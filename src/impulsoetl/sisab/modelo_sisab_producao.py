@@ -359,7 +359,7 @@ class SisabRelatorioProducao(object):
         selecao = self._interface.find(attrs={"name": selecao_codigo})
         return selecao.find(
             "option",
-            string=re.compile(r"^\W*" + descricao + r"\W*$", re.IGNORECASE)
+            string=re.compile(r"^\W*" + re.escape(descricao) + r"\W*$", re.IGNORECASE)
         )["value"]
 
     def _obter_opcoes_disponiveis(

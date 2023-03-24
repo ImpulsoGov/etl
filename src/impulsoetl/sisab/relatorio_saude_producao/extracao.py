@@ -91,7 +91,7 @@ TIPO_ATENDIMENTO = [
     ]
 
 
-def obter_relatorio_saude_producao_com_equipes (
+def obter_relatorio_saude_producao_com_equipes(
     periodo_competencia:date)-> pd.DataFrame:
     
     """
@@ -103,48 +103,32 @@ def obter_relatorio_saude_producao_com_equipes (
         Objeto [`pandas.DataFrame`] com os dados extraídos.
     """
 
-    df_consolidado = pd.DataFrame()
+    try:
+        df_parcial = extrair_producao_por_municipio(
+            tipo_producao="Atendimento individual",
+            competencias=[periodo_competencia],
+            selecoes_adicionais={
+                "Problema/Condição Avaliada": "Selecionar Todos", 
+                "Conduta":"Selecionar Todos",
+                "Categoria do Profissional": "Selecionar Todos", 
+                "Tipo de Atendimento":"Selecionar Todos", 
+                "Tipo de Equipe":"Selecionar Todos"
+            },
+            ).pipe(transformar_producao_por_municipio)
 
-    for condicao in CONDICAO_AVALIADA:
-        for conduta in CONDUTAS:
-            for profissional in CATEGORIA_PROFISSIONAL:
-                for atendimento in TIPO_ATENDIMENTO:
-                    try:
-                        df_parcial = extrair_producao_por_municipio(
-                            tipo_producao="Atendimento individual",
-                            competencias=[periodo_competencia],
-                            selecoes_adicionais={
-                                "Problema/Condição Avaliada": [condicao], 
-                                "Conduta":[conduta],
-                                "Categoria do Profissional":[profissional], 
-                                "Tipo de Atendimento":[atendimento], 
-                                "Tipo de Equipe":"Selecionar Todos"
-                            },
-                            
-                            ).pipe(transformar_producao_por_municipio)
-                  
-                        df_consolidado = df_consolidado.append(df_parcial)
+        
+    except pd.errors.ParserError as e:
+        logger.error(e)
+        pass
 
-                    except pd.errors.ParserError as e:
-                        logger.error(e)
-                        logger.info("Erro ao aplicar os seguintes filtros: {} + {} + {} + {}", 
-                        condicao,
-                        conduta,
-                        profissional,
-                        atendimento)
-                        pass
-                    
-                    except TypeError as e:
-                        logger.error(e)
-                        logger.info("Erro ao aplicar os seguintes filtros: {} + {} + {} + {}", 
-                        condicao,
-                        conduta,
-                        profissional,
-                        atendimento)
-                        pass
-    return df_consolidado
+    except TypeError as e:
+        logger.error(e)
+        pass
 
-def obter_relatorio_saude_producao_sem_equipes (
+    else: 
+        return df_parcial
+
+def obter_relatorio_saude_producao_sem_equipes(
     periodo_competencia:date)-> pd.DataFrame:
     
     """
@@ -155,45 +139,23 @@ def obter_relatorio_saude_producao_sem_equipes (
     Retorna:
         Objeto [`pandas.DataFrame`] com os dados extraídos.
     """
-    df_consolidado = pd.DataFrame()
 
-    for condicao in CONDICAO_AVALIADA:
-        for conduta in CONDUTAS:
-            for profissional in CATEGORIA_PROFISSIONAL:
-                for atendimento in TIPO_ATENDIMENTO:
-                    try:
-                        df_parcial = extrair_producao_por_municipio(
-                            tipo_producao="Atendimento individual",
-                            competencias=[periodo_competencia],
-                            selecoes_adicionais={
-                                "Problema/Condição Avaliada": [condicao], 
-                                "Conduta":[conduta],
-                                "Categoria do Profissional":[profissional], 
-                                "Tipo de Atendimento":[atendimento], 
-                            },
-                            
-                            ).pipe(transformar_producao_por_municipio)
-                       
-                        df_consolidado = df_consolidado.append(df_parcial)
-
-                    except pd.errors.ParserError as e:
-                        logger.error(e)
-                        logger.info("Erro ao aplicar os seguintes filtros: {} + {} + {} + {}", 
-                        condicao,
-                        conduta,
-                        profissional,
-                        atendimento)
-                        pass
-                    
-                    except TypeError as e:
-                        logger.error(e)
-                        logger.info("Erro ao aplicar os seguintes filtros: {} + {} + {} + {}", 
-                        condicao,
-                        conduta,
-                        profissional,
-                        atendimento)
-                        pass
-    return df_consolidado
+    try:
+        df_parcial = extrair_producao_por_municipio(
+            tipo_producao="Atendimento individual",
+            competencias=[periodo_competencia],
+            selecoes_adicionais={
+                "Problema/Condição Avaliada": "Selecionar Todos", 
+                "Conduta":"Selecionar Todos",
+                "Categoria do Profissional": "Selecionar Todos", 
+                "Tipo de Atendimento":"Selecionar Todos"
+            },).pipe(transformar_producao_por_municipio)
+    
+    except Exception as e:
+        logger.error(e)
+        pass
+    else: 
+        return df_parcial
 
 @task(
     name="Extrair Relatório de Produção de Saúde ",

@@ -292,7 +292,12 @@ def extrair_producao_por_municipio(
         incluir_subtotais=incluir_subtotais,
     ):
         csv = relatorio.download()
-        producao_por_municipio_parcial = _ler_producao_por_municipio(csv)
+        
+        try:
+            producao_por_municipio_parcial = _ler_producao_por_municipio(csv)
+        except pd.errors.ParserError as e:
+            logger.error(e)
+            continue
 
         # verticaliza o dataframe (transforma colunas em linhas)
         producao_por_municipio_parcial = producao_por_municipio_parcial.melt(
