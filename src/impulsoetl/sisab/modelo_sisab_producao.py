@@ -318,16 +318,22 @@ class SisabRelatorioProducao(object):
             um trecho de dados com valores separados por ponto-e-vírgula, e um
             rodapé.
         """
-        resposta = requests.request(
-            "POST",
-            self.URL + ";jsessionid=" + self._cookies["JSESSIONID"],
-            headers=self._cabecalhos_requisicao,
-            cookies=self._cookies,
-            data=self._payload,
-            timeout=120,
-        )
-        resposta.raise_for_status()
-        return resposta.text
+        try:
+            resposta = requests.request(
+                "POST",
+                self.URL + ";jsessionid=" + self._cookies["JSESSIONID"],
+                headers=self._cabecalhos_requisicao,
+                cookies=self._cookies,
+                data=self._payload,
+                timeout=120,
+            )
+            resposta.raise_for_status()
+
+        except Exception as e:
+            logger.error(e)
+            pass
+        else: 
+            return resposta.text
 
 
     @property
