@@ -1314,7 +1314,6 @@ def carregar_relatorio_producao(
     version=__VERSION__,
     validate_parameters=False,
 )
-@repetir_por_ano_mes(data_inicio_minima="2013-04-01")
 def obter_relatorio_producao(
     sessao: Session,
     tabela_destino: str,

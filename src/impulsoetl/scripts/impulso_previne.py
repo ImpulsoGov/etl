@@ -11,10 +11,14 @@ from prefect import flow
 
 from impulsoetl import __VERSION__
 from impulsoetl.bd import Sessao, tabelas
+from impulsoetl.loggers import habilitar_suporte_loguru, logger
 from impulsoetl.egestor.relatorio_financiamento.principal import (
     obter_relatorio_financiamento,
 )
-from impulsoetl.loggers import habilitar_suporte_loguru, logger
+"""
+from impulsoetl.egestor.relatorio_financiamento.principal import (
+    obter_relatorio_financiamento,
+)
 from impulsoetl.sisab.cadastros_individuais import obter_cadastros_individuais
 from impulsoetl.sisab.indicadores_municipios.principal import (
     obter_indicadores_desempenho,
@@ -23,11 +27,15 @@ from impulsoetl.sisab.parametros_cadastro.principal import obter_parametros
 from impulsoetl.sisab.relatorio_validacao_producao.principal import (
     obter_validacao_producao,
 )
+"""
+from impulsoetl.sisab.relatorio_saude_producao.principal import (
+    obter_relatorio_producao_por_profissional_problema_conduta_atendimento
+)
 
 agendamentos = tabelas["configuracoes.capturas_agendamentos"]
 capturas_historico = tabelas["configuracoes.capturas_historico"]
 
-
+"""
 @flow(
     name="Rodar Agendamentos de Cadastros das Equipes Válidas",
     description=(
@@ -719,8 +727,6 @@ def validacao_producao(
             conector.execute(requisicao_inserir_historico)
             sessao.commit()
             logger.info("OK.")
-
-
 @flow(
     name=("Rodar Agendamentos de Relatórios de Financiamento"),
     description=(
@@ -793,3 +799,62 @@ def egestor_financiamento(
                 conector.execute(requisicao_inserir_historico)
                 sessao.commit()
                 logger.info("OK.")
+"""
+@flow(
+    name=("Rodar Agendamentos do Relatório de Produção do SISAB"),
+    description=(
+        "Lê as capturas agendadas para obter o Relatório de Produção de Saúde do SISAB "
+        + "para todos os municípios, filtrados por Tipo de Equipe, Categoria Profissional,"
+        + "Condição Avaliada, Tipo de Atendimento e Conduta"
+    ),
+    retries=0,
+    retry_delay_seconds=None,
+    timeout_seconds=14400,
+    version=__VERSION__,
+    validate_parameters=False,
+)
+
+def relatorio_producao_saude(
+    teste: bool = False,
+) -> None:
+    habilitar_suporte_loguru()
+    operacao_id = "063e2878-3247-78a7-83dd-1d291156cdf6"
+
+    agendamentos = tabelas["configuracoes.capturas_agendamentos"]
+    with Sessao() as sessao:
+        agendamentos_relatorio_producao_saude = (
+            sessao.query(agendamentos)
+            .filter(agendamentos.c.operacao_id == operacao_id)
+            .all()
+        )
+        sessao.commit()
+
+        logger.info("Leitura dos Agendamentos ok!")
+        for agendamento in agendamentos_relatorio_producao_saude:
+            obter_relatorio_producao_por_profissional_problema_conduta_atendimento(
+                sessao=sessao,
+                tabela_destino=agendamento.tabela_destino,
+                periodo_competencia=agendamento.periodo_data_inicio,
+                periodo_id=agendamento.periodo_id,
+                unidade_geografica_id=agendamento.unidade_geografica_id
+            )
+
+            if teste:  
+                sessao.rollback()
+                break
+
+            logger.info("Registrando captura bem-sucedida...")
+            requisicao_inserir_historico = capturas_historico.insert(
+                {
+                    "operacao_id": operacao_id,
+                    "periodo_id": agendamento.periodo_id,
+                    "unidade_geografica_id": agendamento.unidade_geografica_id,
+                }
+            )
+            conector = sessao.connection()
+            conector.execute(requisicao_inserir_historico)
+            sessao.commit()
+            
+            logger.info("OK.")
+
+relatorio_producao_saude()
