@@ -28,7 +28,7 @@ from impulsoetl.loggers import logger
     version=__VERSION__,
     validate_parameters=False,
 )
-def obter_relatorio_producao_por_profissional_problema_conduta_atendimento(
+def obter_relatorio_producao_por_profissionais_reduzidos(
     sessao: Session,
     tabela_destino: str,
     periodo_competencia: date,
