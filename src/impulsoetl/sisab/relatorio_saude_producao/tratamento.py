@@ -17,20 +17,16 @@ COLUNAS_EXCLUIR = ['uf_sigla','municipio_nome']
 COLUNAS_RENOMEAR : Final[dict[str, str]] = {
     'Categoria do Profissional':'categoria_profissional',
     'Problema/Condição Avaliada':'problema_condicao_avaliada',
-    'Tipo de Atendimento':'tipo_atendimento',
     'Conduta':'conduta',
     'quantidade_aprovada':'quantidade',
-    'Tipo de Equipe':'equipe_tipo'
 }
 
 COLUNAS_TIPOS: Final[frozendict] = frozendict(
     {
     'municipio_id_sus':'str',
-    'equipe_tipo':'str',
     'periodo_data_inicio':'str',
     'categoria_profissional':'str',
     'problema_condicao_avaliada':'str',
-    'tipo_atendimento':'str',
     'conduta':'str',
     'quantidade':'Int64'
     }
