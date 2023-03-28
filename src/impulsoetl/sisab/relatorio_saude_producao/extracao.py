@@ -46,13 +46,10 @@ def obter_relatorio_reduzido(
 
     except Exception as e:
         logger.error(e)
-        logger.info("Erro ao aplicar os seguintes filtros: {} + {} + {}", 
-        condicao,
-        conduta,
-        profissional)
         pass
 
     return df_consolidado
+
 
 @task(
     name="Extrair Relatório de Produção de Saúde - Profissionais Selecionados ",
