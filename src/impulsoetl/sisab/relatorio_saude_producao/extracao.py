@@ -169,7 +169,3 @@ def extrair_relatorio(
     logger.info("Extração concluída")
 
     return df_extraido
-
-
-
-
