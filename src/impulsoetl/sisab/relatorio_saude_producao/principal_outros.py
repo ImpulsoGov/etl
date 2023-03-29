@@ -10,7 +10,7 @@ from prefect import flow
 
 from impulsoetl import __VERSION__
 from impulsoetl.bd import Sessao
-from impulsoetl.sisab.relatorio_saude_producao.extracao import extrair_relatorio
+from impulsoetl.sisab.relatorio_saude_producao.extracao_outros import extrair_relatorio_outros
 from impulsoetl.sisab.relatorio_saude_producao.tratamento import tratamento_dados
 from impulsoetl.sisab.relatorio_saude_producao.verificacao import verificar_informacoes_relatorio_producao
 
@@ -19,7 +19,7 @@ from impulsoetl.loggers import logger
 
 
 @flow(
-    name="Obter Relatório de Produção de Saúde",
+    name="Obter Relatório de Produção de Saúde - Profissionais Outros",
     description=(
         "Extrai, transforma e carrega os dados do relatório de Produção de Saúde extraído a partir da página do SISAB."
     ),
@@ -28,7 +28,7 @@ from impulsoetl.loggers import logger
     version=__VERSION__,
     validate_parameters=False,
 )
-def obter_relatorio_producao_por_profissionais_reduzidos(
+def obter_relatorio_producao_por_profissionais_outros(
     sessao: Session,
     tabela_destino: str,
     periodo_competencia: date,
@@ -48,11 +48,10 @@ def obter_relatorio_producao_por_profissionais_reduzidos(
 
     logger.info("Extraindo relatório da competencia {}, ...".format(periodo_competencia))
 
-    df_extraido = extrair_relatorio(
+    df_extraido = extrair_relatorio_outros(
         periodo_competencia = periodo_competencia
     )
-    
-        
+            
     df_tratado = tratamento_dados(
         df_extraido=df_extraido,
         periodo_id=periodo_id,

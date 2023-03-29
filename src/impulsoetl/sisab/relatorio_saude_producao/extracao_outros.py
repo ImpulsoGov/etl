@@ -13,21 +13,32 @@ from impulsoetl.sisab.utilitarios_sisab_relatorio_producao import extrair_produc
 from impulsoetl.sisab.utilitarios_sisab_relatorio_producao import transformar_producao_por_municipio
 
 
-CATEGORIA_PROFISSIONAL_REDUZIDA = [
-    'Cirurgião dentista',
-    'Enfermeiro',
-    'Fisioterapeuta',
-    'Médico',
-    'Psicólogo',
-    'Técnico e auxiliar de enfermagem',
-    'Técnico e auxiliar de saúde bucal',
-    ]
+CATEGORIA_PROFISSIONAL_OUTROS = [
+    'Agente de combate a endemias', 
+    'Agente de saúde',
+    'Assistente Social', 
+    'Educador social', 
+    'Farmacêutico', 
+    'Fonoaudiólogo', 
+    'Médico veterinário', 
+    'Nutricionista', 
+    'Outros prof. de nível médio', 
+    'Outros prof. de nível superior', 
+    'Profissional de educação física', 
+    'Sanitarista', 
+    'Terapeuta ocupacional', 
+    'Naturólogo', 
+    'Musicoterapeuta', 
+    'Arteterapeuta', 
+    'Terapeuto Holístico', 
+    'Recepcionista'
+]
 
-def obter_relatorio_reduzido(
+def obter_relatorio_outros(
     periodo_competencia: date)-> pd.DataFrame():
 
     df_consolidado = pd.DataFrame()
-    
+
     try:
         df_parcial = extrair_producao_por_municipio(
             tipo_producao="Atendimento individual",
@@ -35,7 +46,7 @@ def obter_relatorio_reduzido(
             selecoes_adicionais={
                 "Problema/Condição Avaliada": "Selecionar Todos", 
                 "Conduta":"Selecionar Todos",
-                "Categoria do Profissional":CATEGORIA_PROFISSIONAL_REDUZIDA, 
+                "Categoria do Profissional":CATEGORIA_PROFISSIONAL_OUTROS, 
             },
 
             ).pipe(transformar_producao_por_municipio)
@@ -47,12 +58,12 @@ def obter_relatorio_reduzido(
     except Exception as e:
         logger.error(e)
         pass
-
+                    
     return df_consolidado
 
 
 @task(
-    name="Extrair Relatório de Produção de Saúde - Profissionais Selecionados ",
+    name="Extrair Relatório de Produção de Saúde - Profissionais Outros ",
     description=(
         "Extrai o relatório de Produção de Saúde a partir da página do SISAB."
     ),
@@ -60,13 +71,13 @@ def obter_relatorio_reduzido(
     retries=2,
     retry_delay_seconds=120,
 )
-def extrair_relatorio(
+def extrair_relatorio_outros(
     periodo_competencia: date)-> pd.DataFrame():
 
     habilitar_suporte_loguru()
     logger.info("Iniciando extraçção do relatório...")
 
-    df_extraido = obter_relatorio_reduzido(periodo_competencia)
+    df_extraido = obter_relatorio_outros(periodo_competencia)
     
     logger.info("Extração concluída")
 

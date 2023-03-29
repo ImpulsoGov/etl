@@ -28,9 +28,8 @@ from impulsoetl.sisab.relatorio_validacao_producao.principal import (
     obter_validacao_producao,
 )
 """
-from impulsoetl.sisab.relatorio_saude_producao.principal import (
-    obter_relatorio_producao_por_profissional_problema_conduta_atendimento
-)
+from impulsoetl.sisab.relatorio_saude_producao.principal import obter_relatorio_producao_por_profissionais_reduzidos
+from impulsoetl.sisab.relatorio_saude_producao.principal_outros import obter_relatorio_producao_por_profissionais_outros
 
 agendamentos = tabelas["configuracoes.capturas_agendamentos"]
 capturas_historico = tabelas["configuracoes.capturas_historico"]
@@ -801,7 +800,7 @@ def egestor_financiamento(
                 logger.info("OK.")
 """
 @flow(
-    name=("Rodar Agendamentos do Relatório de Produção do SISAB"),
+    name=("Rodar Agendamentos do Relatório de Produção do SISAB - Profissionais Reduzidos"),
     description=(
         "Lê as capturas agendadas para obter o Relatório de Produção de Saúde do SISAB "
         + "para todos os municípios, filtrados por Tipo de Equipe, Categoria Profissional,"
@@ -814,8 +813,8 @@ def egestor_financiamento(
     validate_parameters=False,
 )
 
-def relatorio_producao_saude(
-    teste: bool = False,
+def relatorio_producao_saude_profissionais_reduzidos(
+    teste: bool = True,
 ) -> None:
     habilitar_suporte_loguru()
     operacao_id = "063e2878-3247-78a7-83dd-1d291156cdf6"
@@ -831,7 +830,7 @@ def relatorio_producao_saude(
 
         logger.info("Leitura dos Agendamentos ok!")
         for agendamento in agendamentos_relatorio_producao_saude:
-            obter_relatorio_producao_por_profissional_problema_conduta_atendimento(
+            obter_relatorio_producao_por_profissionais_reduzidos(
                 sessao=sessao,
                 tabela_destino=agendamento.tabela_destino,
                 periodo_competencia=agendamento.periodo_data_inicio,
@@ -857,4 +856,65 @@ def relatorio_producao_saude(
             
             logger.info("OK.")
 
-relatorio_producao_saude()
+
+#relatorio_producao_saude_profissionais_reduzidos()
+
+"""
+@flow(
+    name=("Rodar Agendamentos do Relatório de Produção do SISAB - Profissionais Outros"),
+    description=(
+        "Lê as capturas agendadas para obter o Relatório de Produção de Saúde do SISAB "
+        + "para todos os municípios, filtrados por Tipo de Equipe, Categoria Profissional,"
+        + "Condição Avaliada, Tipo de Atendimento e Conduta"
+    ),
+    retries=0,
+    retry_delay_seconds=None,
+    timeout_seconds=14400,
+    version=__VERSION__,
+    validate_parameters=False,
+)
+
+def relatorio_producao_saude_profissionais_outros(
+    teste: bool = True,
+) -> None:
+    habilitar_suporte_loguru()
+    operacao_id = "06423293-7fac-7493-b209-e5aa489879fb"
+
+    agendamentos = tabelas["configuracoes.capturas_agendamentos"]
+    with Sessao() as sessao:
+        agendamentos_relatorio_producao_saude = (
+            sessao.query(agendamentos)
+            .filter(agendamentos.c.operacao_id == operacao_id)
+            .all()
+        )
+        sessao.commit()
+
+        logger.info("Leitura dos Agendamentos ok!")
+        for agendamento in agendamentos_relatorio_producao_saude:
+            obter_relatorio_producao_por_profissionais_outros(
+                sessao=sessao,
+                tabela_destino=agendamento.tabela_destino,
+                periodo_competencia=agendamento.periodo_data_inicio,
+                periodo_id=agendamento.periodo_id,
+                unidade_geografica_id=agendamento.unidade_geografica_id
+            )
+
+            if teste:  
+                sessao.rollback()
+                break
+
+            logger.info("Registrando captura bem-sucedida...")
+            requisicao_inserir_historico = capturas_historico.insert(
+                {
+                    "operacao_id": operacao_id,
+                    "periodo_id": agendamento.periodo_id,
+                    "unidade_geografica_id": agendamento.unidade_geografica_id,
+                }
+            )
+            conector = sessao.connection()
+            conector.execute(requisicao_inserir_historico)
+            sessao.commit()
+            
+            logger.info("OK.")
+
+relatorio_producao_saude_profissionais_outros()
