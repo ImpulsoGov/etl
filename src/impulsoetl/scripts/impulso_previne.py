@@ -917,4 +917,4 @@ def relatorio_producao_saude_profissionais_outros(
             
             logger.info("OK.")
 
-relatorio_producao_saude_profissionais_outros()
+relatorio_producao_saude_profissionais_outros()"""
