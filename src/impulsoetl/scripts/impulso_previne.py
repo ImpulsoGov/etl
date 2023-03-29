@@ -857,7 +857,7 @@ def relatorio_producao_saude_profissionais_reduzidos(
             logger.info("OK.")
 
 
-relatorio_producao_saude_profissionais_reduzidos()
+#relatorio_producao_saude_profissionais_reduzidos()
 
 """
 @flow(
