@@ -6,6 +6,7 @@ from typing import Final
 
 import numpy as np
 import pandas as pd
+import math
 from frozendict import frozendict
 #from prefect import task
 
@@ -80,6 +81,9 @@ def tratar_tipos(df_extraido: pd.DataFrame) -> pd.DataFrame:
         df_extraido[coluna] = pd.to_datetime(
             df_extraido[coluna], infer_datetime_format=True, errors="coerce"
         )
+    
+    for coluna in COLUNAS_CARGA_HORARIA:
+        df_extraido[coluna] =  df_extraido[coluna].round(0)
 
     for coluna in COLUNAS_CARGA_HORARIA:
         df_extraido[coluna] =  df_extraido[coluna].astype(float).round(0)
@@ -108,6 +112,7 @@ def ordenar_colunas(df_extraido: pd.DataFrame, COLUNAS_TIPOS: dict):
     retries=2,
     retry_delay_seconds=120,
 )
+
 def tratamento_dados(
     df_extraido: pd.DataFrame, periodo_id: str, unidade_geografica_id: str
 ) -> pd.DataFrame:

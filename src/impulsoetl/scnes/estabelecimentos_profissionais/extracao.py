@@ -14,7 +14,9 @@ from impulsoetl.scnes.extracao_lista_cnes import extrair_lista_cnes
 
 
 def extrair_profissionais_com_ine (
-    codigo_municipio:str,lista_codigos:list,periodo_data_inicio:date
+    codigo_municipio:str,
+    lista_codigos:list,
+    periodo_data_inicio:date
 )->pd.DataFrame:
     """
     Extrai informaçãoes dos profissionais de saúde que fazem parte de alguma equipe a partir da página do CNES
@@ -30,10 +32,8 @@ def extrair_profissionais_com_ine (
 
     lista_codigos = extrair_lista_cnes(codigo_municipio)
     equipes = extrair_equipes(codigo_municipio, lista_codigos, periodo_data_inicio)
-    lista_cnes = equipes['estabelecimento_cnes_id'].value_counts().index.tolist()
 
-
-    for cnes in lista_cnes:
+    for cnes in lista_codigos:
         equipes_cnes = equipes.loc[equipes['estabelecimento_cnes_id']==cnes]
         codigos_equipe_area = dict(zip(equipes_cnes['seqEquipe'],equipes_cnes['coArea']))
         codigos_equipe_cnes =  dict(zip(equipes_cnes['seqEquipe'],equipes_cnes['coEquipe']))
@@ -42,11 +42,10 @@ def extrair_profissionais_com_ine (
             coArea = codigos_equipe_area[seqEquipe]
             for coEquipe in codigos_equipe_cnes:
                 coEquipe = codigos_equipe_cnes[coEquipe]
-
-                try:
-                    url = "http://cnes.datasus.gov.br/services/estabelecimentos-equipes/profissionais/"+codigo_municipio+cnes+"?coMun="+codigo_municipio+"&coArea="+coArea+"&coEquipe="+seqEquipe+"&competencia={:%Y%m}".format(periodo_data_inicio)
-                    payload={}
-                    headers = {
+                
+                url = "http://cnes.datasus.gov.br/services/estabelecimentos-equipes/profissionais/"+codigo_municipio+cnes+"?coMun="+codigo_municipio+"&coArea="+coArea+"&coEquipe="+seqEquipe+"&competencia={:%Y%m}".format(periodo_data_inicio)
+                payload={}
+                headers = {
                     'Accept': 'application/json, text/plain, */*',
                     'Accept-Language': 'pt-BR,pt;q=0.9,en-US;q=0.8,en;q=0.7',
                     'Connection': 'keep-alive',
@@ -57,12 +56,11 @@ def extrair_profissionais_com_ine (
                     response = requests.request("GET", url, headers=headers, data=payload)
                     res = response.text
         
-                    parsed = json.loads(res)
-                    df = pd.DataFrame(parsed)
-                    df['INE'] = coEquipe
-                    df['coArea'] = coArea
-                    df['estabelecimento_cnes_id'] = cnes
-                    df['municipio_id_sus'] = codigo_municipio
+                parsed = json.loads(res)
+                df = pd.DataFrame(parsed)
+                df['INE'] = coEquipe
+                df['coArea'] = coArea
+                df['estabelecimento_cnes_id'] = cnes
 
                     df_extraido = df_extraido.append(df)
 
@@ -83,7 +81,9 @@ def extrair_profissionais_com_ine (
     retry_delay_seconds=120,
 )
 def extrair_profissionais (
-    codigo_municipio:str, lista_codigos:list, periodo_data_inicio:date
+    codigo_municipio:str, 
+    lista_codigos:list, 
+    periodo_data_inicio:date
 )-> pd.DataFrame:
     """
     Extrai informaçãoes dos profissionais de saúde dos estabelecimentos a partir da página do CNES
@@ -103,7 +103,7 @@ def extrair_profissionais (
     for cnes in lista_codigos:
         try:
             url = ("http://cnes.datasus.gov.br/services/estabelecimentos-profissionais/"+codigo_municipio+cnes+"?competencia={:%Y%m}".format(periodo_data_inicio))
-            print(url)
+    
             payload={}
             headers = {
                 'Accept': 'application/json, text/plain, */*',
@@ -136,9 +136,10 @@ def extrair_profissionais (
             pass
     
     df_ine = extrair_profissionais_com_ine(codigo_municipio=codigo_municipio,lista_codigos=lista_codigos, periodo_data_inicio=periodo_data_inicio)
-    df_ine = df_ine[['estabelecimento_cnes_id','INE','dtEntrada','dtDesligamento','cns','municipio_id_sus']]
-    df_consolidado = pd.merge(df_parcial, df_ine, how='outer', on=['cns','estabelecimento_cnes_id','municipio_id_sus'])
+    df_ine = df_ine[['estabelecimento_cnes_id','INE','dtEntrada','dtDesligamento','cns']]
+    df_consolidado = pd.merge(df_parcial, df_ine, how='outer', on=['cns','estabelecimento_cnes_id'])
 
     logger.info("Extração concluída ...")
 
     return df_consolidado
+
