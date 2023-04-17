@@ -21,7 +21,7 @@ from impulsoetl.loggers import habilitar_suporte_loguru, logger
 from impulsoetl.scnes.estabelecimentos_identificados.principal import obter_informacoes_estabelecimentos_identificados
 from impulsoetl.scnes.estabelecimentos_horarios.principal import obter_horarios_estabelecimentos
 from impulsoetl.scnes.estabelecimentos_equipes.principal import obter_equipes_cnes
-from impulsoetl.scnes.estabelecimentos_profissionais.principal import obter_profissionais_cnes
+from impulsoetl.scnes.estabelecimentos_profissionais_com_ine.principal import obter_profissionais_cnes_com_ine
 
 
 
@@ -351,9 +351,9 @@ def cnes_equipes(
 
 
 @flow(
-    name="Rodar Agendamentos de Profissionais do SCNES",
+    name="Rodar Agendamentos de Profissionais com INE do SCNES",
     description=(
-        "Lê as capturas agendadas para ficha de profissionais de saúde "
+        "Lê as capturas agendadas para ficha de profissionais de saúde vinculados à alguma equipe"
     ),
     retries=0,
     retry_delay_seconds=None,
@@ -361,11 +361,11 @@ def cnes_equipes(
     version=__VERSION__,
     validate_parameters=False,
 )
-def cnes_profissionais(
+def cnes_profissionais_com_ine(
     teste: bool = False,
 ) -> None:
 
-    operacao_id = "063c94ab-a2f5-7504-866c-4a5d0d854105"
+    operacao_id = "0642f1cd-083b-783d-b855-c837cfa7439b"
 
     with Sessao() as sessao:
         agendamentos_cnes = (
@@ -381,7 +381,7 @@ def cnes_profissionais(
             codigo_sus_municipio = agendamento.unidade_geografica_id_sus
             periodo_data_inicio = agendamento.periodo_data_inicio
 
-            obter_profissionais_cnes(
+            obter_profissionais_cnes_com_ine(
                 sessao=sessao,
                 tabela_destino=tabela_destino,
                 codigo_municipio=codigo_sus_municipio,
