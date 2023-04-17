@@ -14,13 +14,13 @@ from sqlalchemy.orm import Session
 
 from impulsoetl import __VERSION__
 from impulsoetl.bd import Sessao
-from impulsoetl.scnes.estabelecimentos_profissionais.extracao import (
-    extrair_profissionais,
+from impulsoetl.scnes.estabelecimentos_profissionais_com_ine.extracao import (
+    extrair_profissionais_com_ine,
 )
-from impulsoetl.scnes.estabelecimentos_profissionais.tratamento import (
+from impulsoetl.scnes.estabelecimentos_profissionais_com_ine.tratamento import (
     tratamento_dados,
 )
-from impulsoetl.scnes.estabelecimentos_profissionais.verificacao import (
+from impulsoetl.scnes.estabelecimentos_profissionais_com_ine.verificacao import (
     verificar_dados,
 )
 from impulsoetl.scnes.extracao_lista_cnes import extrair_lista_cnes
@@ -29,7 +29,7 @@ from impulsoetl.utilitarios.bd import carregar_dataframe
 from impulsoetl.loggers import habilitar_suporte_loguru, logger
 
 @flow(
-    name="Obter dados da Ficha dos Profissionais de Saúde por Estabelecimento",
+    name="Obter dados dos profissionais com INE por estabelecimento",
     description=(
         "Extrai, transforma e carrega os dados dos profissionais de saúde "
         + "a partir da página do CNES"
@@ -39,7 +39,7 @@ from impulsoetl.loggers import habilitar_suporte_loguru, logger
     version=__VERSION__,
     validate_parameters=False,
 )
-def obter_profissionais_cnes(
+def obter_profissionais_cnes_com_ine(
     sessao: Session,
     tabela_destino: str,
     codigo_municipio: str,
@@ -59,7 +59,7 @@ def obter_profissionais_cnes(
 
     lista_cnes = extrair_lista_cnes(codigo_municipio=codigo_municipio)
 
-    df_extraido = extrair_profissionais(
+    df_extraido = extrair_profissionais_com_ine(
         codigo_municipio=codigo_municipio,
         lista_codigos=lista_cnes,
         periodo_data_inicio=periodo_data_inicio,
