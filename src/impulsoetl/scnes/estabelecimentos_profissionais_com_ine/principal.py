@@ -29,7 +29,7 @@ from impulsoetl.utilitarios.bd import carregar_dataframe
 from impulsoetl.loggers import habilitar_suporte_loguru, logger
 
 @flow(
-    name="Obter dados da Ficha dos Profissionais de Saúde por Estabelecimento",
+    name="Obter dados dos profissionais com INE por estabelecimento",
     description=(
         "Extrai, transforma e carrega os dados dos profissionais de saúde "
         + "a partir da página do CNES"
@@ -39,7 +39,7 @@ from impulsoetl.loggers import habilitar_suporte_loguru, logger
     version=__VERSION__,
     validate_parameters=False,
 )
-def obter_profissionais_cnes(
+def obter_profissionais_cnes_com_ine(
     sessao: Session,
     tabela_destino: str,
     codigo_municipio: str,
