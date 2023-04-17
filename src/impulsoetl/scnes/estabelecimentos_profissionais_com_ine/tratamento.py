@@ -8,37 +8,29 @@ import numpy as np
 import pandas as pd
 import math
 from frozendict import frozendict
-#from prefect import task
+from prefect import task
 
 from impulsoetl.loggers import habilitar_suporte_loguru, logger
-from impulsoetl.scnes.estabelecimentos_equipes.extracao import extrair_equipes
-from impulsoetl.scnes.estabelecimentos_profissionais.extracao import (
-    extrair_profissionais,
-)
 from impulsoetl.scnes.extracao_lista_cnes import extrair_lista_cnes
 
 COLUNAS_EXCLUIR = [
-    "tpSusNaoSus",
-    "artigo2",
-    "artigo3",
-    "artigo5",
-    "dtEntrada_x",
-    "cnsMaster",
+    "coArea",
+    "stEquipeMinima", 
+    "diferenciada", 
+    "complementar"
 ]
+
 
 COLUNAS_RENOMEAR: Final[dict[str, str]] = {
     "INE": "equipe_id_ine",
-    "nome": "profissional_nome",
+    "noProfissional": "profissional_nome",
     "cns": "profissional_cns",
     "cbo": "profissional_cbo",
     "dsCbo": "profissional_ocupacao",
-    "vinculacao": "profissional_vinculacao",
-    "vinculo": "profissional_vinculo_tipo",
-    "subVinculo": "profissional_vinculo_subptipo",
     "chHosp": "carga_horaria_hospitalar",
     "chAmb": "carga_horaria_ambulatorial",
     "chOutros": "carga_horaria_outras",
-    "dtEntrada_y": "periodo_data_entrada",
+    "dtEntrada": "periodo_data_entrada",
     "dtDesligamento": "periodo_data_desligamento",
 }
 
@@ -51,9 +43,6 @@ COLUNAS_TIPOS: Final[frozendict] = frozendict(
         "profissional_cns": "str",
         "profissional_cbo": "str",
         "profissional_ocupacao": "str",
-        "profissional_vinculacao": "str",
-        "profissional_vinculo_tipo": "str",
-        "profissional_vinculo_subptipo": "str",
         "carga_horaria_hospitalar": "Int64",
         "carga_horaria_ambulatorial": "Int64",
         "carga_horaria_outras": "Int64",
@@ -81,9 +70,6 @@ def tratar_tipos(df_extraido: pd.DataFrame) -> pd.DataFrame:
         df_extraido[coluna] = pd.to_datetime(
             df_extraido[coluna], infer_datetime_format=True, errors="coerce"
         )
-    
-    for coluna in COLUNAS_CARGA_HORARIA:
-        df_extraido[coluna] =  df_extraido[coluna].round(0)
 
     for coluna in COLUNAS_CARGA_HORARIA:
         df_extraido[coluna] =  df_extraido[coluna].astype(float).round(0)
@@ -101,16 +87,15 @@ def ordenar_colunas(df_extraido: pd.DataFrame, COLUNAS_TIPOS: dict):
 
     return df_extraido
 
-
 @task(
-    name="Tratar Informações dos Profissionais de Saúde",
+    name="Trata os dados dos profissionais de saúde com INE por estabelecimento",
     description=(
-        "Trata os dados dos profisisonais de saúde dos estabelecimentos de cada município"
-        + "a partir da página do CNES."
+        "Realiza o tratamento dos dados dos profissionais vinculados à alguma equipe de saúde"
+        + "a partir da página do CNES"
     ),
     tags=["cnes", "profissionais", "tratamento"],
-    retries=2,
-    retry_delay_seconds=120,
+    retries=0,
+    retry_delay_seconds=None,
 )
 def tratamento_dados(
     df_extraido: pd.DataFrame, periodo_id: str, unidade_geografica_id: str

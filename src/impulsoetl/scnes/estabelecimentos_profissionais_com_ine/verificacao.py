@@ -6,15 +6,6 @@ import pandas as pd
 from prefect import task
 
 from impulsoetl.loggers import habilitar_suporte_loguru, logger
-from impulsoetl.scnes.estabelecimentos_equipes.extracao import extrair_equipes
-from impulsoetl.scnes.estabelecimentos_profissionais.extracao import (
-    extrair_profissionais,
-)
-from impulsoetl.scnes.estabelecimentos_profissionais.tratamento import (
-    tratamento_dados,
-)
-from impulsoetl.scnes.extracao_lista_cnes import extrair_lista_cnes
-
 
 def verifica_diferenca_qtd_registros(
     df_extraido: pd.DataFrame,
