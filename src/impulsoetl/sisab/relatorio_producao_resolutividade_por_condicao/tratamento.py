@@ -76,13 +76,14 @@ def tratamento_dados(
     habilitar_suporte_loguru()
     logger.info("Iniciando o tratamento dos dados...")
 
-    df_extraido = df_extraido.loc[df_extraido['municipio_id_sus']==municipio_id_sus].reset_index()
+    df_extraido = df_extraido.loc[df_extraido['municipio_id_sus']==municipio_id_sus].reset_index(drop=True)
     df_extraido = excluir_colunas(df_extraido)
     df_extraido = renomear_colunas(df_extraido)
     df_extraido['periodo_id'] = periodo_id
     df_extraido['unidade_geografica_id'] = unidade_geografica_id
     df_extraido['tipo_producao']='Atendimento Individual'
-    tratar_tipos(df_extraido)    
+    tratar_tipos(df_extraido) 
+    print(df_extraido)   
 
     logger.info("Dados tratados com sucesso ...")
 
