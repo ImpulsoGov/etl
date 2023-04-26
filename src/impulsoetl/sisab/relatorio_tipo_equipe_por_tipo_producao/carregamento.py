@@ -59,6 +59,7 @@ def carregar_dados(
 
     if any(
         [registro.periodo_id == periodo_id for registro in registros_inseridos]
+
     ):
         limpar = (
             delete(tabela_relatorio_producao)
