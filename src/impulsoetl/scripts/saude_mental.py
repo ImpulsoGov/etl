@@ -98,8 +98,9 @@ def resolutividade_aps_por_condicao(
     validate_parameters=False,
 )
 def tipo_equipe_por_tipo_producao(
-    teste: bool = False,
+    teste:bool = True,
 ) -> None:
+
     """Número de contatos assistenciais na APS por tipo de produção e equipe.
 
     Argumentos:
@@ -113,36 +114,45 @@ def tipo_equipe_por_tipo_producao(
 
     [`sqlalchemy.orm.session.Session`]: https://docs.sqlalchemy.org/en/14/orm/session_api.html#sqlalchemy.orm.Session
     """
+
     habilitar_suporte_loguru()
     logger.info(
         "Capturando dados de atendimentos individuais) por condição de saúde avaliada.",
     )
-    variaveis = ("Tipo de Equipe", "Tipo de Produção")
-    operacao_id = "0f397c27-db38-4fd9-b097-3a9e25138b4c"
+
+    operacao_id = '0644be06-c2f5-75ef-9c31-8027d0a6f166'
     with Sessao() as sessao:
         agendamentos_producao_por_equipe = (
             sessao.query(agendamentos)
             .filter(agendamentos.c.operacao_id == operacao_id)
             .all()
         )
+
         for agendamento in agendamentos_producao_por_equipe:
-            obter_relatorio_producao(
-                sessao=sessao,
-                tabela_destino=agendamento.tabela_destino,
-                variaveis=variaveis,
-                unidades_geograficas_ids=[agendamento.unidade_geografica_id],
-                unidade_geografica_tipo=agendamento.unidade_geografica_tipo,
-                ano=agendamento.periodo_data_inicio.year,
-                mes=agendamento.periodo_data_inicio.month,
-                tipo_producao=None,
-                atualizar_captura=False,
-                teste=teste,
+            obter_relatorio_tipo_equipe_por_producao(
+                sessao = sessao,
+                teste = teste,
+                tabela_destino = agendamento.tabela_destino,
+                periodo_id = agendamento.periodo_id,
+                unidade_geografica_id = agendamento.unidade_geografica_id,
+                unidade_geografica_id_sus= agendamento.unidade_geografica_id_sus,
+                periodo_competencia = agendamento.periodo_data_inicio,
             )
+            logger.info("Registrando captura bem-sucedida...")
+            requisicao_inserir_historico = capturas_historico.insert(
+                {
+                    "operacao_id": operacao_id,
+                    "periodo_id": agendamento.periodo_id,
+                    "unidade_geografica_id": agendamento.unidade_geografica_id,
+                }
+            )
+            conector = sessao.connection()
+            conector.execute(requisicao_inserir_historico)
             if teste:
                 sessao.rollback()
                 break
             sessao.commit()
-
+            logger.info("OK.")
 
 @flow(
     name="Rodar Agendamentos de Arquivos de Disseminação da RAAS-PS",
