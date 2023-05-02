@@ -26,7 +26,7 @@ RUN apt-get install -yqq curl
 RUN curl -s -L \
     https://github.com/mozilla/geckodriver/releases/download/v0.31.0/geckodriver-v0.31.0-linux64.tar.gz \
     | tar xz -C /usr/local/bin/
-RUN apt-get install -yqq firefox-esr:amd64=91.13.0esr-1~deb11u1	
+#RUN apt-get install -yqq firefox-esr:amd64=91.13.0esr-1~deb11u1	
 
 # instalar dependências
 RUN apt-get install -yqq git build-essential libssl-dev libffi-dev python3-dev cargo
