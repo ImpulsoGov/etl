@@ -17,7 +17,6 @@ authors = ["ImpulsoGov <contato@impulsogov.org>"]
 
 python = ">=3.10,<3.11"
 cryptography = ">=38.0.3"
-pandas = "1.4.2"
 "psycopg2-binary" = "^2.9.3"
 scipy = "~1.8.1"
 frozendict = "2.1.1"
@@ -37,7 +36,9 @@ uuid6 = "^2022.6.25"
 lxml = "^4.9.1"
 xlrd = "^2.0.1"
 beautifulsoup4 = "^4.11.2"
-
+pandas = "1.4.3"
+pyreaddbc = "1.0.0"
+dbfread = "2.0.7"
 
 [tool.poetry.group.dev.dependencies]
 
