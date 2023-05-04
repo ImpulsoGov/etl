@@ -6,25 +6,23 @@
 """Obtém dados de procedimentos ambulatoriais registrados no SIASUS."""
 
 
-from __future__ import annotations
-
 import os
 import re
 from datetime import date
-from ftplib import FTP
 from typing import Final, Generator
-from urllib.error import URLError
 
 import janitor  # noqa: F401  # nopycln: import
 import numpy as np
 import pandas as pd
 from frozendict import frozendict
+from prefect import flow, task
 from sqlalchemy.orm import Session
 from uuid6 import uuid7
 
+from impulsoetl import __VERSION__
 from impulsoetl.comum.datas import agora_gmt_menos3, periodo_por_data
 from impulsoetl.comum.geografias import id_sus_para_id_impulso
-from impulsoetl.loggers import logger
+from impulsoetl.loggers import habilitar_suporte_loguru, logger
 from impulsoetl.utilitarios.bd import carregar_dataframe
 from impulsoetl.utilitarios.datasus_ftp import extrair_dbc_lotes
 
@@ -222,13 +220,24 @@ def extrair_pa(
     )
 
 
+@task(
+    name="Transformar Procedimentos Ambulatoriais",
+    description=(
+        "Transforma os dados dos arquivos de disseminação de Procedimentos "
+        + " Ambulatoriais a partir do repositório público do Sistema de "
+        + " Informações Ambulatoriais do SUS."
+    ),
+    tags=["saude_mental", "siasus", "pa", "transformacao"],
+    retries=0,
+    retry_delay_seconds=None,
+)
 def transformar_pa(
     sessao: Session,
     pa: pd.DataFrame,
     condicoes: str | None = None,
 ) -> pd.DataFrame:
     """Transforma um `DataFrame` de procedimentos ambulatoriais do SIASUS.
-    
+
     Argumentos:
         sessao: objeto [`sqlalchemy.orm.session.Session`][] que permite
             acessar a base de dados da ImpulsoGov.
@@ -256,6 +265,7 @@ def transformar_pa(
     [`pandas.DataFrame.query()`]: https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.query.html
     [it-siasus]: https://drive.google.com/file/d/1DC5093njSQIhMHydYptlj2rMbrMF36y6
     """
+    habilitar_suporte_loguru()
     logger.info(
         "Transformando DataFrame com {num_registros_pa} procedimentos "
         + "ambulatoriais.",
@@ -263,7 +273,7 @@ def transformar_pa(
     )
     logger.debug(
         "Memória ocupada pelo DataFrame original:  {memoria_usada:.2f} mB.",
-        memoria_usada=pa.memory_usage(deep=True).sum() / 10 ** 6,
+        memoria_usada=pa.memory_usage(deep=True).sum() / 10**6,
     )
 
     # aplica condições de filtragem dos registros
@@ -406,27 +416,51 @@ def transformar_pa(
     logger.debug(
         "Memória ocupada pelo DataFrame transformado: {memoria_usada:.2f} mB.",
         memoria_usada=(
-            pa_transformada.memory_usage(deep=True).sum() / 10 ** 6
+            pa_transformada.memory_usage(deep=True).sum() / 10**6
         ),
     )
     return pa_transformada
 
 
+@task(
+    name="Validar Procedimentos Ambulatoriais",
+    description=(
+        "Valida os dados transformados dos arquivos de disseminação de "
+        + "Procedimentos Ambulatoriais a partir do repositório público do "
+        + "Sistema de Informações Ambulatoriais do SUS."
+    ),
+    tags=["saude_mental", "siasus", "pa", "validacao"],
+    retries=0,
+    retry_delay_seconds=None,
+)
 def validar_pa(pa_transformada: pd.DataFrame) -> pd.DataFrame:
+    habilitar_suporte_loguru()
     assert isinstance(pa_transformada, pd.DataFrame), "Não é um DataFrame"
     assert len(pa_transformada) > 0, "DataFrame vazio."
     nulos_por_coluna = pa_transformada.applymap(pd.isna).sum()
-    assert nulos_por_coluna["quantidade_apresentada"] == 0, (
-        "A quantidade apresentada é um valor nulo."
-    )
-    assert nulos_por_coluna["quantidade_aprovada"] == 0, (
-        "A quantidade aprovada é um valor nulo."
-    )
-    assert nulos_por_coluna["realizacao_periodo_data_inicio"] == 0, (
-        "A competência de realização é um valor nulo."
-    )
+    assert (
+        nulos_por_coluna["quantidade_apresentada"] == 0
+    ), "A quantidade apresentada é um valor nulo."
+    assert (
+        nulos_por_coluna["quantidade_aprovada"] == 0
+    ), "A quantidade aprovada é um valor nulo."
+    assert (
+        nulos_por_coluna["realizacao_periodo_data_inicio"] == 0
+    ), "A competência de realização é um valor nulo."
 
 
+@flow(
+    name="Obter Procedimentos Ambulatoriais",
+    description=(
+        "Extrai, transforma e carrega os dados dos arquivos de disseminação "
+        + "Boletins de Produção Ambulatorial - individualizados a partir do "
+        + "repositório público do Sistema de Informações Ambulatoriais do SUS."
+    ),
+    retries=0,
+    retry_delay_seconds=None,
+    version=__VERSION__,
+    validate_parameters=False,
+)
 def obter_pa(
     sessao: Session,
     uf_sigla: str,
@@ -461,6 +495,7 @@ def obter_pa(
     [`datetime.date`]: https://docs.python.org/3/library/datetime.html#date-objects
     [`transformar_pa()`]: impulsoetl.siasus.procedimentos.transformar_pa
     """
+    habilitar_suporte_loguru()
     logger.info(
         "Iniciando captura de procedimentos ambulatoriais para Unidade "
         + "Federativa '{}' na competencia de {:%m/%Y}.",
@@ -480,7 +515,7 @@ def obter_pa(
     contador = 0
     for pa_lote in pa_lotes:
         pa_transformada = transformar_pa(
-            sessao=sessao, 
+            sessao=sessao,
             pa=pa_lote,
             condicoes=kwargs.get("condicoes"),
         )

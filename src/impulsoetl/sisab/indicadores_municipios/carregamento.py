@@ -6,14 +6,13 @@
 """Carrega dados de indicadores de desempenho no banco de dados da Impulso."""
 
 
-from __future__ import annotations
-
 import json
 
 import pandas as pd
+from prefect import task
 from sqlalchemy.orm import Session
 
-from impulsoetl.loggers import logger
+from impulsoetl.loggers import habilitar_suporte_loguru, logger
 from impulsoetl.sisab.indicadores_municipios.modelos import (
     indicadores_equipe_homologadas,
     indicadores_equipe_validas,
@@ -21,12 +20,23 @@ from impulsoetl.sisab.indicadores_municipios.modelos import (
 )
 
 
+@task(
+    name="Carrega Indicadores do Previne Brasil",
+    description=(
+        "Carrega os dados dos relatórios de indicadores do Previne Brasil "
+        + "extraídos e transformados a partir do portal público do Sistema de "
+        + "Informação em Saúde para a Atenção Básica do SUS."
+    ),
+    tags=["aps", "sisab", "indicadores_municipios", "carregamento"],
+    retries=0,
+    retry_delay_seconds=None,
+)
 def carregar_indicadores(
     sessao: Session,
     indicadores_transformada: pd.DataFrame,
     visao_equipe: str,
 ) -> int:
-
+    habilitar_suporte_loguru()
     registros = json.loads(
         indicadores_transformada.to_json(
             orient="records",

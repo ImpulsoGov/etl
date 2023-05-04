@@ -5,26 +5,26 @@
 
 """Junta etapas do fluxo de ETL de indicadores de desempenho dos municípios."""
 
-from __future__ import annotations
-
 from datetime import date
 from typing import Final
 
+from prefect import flow
 from sqlalchemy.orm import Session
 
+from impulsoetl import __VERSION__
+from impulsoetl.loggers import habilitar_suporte_loguru
 from impulsoetl.sisab.indicadores_municipios.carregamento import (
     carregar_indicadores,
 )
 from impulsoetl.sisab.indicadores_municipios.extracao import (
     extrair_indicadores,
 )
-from impulsoetl.sisab.indicadores_municipios.verificacao import (
-    verificar_indicadores_municipios
-)
 from impulsoetl.sisab.indicadores_municipios.tratamento import (
     transformar_indicadores,
 )
-
+from impulsoetl.sisab.indicadores_municipios.verificacao import (
+    verificar_indicadores_municipios,
+)
 
 INDICADORES_CODIGOS: Final[dict[str, str]] = {
     "Pré-Natal (6 consultas)": "1",
@@ -37,12 +37,25 @@ INDICADORES_CODIGOS: Final[dict[str, str]] = {
 }
 
 
+@flow(
+    name="Obter Indicadores do Previne Brasil",
+    description=(
+        "Extrai, transforma e carrega os dados dos relatórios de indicadores "
+        + "do Previne Brasil a partir do portal público do Sistema de "
+        + "Informação em Saúde para a Atenção Básica do SUS."
+    ),
+    retries=0,
+    retry_delay_seconds=None,
+    version=__VERSION__,
+    validate_parameters=False,
+)
 def obter_indicadores_desempenho(
     sessao: Session,
     visao_equipe: str,
     quadrimestre: date,
     teste: bool = False,
 ) -> None:
+    habilitar_suporte_loguru()
     for indicador in INDICADORES_CODIGOS:
         df = extrair_indicadores(
             visao_equipe=visao_equipe,

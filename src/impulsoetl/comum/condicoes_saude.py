@@ -7,11 +7,8 @@
 """
 
 
-from __future__ import annotations
-
 import re
 from typing import Final
-
 
 CID10: Final[re.Pattern] = re.compile(
     r"[A-Z][0-9]{2}\.?[0-9X]{,4}",

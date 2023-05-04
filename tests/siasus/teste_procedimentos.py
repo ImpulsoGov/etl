@@ -126,7 +126,7 @@ def teste_extrair_pa(uf_sigla, periodo_data_inicio, passo):
     ["PA_UFMUN == '280030'", None],
 )
 def teste_transformar_pa(sessao, pa, condicoes):
-    pa_transformada = transformar_pa(
+    pa_transformada = transformar_pa.fn(
         sessao=sessao,
         pa=pa,
         condicoes=condicoes,
@@ -155,8 +155,8 @@ def teste_transformar_pa(sessao, pa, condicoes):
         )
 
 
-def teste_carregar_pa(sessao, pa_transformada, caplog, tabela_teste, passo):
-    codigo_saida = carregar_dataframe(
+def teste_carregar_pa(sessao, pa_transformada, capfd, tabela_teste, passo):
+    codigo_saida = carregar_dataframe.fn(
         sessao=sessao,
         df=pa_transformada.iloc[:10],
         tabela_destino=tabela_teste,
@@ -166,7 +166,7 @@ def teste_carregar_pa(sessao, pa_transformada, caplog, tabela_teste, passo):
 
     assert codigo_saida == 0
 
-    logs = caplog.text
+    logs = capfd.readouterr().err
     assert "Carregamento concluído" in logs
 
 
@@ -183,7 +183,7 @@ def teste_obter_pa(
     sessao,
     uf_sigla,
     periodo_data_inicio,
-    caplog,
+    capfd,
     tabela_teste,
     parametros,
 ):
@@ -196,5 +196,5 @@ def teste_obter_pa(
         **parametros,
     )
 
-    logs = caplog.text
+    logs = capfd.readouterr().err
     assert "Carregamento concluído" in logs

@@ -11,8 +11,6 @@ Atributos:
 """
 
 
-from __future__ import annotations
-
 import os
 from contextlib import contextmanager
 from pathlib import Path
@@ -26,10 +24,13 @@ from selenium_driver_updater import DriverUpdater
 ambiente = os.getenv("IMPULSOETL_AMBIENTE", "desenvolvimento")
 
 _diretorio_raiz = Path(__file__).parents[2]
-_diretorio_binarios = _diretorio_raiz / "bin"
 
-if not _diretorio_binarios.is_dir():
-    _diretorio_binarios.mkdir()
+if ambiente == "desenvolvimento":
+    _diretorio_binarios = _diretorio_raiz / "bin"
+    if not _diretorio_binarios.is_dir():
+        _diretorio_binarios.mkdir()
+else:
+    _diretorio_binarios = Path("/usr/local/bin/")
 
 diretorio_downloads = Path(
     os.getenv("IMPULSOETL_DOWNLOADS_CAMINHO") or Path(_diretorio_raiz / "tmp"),

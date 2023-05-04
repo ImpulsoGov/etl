@@ -26,7 +26,7 @@ from impulsoetl.utilitarios.bd import carregar_dataframe
 
 @pytest.fixture(scope="module")
 def _habilitacoes():
-    return pd.read_parquet("CNES_HBSE2111_.parquet")
+    return pd.read_parquet("tests/scnes/CNES_HBSE2111_.parquet")
 
 
 @pytest.fixture(scope="function")
@@ -121,7 +121,7 @@ def teste_extrair_pa(uf_sigla, periodo_data_inicio, passo):
 
 @pytest.mark.integracao
 def teste_transformar_habilitacoes(sessao, habilitacoes):
-    habilitacoes_transformado = transformar_habilitacoes(
+    habilitacoes_transformado = transformar_habilitacoes.fn(
         sessao=sessao,
         habilitacoes=habilitacoes,
     )
@@ -154,9 +154,9 @@ def teste_carregar_habilitacoes(
     habilitacoes_transformado,
     tabela_teste,
     passo,
-    caplog,
+    capfd,
 ):
-    carregamento_status = carregar_dataframe(
+    carregamento_status = carregar_dataframe.fn(
         sessao=sessao,
         df=habilitacoes_transformado.iloc[:10],
         tabela_destino=tabela_teste,
@@ -166,7 +166,9 @@ def teste_carregar_habilitacoes(
 
     assert carregamento_status == 0
 
-    logs = caplog.text
+    # BUG: só passa quando o pytest é executado com a opção `-s`; ver
+    # https://github.com/pytest-dev/pytest/issues/5997
+    logs = capfd.readouterr().err
     assert "Carregamento concluído" in logs
 
 
@@ -180,7 +182,7 @@ def teste_obter_habilitacoes(
     uf_sigla,
     periodo_data_inicio,
     tabela_teste,
-    caplog,
+    capfd,
 ):
     obter_habilitacoes(
         sessao=sessao,
@@ -190,5 +192,5 @@ def teste_obter_habilitacoes(
         teste=True,
     )
 
-    logs = caplog.text
+    logs = capfd.readouterr().err
     assert "Carregamento concluído" in logs

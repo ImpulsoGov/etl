@@ -7,8 +7,6 @@
 """
 
 
-from __future__ import annotations
-
 import os
 from datetime import date
 from typing import Final, Generator
@@ -17,16 +15,18 @@ import janitor  # noqa: F401  # nopycln: import
 import numpy as np
 import pandas as pd
 from frozendict import frozendict
+from prefect import flow, task
 from sqlalchemy.orm import Session
 from uuid6 import uuid7
 
+from impulsoetl import __VERSION__
 from impulsoetl.comum.datas import (
     agora_gmt_menos3,
     de_aaaammdd_para_timestamp,
     periodo_por_data,
 )
 from impulsoetl.comum.geografias import id_sus_para_id_impulso
-from impulsoetl.loggers import logger
+from impulsoetl.loggers import habilitar_suporte_loguru, logger
 from impulsoetl.utilitarios.bd import carregar_dataframe
 from impulsoetl.utilitarios.datasus_ftp import extrair_dbc_lotes
 
@@ -156,7 +156,7 @@ def extrair_bpa_i(
     [`datetime.date`]: https://docs.python.org/3/library/datetime.html#date-objects
     """
 
-    return extrair_dbc_lotes(
+    yield from extrair_dbc_lotes(
         ftp="ftp.datasus.gov.br",
         caminho_diretorio="/dissemin/publicos/SIASUS/200801_/Dados",
         arquivo_nome="BI{uf_sigla}{periodo_data_inicio:%y%m}.dbc".format(
@@ -167,6 +167,17 @@ def extrair_bpa_i(
     )
 
 
+@task(
+    name="Transformar BPA-i's",
+    description=(
+        "Transforma os dados dos arquivos de disseminação dos Boletins de "
+        + "Produção Ambulatorial - individualizados a partir do repositório "
+        + "público do Sistema de Informações Ambulatoriais do SUS."
+    ),
+    tags=["saude_mental", "siasus", "bpa_i", "transformacao"],
+    retries=0,
+    retry_delay_seconds=None,
+)
 def transformar_bpa_i(
     sessao: Session,
     bpa_i: pd.DataFrame,
@@ -201,13 +212,14 @@ def transformar_bpa_i(
     [`pandas.DataFrame.query()`]: https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.query.html
     [it-siasus]: https://drive.google.com/file/d/1DC5093njSQIhMHydYptlj2rMbrMF36y6
     """
+    habilitar_suporte_loguru()
     logger.info(
         "Transformando DataFrame com {num_registros_bpa_i} registros de BPAi.",
         num_registros_bpa_i=len(bpa_i),
     )
     logger.debug(
         "Memória ocupada pelo DataFrame original:  {memoria_usada:.2f} mB.",
-        memoria_usada=bpa_i.memory_usage(deep=True).sum() / 10 ** 6,
+        memoria_usada=bpa_i.memory_usage(deep=True).sum() / 10**6,
     )
 
     # aplica condições de filtragem dos registros
@@ -296,12 +308,25 @@ def transformar_bpa_i(
     logger.debug(
         "Memória ocupada pelo DataFrame transformado: {memoria_usada:.2f} mB.",
         memoria_usada=(
-            bpa_i_transformada.memory_usage(deep=True).sum() / 10 ** 6
+            bpa_i_transformada.memory_usage(deep=True).sum() / 10**6
         ),
     )
     return bpa_i_transformada
 
 
+@flow(
+    name="Obter BPA-i's",
+    description=(
+        "Extrai, transforma e carrega os dados dos arquivos de disseminação "
+        + "dos Boletins de Produção Ambulatorial - individualizados a partir "
+        + "do repositório público do Sistema de Informações Ambulatoriais do "
+        + "SUS."
+    ),
+    retries=0,
+    retry_delay_seconds=None,
+    version=__VERSION__,
+    validate_parameters=False,
+)
 def obter_bpa_i(
     sessao: Session,
     uf_sigla: str,
@@ -335,6 +360,7 @@ def obter_bpa_i(
     [`datetime.date`]: https://docs.python.org/3/library/datetime.html#date-objects
     [`transformar_bpa_i()`]: impulsoetl.siasus.bpa_i.transformar_bpa_i
     """
+    habilitar_suporte_loguru()
     logger.info(
         "Iniciando captura de BPA-i's para Unidade Federativa "
         + "Federativa '{}' na competencia de {:%m/%Y}.",

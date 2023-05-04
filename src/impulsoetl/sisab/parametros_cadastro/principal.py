@@ -3,22 +3,35 @@
 # SPDX-License-Identifier: MIT
 
 
-from __future__ import annotations
-
 from datetime import date
 
-from impulsoetl.sisab.parametros_cadastro.tratamento import tratamento_dados
+from prefect import flow
 from sqlalchemy.orm import Session
 
+from impulsoetl import __VERSION__
+from impulsoetl.loggers import habilitar_suporte_loguru
 from impulsoetl.sisab.parametros_cadastro.carregamento import (
     carregar_parametros,
 )
 from impulsoetl.sisab.parametros_cadastro.extracao import extrair_parametros
+from impulsoetl.sisab.parametros_cadastro.tratamento import tratamento_dados
 from impulsoetl.sisab.parametros_cadastro.verificacao import (
     verificar_parametros_cadastro,
 )
 
 
+@flow(
+    name="Obter Parâmetros de Cadastro",
+    description=(
+        "Extrai, transforma e carrega os dados de parâmetros de cadastro "
+        + "do portal público do Sistema de Informação em Saúde para a Atenção "
+        + "Básica do SUS."
+    ),
+    retries=0,
+    retry_delay_seconds=None,
+    version=__VERSION__,
+    validate_parameters=False,
+)
 def obter_parametros(
     sessao: Session,
     visao_equipe: str,
@@ -46,6 +59,7 @@ def obter_parametros(
             posterior ao método [`Session.rollback()`][] da sessão gerada com o
             SQLAlchemy.
     """
+    habilitar_suporte_loguru()
 
     df = extrair_parametros(
         visao_equipe=visao_equipe,

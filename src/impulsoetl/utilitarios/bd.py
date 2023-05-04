@@ -6,21 +6,20 @@
 """Funções e classes úteis para interagir com o banco de dados da Impulso."""
 
 
-from __future__ import annotations
-
 import csv
 from io import StringIO
 from typing import Iterable, cast
 
 import pandas as pd
 from pandas.io.sql import SQLTable
+from prefect import task
 from psycopg2.errors import Error as Psycopg2Error
 from sqlalchemy.engine import Connection, Engine
 from sqlalchemy.exc import DBAPIError, InvalidRequestError
 from sqlalchemy.orm.session import Session
 from sqlalchemy.schema import MetaData, Table
 
-from impulsoetl.loggers import logger
+from impulsoetl.loggers import habilitar_suporte_loguru, logger
 
 
 class TabelasRefletidasDicionario(dict):
@@ -150,6 +149,19 @@ def postgresql_copiar_dados(
     return None
 
 
+@task(
+    name="Carregar Pandas DataFrame",
+    description=(
+        "Carrega dados previamente transformados e armazenados "
+        + "temporariamente como um "
+        + "[DataFrame do Pandas](https://pandas.pydata.org/pandas-docs/stable"
+        + "/reference/api/pandas.DataFrame.html)"
+        + "em memória, tendo como destino o banco de dados da Impulso Gov."
+    ),
+    tags=["carregamento"],
+    retries=0,
+    retry_delay_seconds=None,
+)
 def carregar_dataframe(
     sessao: Session,
     df: pd.DataFrame,
@@ -189,12 +201,13 @@ def carregar_dataframe(
     [`DataFrame`]: https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html
     [`transformar_pa()`]: impulsoetl.siasus.procedimentos.transformar_pa
     """
+    habilitar_suporte_loguru()
 
     num_registros = len(df)
     schema_nome, tabela_nome = tabela_destino.split(".", maxsplit=1)
 
     logger.info(
-        "Carregando {num_registros} registros de procedimentos ambulatoriais "
+        "Carregando {num_registros} registros "
         "para a tabela `{tabela_destino}`...",
         num_registros=num_registros,
         tabela_destino=tabela_destino,
@@ -228,9 +241,10 @@ def carregar_dataframe(
             erro.hide_parameters = True
             erro = cast(Psycopg2Error, erro.orig)
         logger.error(
-            "Erro ao inserir registros na tabela `{}` (Código {})",
+            "Erro ao inserir registros na tabela `{}` (Código {}, erro {})",
             tabela_destino,
             erro.pgcode,
+            erro,
         )
         logger.debug(
             "({}.{}) {}",

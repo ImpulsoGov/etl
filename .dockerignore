@@ -11,4 +11,5 @@
 !poetry.lock
 !src
 !README.md
-!*/entrypoint.sh
+!entrypoint.sh
+!implementar_fluxos.py

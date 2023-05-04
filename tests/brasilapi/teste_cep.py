@@ -77,7 +77,7 @@ def teste_tipos():
 
 @pytest.mark.parametrize("cep", ["89010025"])
 def teste_extrair_cep(cep):
-    cep_dados = extrair_cep(id_cep=cep)
+    cep_dados = extrair_cep.fn(id_cep=cep)
     assert isinstance(cep_dados, dict)
     for campo in DE_PARA_CEP:
         if campo not in ("latitude", "longitude"):
@@ -89,7 +89,7 @@ def teste_extrair_cep(cep):
 
 
 def teste_transformar_cep(cep_dados):
-    cep_transformado = transformar_cep(cep_dados=cep_dados)
+    cep_transformado = transformar_cep.fn(cep_dados=cep_dados)
 
     assert isinstance(cep_transformado, dict)
     for campo in cep_transformado:
@@ -99,8 +99,8 @@ def teste_transformar_cep(cep_dados):
         assert isinstance(cep_transformado[campo], TIPOS_CEP[campo])
 
 
-def teste_carregar_cep(sessao, cep_transformado, caplog):
-    codigo_saida = carregar_cep(
+def teste_carregar_cep(sessao, cep_transformado, capfd):
+    codigo_saida = carregar_cep.fn(
         sessao=sessao,
         cep_transformado=cep_transformado,
     )
@@ -109,10 +109,10 @@ def teste_carregar_cep(sessao, cep_transformado, caplog):
 
 @pytest.mark.integracao
 @pytest.mark.parametrize("ceps_pendentes", [["89010025", "01001000"]])
-def teste_obter_cep(sessao, ceps_pendentes, caplog):
+def teste_obter_cep(sessao, ceps_pendentes, capfd):
     obter_cep(sessao=sessao, ceps_pendentes=ceps_pendentes, teste=True)
 
-    logs = caplog.text
+    logs = capfd.readouterr().err
     assert "CEPs carregados com sucesso" in logs
     linhas_adicionadas = int(re.search("([0-9]+) CEPs carregados", logs)[1])
     linhas_com_falha = int(re.search("; ([0-9]+) falharam", logs)[1])

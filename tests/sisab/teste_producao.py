@@ -7,8 +7,6 @@
 """
 
 
-from __future__ import annotations
-
 import re
 from copy import deepcopy
 from datetime import date
@@ -653,7 +651,7 @@ class TesteRelatorioProducao(object):
     ],
 )
 def teste_gerar_nome_tabela(variaveis, unidade_geografica, nome_esperado):
-    nome_gerado = gerar_nome_tabela(
+    nome_gerado = gerar_nome_tabela.fn(
         variaveis=variaveis,
         unidade_geografica=unidade_geografica,
     )
@@ -670,11 +668,11 @@ def teste_gerar_nome_tabela(variaveis, unidade_geografica, nome_esperado):
 def teste_gerar_modelo_impulso(variavel_a, variavel_b, relatorio_transformado):
     """Testa gerar modelo de relatório de produção."""
 
-    tabela_nome = gerar_nome_tabela(
+    tabela_nome = gerar_nome_tabela.fn(
         variaveis=(variavel_a, variavel_b),
         unidade_geografica="municipios",
     )
-    modelo = gerar_modelo_impulso(
+    modelo = gerar_modelo_impulso.fn(
         tabela_nome=tabela_nome,
         variaveis=(variavel_a, variavel_b),
     )
@@ -693,7 +691,7 @@ def teste_carregar_relatorio_producao(
     sessao,
     relatorio_transformado,
     modelo_categoria_profissional_por_tipo_equipe,
-    caplog,
+    capfd,
 ):
     """Testa carregar relatório de produção na base de dados da ImpulsoGov."""
     nome_esperado = (
@@ -702,7 +700,7 @@ def teste_carregar_relatorio_producao(
     )
     linhas_esperadas = 16
 
-    codigo_saida = carregar_relatorio_producao(
+    codigo_saida = carregar_relatorio_producao.fn(
         sessao=sessao,
         dados_producao=relatorio_transformado,
         modelo_tabela=(modelo_categoria_profissional_por_tipo_equipe),
@@ -710,7 +708,7 @@ def teste_carregar_relatorio_producao(
 
     assert codigo_saida == 0
 
-    logs = caplog.text
+    logs = capfd.readouterr().err
     assert (
         "Carregamento concluído para a tabela `{}`".format(nome_esperado)
         in logs
@@ -749,7 +747,7 @@ def teste_obter_relatorio_producao(
     data_fim,
     unidades_geograficas_ids,
     unidade_geografica_tipo,
-    caplog,
+    capfd,
 ):
     """Testa fazer ETL de dados de produção do SISAB para o BD da Impulso."""
     obter_relatorio_producao(
@@ -765,7 +763,7 @@ def teste_obter_relatorio_producao(
         teste=True,
     )
 
-    logs = caplog.text
+    logs = capfd.readouterr().err
     assert "Carregamento concluído para a tabela " in logs
     linhas_adicionadas = re.search("adicionadas ([0-9]+) novas linhas.", logs)
     assert linhas_adicionadas

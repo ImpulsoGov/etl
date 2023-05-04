@@ -3,8 +3,6 @@
 # SPDX-License-Identifier: MIT
 
 
-from __future__ import annotations
-
 import urllib
 from datetime import date
 from io import StringIO
@@ -12,7 +10,9 @@ from typing import Final
 
 import pandas as pd
 import requests
+from prefect import task
 
+from impulsoetl.loggers import habilitar_suporte_loguru
 from impulsoetl.sisab.parametros_requisicao import head
 
 VISOES_EQUIPE_CODIGOS: Final[dict[str, str]] = {
@@ -65,12 +65,23 @@ def _extrair_parametros(
     return response.text
 
 
+@task(
+    name="Extrair Parâmetros de Cadastro",
+    description=(
+        "Extrai os dados dos parâmetros de cadastro do Previne Brasil a "
+        + "partir do portal público do Sistema de Informação em Saúde para a "
+        + "Atenção Básica do SUS."
+    ),
+    tags=["aps", "sisab", "parametros_cadastro", "extracao"],
+    retries=2,
+    retry_delay_seconds=120,
+)
 def extrair_parametros(
     visao_equipe: str,
     competencia: date,
     nivel_agregacao: str,
 ) -> pd.DataFrame:
-
+    habilitar_suporte_loguru()
     resposta = _extrair_parametros(
         visao_equipe=visao_equipe,
         competencia=competencia,

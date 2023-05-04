@@ -3,14 +3,13 @@
 # SPDX-License-Identifier: MIT
 
 
-from __future__ import annotations
-
 import json
 
 import pandas as pd
+from prefect import task
 from sqlalchemy.orm import Session
 
-from impulsoetl.loggers import logger
+from impulsoetl.loggers import habilitar_suporte_loguru, logger
 from impulsoetl.sisab.parametros_cadastro.modelos import (
     parametros_equipes_equipe_homologadas,
     parametros_equipes_equipe_validas,
@@ -19,13 +18,24 @@ from impulsoetl.sisab.parametros_cadastro.modelos import (
 )
 
 
+@task(
+    name="Carrega Parâmetros de Cadastro",
+    description=(
+        "Carrega os dados dos parâmetros de cadastro do Previne Brasil "
+        + "extraídos e transformados a partir do portal público do Sistema de "
+        + "Informação em Saúde para a Atenção Básica do SUS."
+    ),
+    tags=["aps", "sisab", "indicadores_municipios", "carregamento"],
+    retries=0,
+    retry_delay_seconds=None,
+)
 def carregar_parametros(
     sessao: Session,
     parametros_transformada: pd.DataFrame,
     visao_equipe: str,
     nivel_agregacao: str,
 ) -> int:
-
+    habilitar_suporte_loguru()
     registros = json.loads(
         parametros_transformada.to_json(
             orient="records",

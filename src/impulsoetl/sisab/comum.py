@@ -6,8 +6,6 @@
 """Define elementos comuns a diversos formulários do SISAB."""
 
 
-from __future__ import annotations
-
 import os
 from abc import ABC, abstractmethod
 from contextlib import contextmanager

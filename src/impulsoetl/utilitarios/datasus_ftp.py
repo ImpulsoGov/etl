@@ -6,8 +6,6 @@
 """Funções e classes úteis para interagir com os repositórios do DataSUS."""
 
 
-from __future__ import annotations
-
 import re
 import shutil
 from contextlib import closing
@@ -16,14 +14,28 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 from typing import Generator, cast
 from urllib.request import urlopen
-
+import os
 import pandas as pd
 from dbfread import DBF, FieldParser
 from more_itertools import ichunked
-from pysus.utilities.readdbc import dbc2dbf
+from pyreaddbc import ffi, lib
 
 from impulsoetl.loggers import logger
 
+def dbc2dbf(infile, outfile):
+    """
+    Converts a DATASUS dbc file to a DBF database saving it to `outfile`.
+    :param infile: .dbc file name
+    :param outfile: name of the .dbf file to be created.
+    """
+    if isinstance(infile, str):
+        infile = infile.encode()
+    if isinstance(outfile, str):
+        outfile = outfile.encode()
+    p = ffi.new("char[]", os.path.abspath(infile))
+    q = ffi.new("char[]", os.path.abspath(outfile))
+
+    lib.dbc2dbf([p], [q])
 
 class LeitorCamposDBF(FieldParser):
     def parseD(self, field, data):

@@ -8,9 +8,6 @@ name: Cria imagem Docker - ImpulsoETL
 on:
   push:
     branches: [ main ]
-  pull_request:
-    types: [ closed ]
-    branches: [ main ]
 
 jobs:
   build:
@@ -25,7 +22,32 @@ jobs:
         DOCKER_SENHA: ${{secrets.DOCKER_SENHA}}
         SLACK_WEBHOOK_URL: ${{secrets.SLACK_WEBHOOK_URL}}
       run: docker login -u $DOCKER_USER -p $DOCKER_SENHA
-    - name: Construir imagem do ImpulsoETL
+    - name: Construir imagem do ImpulsoETL (sem prefect)
       run: docker build -t impulsogov/impulsoetl:latest .
+    - name: Implementar blocos e fluxos do Prefect
+      env:
+        DOCKER_IMAGEM: impulsogov/impulsoetl
+        DOCKER_REGISTRO_SENHA: ${{secrets.DOCKER_SENHA}}
+        DOCKER_REGISTRO_URL: ${{secrets.DOCKER_REGISTRO_URL}}
+        DOCKER_REGISTRO_USUARIO: ${{secrets.DOCKER_USER}}
+        IMPULSOETL_BD_HOST: ${{secrets.IMPULSOETL_BD_HOST}}
+        IMPULSOETL_BD_PORTA: ${{secrets.IMPULSOETL_BD_PORTA}}
+        IMPULSOETL_BD_NOME: ${{secrets.IMPULSOETL_BD_NOME}}
+        IMPULSOETL_BD_USUARIO: ${{secrets.IMPULSOETL_BD_USUARIO}}
+        IMPULSOETL_BD_SENHA: ${{secrets.IMPULSOETL_BD_SENHA}}
+        PREFECT_API_URL: ${{secrets.PREFECT_API_URL}}
+      run: >
+        docker run
+        -e DOCKER_IMAGEM
+        -e DOCKER_REGISTRO_SENHA
+        -e DOCKER_REGISTRO_URL
+        -e DOCKER_REGISTRO_USUARIO
+        -e IMPULSOETL_BD_HOST
+        -e IMPULSOETL_BD_PORTA
+        -e IMPULSOETL_BD_NOME
+        -e IMPULSOETL_BD_USUARIO
+        -e IMPULSOETL_BD_SENHA
+        -e PREFECT_API_URL
+        impulsogov/impulsoetl:latest poetry run python3 implementar_fluxos.py
     - name: Enviar imagem do ImpulsoETL
       run: docker push impulsogov/impulsoetl

@@ -6,8 +6,6 @@
 """Utilidades para lidar com dados textuais."""
 
 
-from __future__ import annotations
-
 import re
 
 from toolz.functoolz import compose_left
