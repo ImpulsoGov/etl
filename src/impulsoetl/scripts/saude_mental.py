@@ -18,7 +18,8 @@ from impulsoetl.siasus.procedimentos import obter_pa
 from impulsoetl.siasus.raas_ps import obter_raas_ps
 from impulsoetl.sihsus.aih_rd import obter_aih_rd
 from impulsoetl.sinan.violencia import obter_agravos_violencia
-from impulsoetl.sisab.producao import obter_relatorio_producao
+from impulsoetl.sisab.relatorio_producao_resolutividade_por_condicao.principal import obter_relatorio_resolutividade_por_condicao
+from impulsoetl.sisab.relatorio_tipo_equipe_por_tipo_producao.principal import obter_relatorio_tipo_equipe_por_producao
 
 agendamentos = tabelas["configuracoes.capturas_agendamentos"]
 capturas_historico = tabelas["configuracoes.capturas_historico"]

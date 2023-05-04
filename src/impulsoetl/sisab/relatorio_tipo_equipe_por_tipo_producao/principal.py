@@ -42,7 +42,6 @@ def obter_relatorio_tipo_equipe_por_producao(
     unidade_geografica_id: str,
     unidade_geografica_id_sus: str,
     periodo_competencia: date,
-    teste: bool,
 ) -> None:
 
     df_extraido = extrair_relatorio(
