@@ -59,13 +59,6 @@ safety = "1.10.3"
 wemake-python-styleguide="0.0.1"
 pytest-testmon = "^1.2.3"
 
-[tool.poetry.group.prefect]
-optional = true
-
-[tool.poetry.group.prefect.dependencies]
-prefect = ">=2.6.7, <3.0"
-
-
 [tool.poetry.extras]
 
 analise = [
