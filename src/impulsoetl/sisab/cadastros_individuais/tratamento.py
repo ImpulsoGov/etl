@@ -4,13 +4,13 @@
 
 from typing import Final
 
-from frozendict import frozendict
 import pandas as pd
+from frozendict import frozendict
 from prefect import task
 from sqlalchemy.orm import Session
 
 from impulsoetl.comum.geografias import id_sus_para_id_impulso
-from impulsoetl.loggers import logger,habilitar_suporte_loguru
+from impulsoetl.loggers import habilitar_suporte_loguru, logger
 
 CADASTROS_COLUNAS_TIPOS: Final[frozendict] = frozendict(
     {
@@ -33,62 +33,68 @@ CADASTROS_COLUNAS: Final[dict[str, str]] = {
     "INE": "equipe_id_ine",
 }
 
+
 def renomear_colunas(
-    df_extraido:pd.DataFrame,
-    ):
-    return df_extraido.rename(columns=CADASTROS_COLUNAS).rename(columns={df_extraido.columns[7]: 'quantidade'})
+    df_extraido: pd.DataFrame,
+):
+    return df_extraido.rename(columns=CADASTROS_COLUNAS).rename(
+        columns={df_extraido.columns[7]: "quantidade"}
+    )
+
 
 def excluir_colunas(
-    df_tratado:pd.DataFrame,
-    ):
-    
-    return (df_tratado.drop(
-        ["Uf", "Municipio","Sigla da equipe", "Unnamed: 8"],
-        axis=1
-    ).dropna())
+    df_tratado: pd.DataFrame,
+):
+    return df_tratado.drop(
+        ["Uf", "Municipio", "Sigla da equipe", "Unnamed: 8"], axis=1
+    ).dropna()
 
 
 def garantir_tipos_colunas(
-    df_tratado:pd.DataFrame,
-    ):
-
+    df_tratado: pd.DataFrame,
+):
     return df_tratado.astype(CADASTROS_COLUNAS_TIPOS)
 
-def definir_coluna_criterio_pontuacao(
-    df_tratado:pd.DataFrame,
-    com_ponderacao:bool,
-    ):
 
-    return df_tratado.insert(1, "criterio_pontuacao", com_ponderacao, allow_duplicates = True)
+def definir_coluna_criterio_pontuacao(
+    df_tratado: pd.DataFrame,
+    com_ponderacao: bool,
+):
+    return df_tratado.insert(
+        1, "criterio_pontuacao", com_ponderacao, allow_duplicates=True
+    )
+
 
 def definir_coluna_periodo_codigo(
-    df_tratado:pd.DataFrame,
-    periodo_codigo:str,
-    ):
+    df_tratado: pd.DataFrame,
+    periodo_codigo: str,
+):
+    return df_tratado.insert(
+        1, "periodo_codigo", periodo_codigo, allow_duplicates=True
+    )
 
-    return df_tratado.insert(1, "periodo_codigo", periodo_codigo, allow_duplicates = True)
 
 def definir_coluna_periodo_id(
-    df_tratado:pd.DataFrame,
-    periodo_id:str,
-    ):
+    df_tratado: pd.DataFrame,
+    periodo_id: str,
+):
+    return df_tratado.insert(
+        1, "periodo_id", periodo_id, allow_duplicates=True
+    )
 
-    return df_tratado.insert(1, "periodo_id", periodo_id, allow_duplicates = True)
 
 def definir_coluna_unidade_geografica_id(
-    df_tratado:pd.DataFrame,
-    sessao:Session,
-    ):
-    
-    df_tratado["unidade_geografica_id"] = df_tratado[
-        "municipio_id_sus"
-    ].apply(
+    df_tratado: pd.DataFrame,
+    sessao: Session,
+):
+    df_tratado["unidade_geografica_id"] = df_tratado["municipio_id_sus"].apply(
         lambda municipio_id_sus: id_sus_para_id_impulso(
             sessao=sessao,
             id_sus=municipio_id_sus,
         )
     )
     return df_tratado
+
 
 @task(
     name="Transformar Cadastros Individuais",
@@ -101,13 +107,12 @@ def definir_coluna_unidade_geografica_id(
     retries=0,
     retry_delay_seconds=None,
 )
-
 def tratar_dados(
     sessao: Session,
     df_extraido: pd.DataFrame,
     com_ponderacao: bool,
-    periodo_id:str,
-    periodo_codigo:str,
+    periodo_id: str,
+    periodo_codigo: str,
 ) -> pd.DataFrame:
     """Inclui todas etapas de transformação dos dados de cadastros de equipes pelo SISAB.
 
@@ -128,7 +133,7 @@ def tratar_dados(
     """
 
     habilitar_suporte_loguru()
-    
+
     logger.info("Renomeando colunas da tabela...")
     print(df_extraido)
     df_tratado = renomear_colunas(df_extraido=df_extraido)
@@ -137,10 +142,14 @@ def tratar_dados(
     df_tratado = excluir_colunas(df_tratado=df_tratado)
 
     logger.info("Ennquicimento de tabela com novas colunas...")
-    definir_coluna_criterio_pontuacao(df_tratado=df_tratado,com_ponderacao=com_ponderacao)
-    definir_coluna_periodo_codigo(df_tratado=df_tratado,periodo_codigo=periodo_codigo)
-    definir_coluna_periodo_id(df_tratado=df_tratado,periodo_id=periodo_id)
-    definir_coluna_unidade_geografica_id(df_tratado=df_tratado,sessao=sessao)
+    definir_coluna_criterio_pontuacao(
+        df_tratado=df_tratado, com_ponderacao=com_ponderacao
+    )
+    definir_coluna_periodo_codigo(
+        df_tratado=df_tratado, periodo_codigo=periodo_codigo
+    )
+    definir_coluna_periodo_id(df_tratado=df_tratado, periodo_id=periodo_id)
+    definir_coluna_unidade_geografica_id(df_tratado=df_tratado, sessao=sessao)
 
     logger.info("Garantindo tipagem dos dados...")
     garantir_tipos_colunas(df_tratado=df_tratado)

@@ -12,7 +12,7 @@ import pandas as pd
 import requests
 from prefect import task
 
-from impulsoetl.loggers import logger,habilitar_suporte_loguru
+from impulsoetl.loggers import habilitar_suporte_loguru, logger
 from impulsoetl.sisab.parametros_requisicao import head
 
 VISOES_EQUIPE_CODIGOS: Final[dict[str, str]] = {
@@ -21,19 +21,19 @@ VISOES_EQUIPE_CODIGOS: Final[dict[str, str]] = {
     "equipes-validas": "|HM|NC|AQ|",
 }
 
-def escapar_texto(visao_equipe:str):
-    return (
-        urllib.parse.quote(
+
+def escapar_texto(visao_equipe: str):
+    return urllib.parse.quote(
         VISOES_EQUIPE_CODIGOS[visao_equipe],
-        )
     )
 
-def adiciona_parametro_ponderacao(com_ponderacao:bool,payload):
+
+def adiciona_parametro_ponderacao(com_ponderacao: bool, payload):
     if com_ponderacao:
         payload = payload + ("&beneficiarios=on")
     else:
         payload
-    
+
     return payload
 
 
@@ -42,10 +42,7 @@ def extrair_requisicao(
     com_ponderacao: bool,
     competencia: date,
 ) -> str:
-
-    url = (
-        "https://sisab.saude.gov.br/paginas/acessoRestrito/relatorio/federal/indicadores/indicadorCadastro.xhtml"
-    )
+    url = "https://sisab.saude.gov.br/paginas/acessoRestrito/relatorio/federal/indicadores/indicadorCadastro.xhtml"
 
     parametros_requisicaco = head(url)
     headers = parametros_requisicaco[0]
@@ -63,9 +60,11 @@ def extrair_requisicao(
         + view_state
         + "&j_idt85=j_idt85"
     )
-    
-    payload = adiciona_parametro_ponderacao(com_ponderacao=com_ponderacao,payload=payload)
-    
+
+    payload = adiciona_parametro_ponderacao(
+        com_ponderacao=com_ponderacao, payload=payload
+    )
+
     response = requests.request(
         "POST",
         url,
@@ -73,14 +72,14 @@ def extrair_requisicao(
         data=payload,
         timeout=120,
     )
-    
+
     return response.text
 
-def definir_posicao_cabecalho(
-    visao_equipe:str,
-    com_ponderacao:bool,
-    ):
 
+def definir_posicao_cabecalho(
+    visao_equipe: str,
+    com_ponderacao: bool,
+):
     if not com_ponderacao:
         if visao_equipe == "todas-equipes":
             header = 6
@@ -94,6 +93,7 @@ def definir_posicao_cabecalho(
 
     return header
 
+
 @task(
     name="Extrair Cadastros Individuais",
     description=(
@@ -104,7 +104,6 @@ def definir_posicao_cabecalho(
     retries=2,
     retry_delay_seconds=120,
 )
-
 def extrair_cadastros_individuais(
     visao_equipe: str,
     com_ponderacao: bool,
@@ -134,7 +133,9 @@ def extrair_cadastros_individuais(
         com_ponderacao=com_ponderacao,
         competencia=competencia,
     )
-    header = definir_posicao_cabecalho(visao_equipe=visao_equipe,com_ponderacao=com_ponderacao)
+    header = definir_posicao_cabecalho(
+        visao_equipe=visao_equipe, com_ponderacao=com_ponderacao
+    )
     try:
         df_extraido = pd.read_csv(
             StringIO(resposta),
@@ -150,4 +151,3 @@ def extrair_cadastros_individuais(
 
     except pd.errors.ParserError:
         logger.error("Data da competência do relatório não está disponível")
-    
