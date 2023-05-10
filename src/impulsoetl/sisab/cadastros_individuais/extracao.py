@@ -12,7 +12,7 @@ import pandas as pd
 import requests
 from prefect import task
 
-from impulsoetl.loggers import habilitar_suporte_loguru
+from impulsoetl.loggers import logger,habilitar_suporte_loguru
 from impulsoetl.sisab.parametros_requisicao import head
 
 VISOES_EQUIPE_CODIGOS: Final[dict[str, str]] = {
@@ -21,33 +21,51 @@ VISOES_EQUIPE_CODIGOS: Final[dict[str, str]] = {
     "equipes-validas": "|HM|NC|AQ|",
 }
 
+def escapar_texto(visao_equipe:str):
+    return (
+        urllib.parse.quote(
+        VISOES_EQUIPE_CODIGOS[visao_equipe],
+        )
+    )
 
-def _extrair_cadastros_individuais(
+def adiciona_parametro_ponderacao(com_ponderacao:bool,payload):
+    if com_ponderacao:
+        payload = payload + ("&beneficiarios=on")
+    else:
+        payload
+    
+    return payload
+
+
+def extrair_requisicao(
     visao_equipe: str,
     com_ponderacao: bool,
     competencia: date,
 ) -> str:
 
     url = (
-        "https://sisab.saude.gov.br/paginas/acessoRestrito/relatorio/federal"
-        + "/indicadores/indicadorCadastro.xhtml"
+        "https://sisab.saude.gov.br/paginas/acessoRestrito/relatorio/federal/indicadores/indicadorCadastro.xhtml"
     )
-    hd = head(url)
-    vs = hd[1]
+
+    parametros_requisicaco = head(url)
+    headers = parametros_requisicaco[0]
+    view_state = parametros_requisicaco[1]
+
+    visao_equipe_codigos = escapar_texto(visao_equipe=visao_equipe)
+
     ponderacao = "&beneficiarios=on" if com_ponderacao else ""
-    visao_equipe_codigos = urllib.parse.quote(
-        VISOES_EQUIPE_CODIGOS[visao_equipe],
-    )
-    headers = hd[0]
     payload = (
         "j_idt44=j_idt44&selectLinha=cnes_ine&opacao-capitacao="
         + visao_equipe_codigos
         + ponderacao
         + "&competencia={:%Y%m}".format(competencia)
         + "&javax.faces.ViewState="
-        + vs
-        + "&j_idt83=j_idt83"
+        + view_state
+        + "&j_idt85=j_idt85"
     )
+    
+    payload = adiciona_parametro_ponderacao(com_ponderacao=com_ponderacao,payload=payload)
+    
     response = requests.request(
         "POST",
         url,
@@ -55,8 +73,26 @@ def _extrair_cadastros_individuais(
         data=payload,
         timeout=120,
     )
+    
     return response.text
 
+def definir_posicao_cabecalho(
+    visao_equipe:str,
+    com_ponderacao:bool,
+    ):
+
+    if not com_ponderacao:
+        if visao_equipe == "todas-equipes":
+            header = 6
+        else:
+            header = 7
+    else:
+        if visao_equipe == "todas-equipes":
+            header = 7
+        else:
+            header = 8
+
+    return header
 
 @task(
     name="Extrair Cadastros Individuais",
@@ -68,87 +104,50 @@ def _extrair_cadastros_individuais(
     retries=2,
     retry_delay_seconds=120,
 )
+
 def extrair_cadastros_individuais(
     visao_equipe: str,
     com_ponderacao: bool,
     competencia: date,
 ) -> pd.DataFrame:
+    """Extrai relatório de Cadastros Individuais do SISAB.
+
+    Argumentos:
+        visao_equipe: Indica a situação da equipe considerada para a contagem
+            dos cadastros.
+        periodo: Referente ao mês/ano de disponibilização do relatório.
+        com_ponderacao: Lista de booleanos indicando quais tipos de população
+            devem ser filtradas no cadastro - onde `True` indica apenas as
+            populações com critério de ponderação e `False` indica todos os
+            cadastros. Por padrão, o valor é `[True, False]`, indicando que
+            ambas as possibilidades são extraídas do SISAB e carregadas para a
+            mesma tabela de destino.
+
+    Retorna:
+        Um objeto `pandas.DataFrame` com dados capturados pela requisição.
+    """
+
     habilitar_suporte_loguru()
 
-    resposta = _extrair_cadastros_individuais(
+    resposta = extrair_requisicao(
         visao_equipe=visao_equipe,
         com_ponderacao=com_ponderacao,
         competencia=competencia,
     )
+    header = definir_posicao_cabecalho(visao_equipe=visao_equipe,com_ponderacao=com_ponderacao)
+    try:
+        df_extraido = pd.read_csv(
+            StringIO(resposta),
+            delimiter=";",
+            header=header,
+            encoding="ISO-8859-1",
+            engine="python",
+            skipfooter=4,
+            thousands=".",
+            dtype="object",
+        )
+        return df_extraido
 
-    df = pd.read_csv(
-        StringIO(resposta),
-        delimiter="\t",
-        header=None,
-        engine="python",
-    )
-
-    if not com_ponderacao:
-        if visao_equipe == "todas-equipes":
-            dados = df.iloc[8:-4]
-            df = pd.DataFrame(data=dados)
-            df = df[0].str.split(";", expand=True)
-            df.columns = [
-                "Uf",
-                "IBGE",
-                "Municipio",
-                "CNES",
-                "Nome UBS",
-                "INE",
-                "Sigla",
-                "quantidade",
-                "Parametro",
-            ]
-        else:
-            dados = df.iloc[9:-4]
-            df = pd.DataFrame(data=dados)
-            df = df[0].str.split(";", expand=True)
-            df.columns = [
-                "Uf",
-                "IBGE",
-                "Municipio",
-                "CNES",
-                "Nome UBS",
-                "INE",
-                "Sigla",
-                "quantidade",
-                "Parametro",
-                "Coluna",
-            ]
-    else:
-        if visao_equipe == "todas-equipes":
-            dados = df.iloc[9:-4]
-            df = pd.DataFrame(data=dados)
-            df = df[0].str.split(";", expand=True)
-            df.columns = [
-                "Uf",
-                "IBGE",
-                "Municipio",
-                "CNES",
-                "Nome UBS",
-                "INE",
-                "Sigla",
-                "quantidade",
-                "Coluna",
-            ]
-        else:
-            dados = df.iloc[10:-4]
-            df = pd.DataFrame(data=dados)
-            df = df[0].str.split(";", expand=True)
-            df.columns = [
-                "Uf",
-                "IBGE",
-                "Municipio",
-                "CNES",
-                "Nome UBS",
-                "INE",
-                "Sigla",
-                "quantidade",
-                "Coluna",
-            ]
-    return df
+    except pd.errors.ParserError:
+        logger.error("Data da competência do relatório não está disponível")
+    
