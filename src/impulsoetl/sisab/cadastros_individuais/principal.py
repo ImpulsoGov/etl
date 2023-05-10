@@ -10,13 +10,13 @@ from prefect import flow
 from sqlalchemy.orm import Session
 
 from impulsoetl import __VERSION__
-from impulsoetl.bd import Sessao
 from impulsoetl.loggers import habilitar_suporte_loguru, logger
 from impulsoetl.sisab.cadastros_individuais.extracao import (
     extrair_cadastros_individuais,
 )
 from impulsoetl.sisab.cadastros_individuais.tratamento import tratar_dados
 from impulsoetl.utilitarios.bd import carregar_dataframe
+
 
 @flow(
     name="Obter Cadastros Individuais",
@@ -37,7 +37,7 @@ def obter_cadastros_individuais(
     periodo_id: str,
     periodo_codigo: str,
     tabela_destino: str,
-    com_ponderacao: list[bool] = [False, True]
+    com_ponderacao: list[bool] = [False, True],
 ) -> None:
     """Extrai, transforma e carrega dados de cadastros de equipes pelo SISAB.
 
@@ -63,7 +63,6 @@ def obter_cadastros_individuais(
 
     tempo_inicio_etl = time.time()
     for status_ponderacao in com_ponderacao:
-        
         logger.info("Iniciando extração dos dados...")
         df_extraido = extrair_cadastros_individuais(
             visao_equipe=visao_equipe,
@@ -84,7 +83,7 @@ def obter_cadastros_individuais(
 
         logger.info("Iniciando carga dos dados no banco...")
         carregar_dataframe(
-        sessao=sessao, df=df_tratado, tabela_destino=tabela_destino
+            sessao=sessao, df=df_tratado, tabela_destino=tabela_destino
         )
         logger.info("Carga dos dados no banco realizada...")
 
@@ -95,5 +94,5 @@ def obter_cadastros_individuais(
         + "em {tempo_final_etl}.",
         tabela_nome=tabela_destino,
         periodo_codigo=periodo_codigo,
-        tempo_final_etl=tempo_final_etl
+        tempo_final_etl=tempo_final_etl,
     )
