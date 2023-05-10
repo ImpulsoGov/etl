@@ -4,23 +4,19 @@
 
 
 from datetime import date
+import time
 
 from prefect import flow
 from sqlalchemy.orm import Session
 
 from impulsoetl import __VERSION__
+from impulsoetl.bd import Sessao
 from impulsoetl.loggers import habilitar_suporte_loguru, logger
-from impulsoetl.sisab.cadastros_individuais.carregamento import (
-    carregar_cadastros,
-)
 from impulsoetl.sisab.cadastros_individuais.extracao import (
     extrair_cadastros_individuais,
 )
-from impulsoetl.sisab.cadastros_individuais.tratamento import tratamento_dados
-from impulsoetl.sisab.cadastros_individuais.verificacao import (
-    verificar_cadastros_individuais,
-)
-
+from impulsoetl.sisab.cadastros_individuais.tratamento import tratar_dados
+from impulsoetl.utilitarios.bd import carregar_dataframe
 
 @flow(
     name="Obter Cadastros Individuais",
@@ -37,9 +33,11 @@ from impulsoetl.sisab.cadastros_individuais.verificacao import (
 def obter_cadastros_individuais(
     sessao: Session,
     visao_equipe: str,
-    periodo: date,
-    com_ponderacao: list[bool] = [True, False],
-    teste: bool = True,
+    periodo_data: date,
+    periodo_id: str,
+    periodo_codigo: str,
+    tabela_destino: str,
+    com_ponderacao: list[bool] = [False, True]
 ) -> None:
     """Extrai, transforma e carrega dados de cadastros de equipes pelo SISAB.
 
@@ -63,24 +61,39 @@ def obter_cadastros_individuais(
     """
     habilitar_suporte_loguru()
 
+    tempo_inicio_etl = time.time()
     for status_ponderacao in com_ponderacao:
-        df = extrair_cadastros_individuais(
+        
+        logger.info("Iniciando extração dos dados...")
+        df_extraido = extrair_cadastros_individuais(
             visao_equipe=visao_equipe,
             com_ponderacao=status_ponderacao,
-            competencia=periodo,
+            competencia=periodo_data,
         )
         logger.info("Extração dos dados realizada...")
-        df_tratado = tratamento_dados(
+
+        logger.info("Iniciando tratamento dos dados...")
+        df_tratado = tratar_dados(
             sessao=sessao,
-            dados_sisab_cadastros=df,
+            df_extraido=df_extraido,
             com_ponderacao=status_ponderacao,
-            periodo=periodo,
+            periodo_id=periodo_id,
+            periodo_codigo=periodo_codigo,
         )
-        verificar_cadastros_individuais(df=df, df_tratado=df_tratado)
-        carregar_cadastros(
-            sessao=sessao,
-            cadastros_transformada=df_tratado,
-            visao_equipe=visao_equipe,
+        logger.info("Tratamento dos dados realizada...")
+
+        logger.info("Iniciando carga dos dados no banco...")
+        carregar_dataframe(
+        sessao=sessao, df=df_tratado, tabela_destino=tabela_destino
         )
-        if not teste:
-            sessao.commit()
+        logger.info("Carga dos dados no banco realizada...")
+
+    tempo_final_etl = time.time() - tempo_inicio_etl
+    logger.info(
+        "Terminou ETL para `{visao_equipe}` "
+        + "da comepetência`{periodo_codigo}` "
+        + "em {tempo_final_etl}.",
+        tabela_nome=tabela_destino,
+        periodo_codigo=periodo_codigo,
+        tempo_final_etl=tempo_final_etl
+    )
