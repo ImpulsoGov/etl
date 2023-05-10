@@ -69,7 +69,16 @@ def transformar_horarios_json(df_extraido: pd.DataFrame) -> pd.DataFrame:
 
     return df_consolidado
 
-
+@task(
+    name="Transforma dados extraídos dos Horários de Funcionamento dos Estabelecimentos",
+    description=(
+        "Transforma os dados dos horários de funcionamento dos estabelecimentos de saúde"
+        + "a partir da página do CNES."
+    ),
+    tags=["cnes", "equipes", "tratamento"],
+    retries=0,
+    retry_delay_seconds=None,
+)
 def tratamento_dados(
     df_extraido: pd.DataFrame, periodo_id: str, unidade_geografica_id: str
 ) -> pd.DataFrame:

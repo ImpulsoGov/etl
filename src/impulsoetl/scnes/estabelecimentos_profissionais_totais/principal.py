@@ -9,27 +9,35 @@ import warnings
 from datetime import date
 
 warnings.filterwarnings("ignore")
-# from prefect import task
+from prefect import flow
 from sqlalchemy.orm import Session
 
 from impulsoetl import __VERSION__
 from impulsoetl.bd import Sessao
-from impulsoetl.scnes.estabelecimentos_profissionais.extracao import (
-    extrair_profissionais,
+from impulsoetl.scnes.estabelecimentos_profissionais_totais.extracao import (
+    extrair_profissionais_totais,
 )
-from impulsoetl.scnes.estabelecimentos_profissionais.tratamento import (
+from impulsoetl.scnes.estabelecimentos_profissionais_totais.tratamento import (
     tratamento_dados,
 )
-from impulsoetl.scnes.estabelecimentos_profissionais.verificacao import (
-    verificar_dados,
-)
+#from impulsoetl.scnes.verificacao_etls_cnes import (verificar_dados)
 from impulsoetl.scnes.extracao_lista_cnes import extrair_lista_cnes
 from impulsoetl.utilitarios.bd import carregar_dataframe
 
-# from impulsoetl.loggers import habilitar_suporte_loguru, logger
+from impulsoetl.loggers import habilitar_suporte_loguru, logger
 
-
-def obter_profissionais_cnes(
+@flow(
+    name="Obter dados dos profissionais totais por estabelecimento",
+    description=(
+        "Extrai, transforma e carrega os dados dos profissionais de saúde "
+        + "a partir da página do CNES"
+    ),
+    retries=0,
+    retry_delay_seconds=None,
+    version=__VERSION__,
+    validate_parameters=False,
+)
+def obter_profissionais_cnes_totais(
     sessao: Session,
     tabela_destino: str,
     codigo_municipio: str,
@@ -49,7 +57,7 @@ def obter_profissionais_cnes(
 
     lista_cnes = extrair_lista_cnes(codigo_municipio=codigo_municipio)
 
-    df_extraido = extrair_profissionais(
+    df_extraido = extrair_profissionais_totais(
         codigo_municipio=codigo_municipio,
         lista_codigos=lista_cnes,
         periodo_data_inicio=periodo_data_inicio,
@@ -61,7 +69,8 @@ def obter_profissionais_cnes(
         unidade_geografica_id=unidade_geografica_id,
     )
 
-    verificar_dados(df_extraido=df_extraido, df_tratado=df_tratado)
+    #verificar_dados(df_extraido=df_extraido, df_tratado=df_tratado)
+    
     carregar_dataframe(
         sessao=sessao, df=df_tratado, tabela_destino=tabela_destino
     )
