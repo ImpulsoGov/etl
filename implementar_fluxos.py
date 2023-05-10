@@ -77,11 +77,11 @@ bloco_docker_container = DockerContainer(
 )
 
 logger.info("Lendo módulos disponíveis...")
-#geral = import_module(".scripts.geral", "impulsoetl")
+geral = import_module(".scripts.geral", "impulsoetl")
 impulso_previne = import_module(".scripts.impulso_previne", "impulsoetl")
-#saude_mental = import_module(".scripts.saude_mental", "impulsoetl")
+saude_mental = import_module(".scripts.saude_mental", "impulsoetl")
 
-modulos = [impulso_previne] #geral #saude_mental
+modulos = [impulso_previne,geral,saude_mental] 
 
 
 if __name__ == "__main__":
