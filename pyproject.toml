@@ -44,7 +44,7 @@ dbfread = "2.0.7"
 optional = true
 
 [tool.poetry.group.prefect.dependencies]
-prefect = ">=2.10.8, <3.0"
+prefect = ">=2.6.7, <3.0"
 
 [tool.poetry.group.dev.dependencies]
 
