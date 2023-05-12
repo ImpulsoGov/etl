@@ -49,12 +49,16 @@ PREFECT_API_URL: Final[str] = os.getenv(
 )
 
 
-logger.info("Configurando conexão com registro `{}`...", DOCKER_REGISTRO_URL)
+logger.info("Configurando bloco de conexão com registro `{}`...", DOCKER_REGISTRO_URL)
 bloco_docker_registro = DockerRegistry(
     username=DOCKER_REGISTRO_USUARIO,
     password=DOCKER_REGISTRO_SENHA,
     registry_url=DOCKER_REGISTRO_URL,
     reauth=True,
+)
+bloco_docker_registro.save(
+    name="docker-registro-impulso",
+    overwrite=True,
 )
 
 logger.info("Configurando bloco de infraestrutura com Docker...")
