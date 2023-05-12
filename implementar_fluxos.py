@@ -75,7 +75,10 @@ bloco_docker_container = DockerContainer(
     name="docker-container-impulsoetl",
     stream_output=True,
 )
-bloco_docker_container.save()
+bloco_docker_container.save(
+    name="docker-container-impulsoetl",
+    overwrite=True,
+)
 
 logger.info("Lendo módulos disponíveis...")
 geral = import_module(".scripts.geral", "impulsoetl")
