@@ -48,18 +48,26 @@ PREFECT_API_URL: Final[str] = os.getenv(
     "http://127.0.0.1:4200/api",
 )
 
+    
+logger.info("Iniciando cliente bloco de conexão com registro `{}`...", DOCKER_REGISTRO_URL)
+async with PrefectClient(api=PREFECT_API_URL) as cliente:
+    problemas_api = await cliente.api_healthcheck()
+    if problemas_api:
+        logger.error("Tentativa de estabelecer conexão com a API falhou: " + problemas_api.__repr__)
+        raise problemas_api
 
-logger.info("Configurando bloco de conexão com registro `{}`...", DOCKER_REGISTRO_URL)
-bloco_docker_registro = DockerRegistry(
-    username=DOCKER_REGISTRO_USUARIO,
-    password=DOCKER_REGISTRO_SENHA,
-    registry_url=DOCKER_REGISTRO_URL,
-    reauth=True,
-)
-bloco_docker_registro.save(
-    name="docker-registro-impulso",
-    overwrite=True,
-)
+    logger.info("Configurando bloco de conexão com registro `{}`...", DOCKER_REGISTRO_URL)
+    bloco_docker_registro = DockerRegistry(
+        username=DOCKER_REGISTRO_USUARIO,
+        password=DOCKER_REGISTRO_SENHA,
+        registry_url=DOCKER_REGISTRO_URL,
+        reauth=True,
+    )
+    await bloco_docker_registro.save(
+        name="docker-registro-impulso",
+        overwrite=True,
+        client=cliente,
+    )
 
 logger.info("Configurando bloco de infraestrutura com Docker...")
 bloco_docker_container = DockerContainer(
@@ -79,9 +87,10 @@ bloco_docker_container = DockerContainer(
     name="docker-container-impulsoetl",
     stream_output=True,
 )
-bloco_docker_container.save(
+await bloco_docker_container.save(
     name="docker-container-impulsoetl",
     overwrite=True,
+    client=cliente,
 )
 
 logger.info("Lendo módulos disponíveis...")
@@ -122,6 +131,7 @@ if __name__ == "__main__":
                 infrastructure=bloco_docker_container,
                 path=str(modulo_localizacao.parent),
                 version=impulsoetl_versao,
+                client=cliente,
             )
             if not implementacao.schedule:
                 implementacao.schedule = CronSchedule(
