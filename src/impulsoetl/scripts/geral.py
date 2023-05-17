@@ -24,6 +24,7 @@ from impulsoetl.scnes.estabelecimentos_horarios.principal import obter_horarios_
 from impulsoetl.scnes.estabelecimentos_equipes.principal import obter_equipes_cnes
 from impulsoetl.scnes.estabelecimentos_profissionais_com_ine.principal import obter_profissionais_cnes_com_ine
 from impulsoetl.scnes.estabelecimentos_profissionais_totais.principal import obter_profissionais_cnes_totais
+from impulsoetl.sisab.relatorio_producao_profissional_conduta_tipo_atendimento.principal import relatorio_profissional_conduta_atendimento
 
 
 agendamentos = tabelas["configuracoes.capturas_agendamentos"]
@@ -529,4 +530,58 @@ def cnes_profissionais_totais(
             conector = sessao.connection()
             conector.execute(requisicao_inserir_historico)
             sessao.commit()
+            logger.info("OK.")
+
+
+@flow(
+    name="Rodar Agendamentos dos dados Produção do SISAB (Painel AGP)",
+    description=(
+        "Lê as capturas agendadas par ao relatório de produção de saúde por profissional, conduta e tipo de atendimento"
+    ),
+    retries=0,
+    retry_delay_seconds=None,
+    timeout_seconds=14400,
+    version=__VERSION__,
+    validate_parameters=False,
+)
+def obter_relatorio_profissional_conduta_atendimento (
+    teste:bool = False
+) -> None:
+
+    operacao_id = "064540b9-78b9-766c-8130-cdc0f1ed5828" 
+    agendamentos = tabelas["configuracoes.capturas_agendamentos"]
+    with Sessao() as sessao:
+        agendamentos_relatorio_producao_saude = (
+            sessao.query(agendamentos)
+            .filter(agendamentos.c.operacao_id == operacao_id)
+            .all()
+        )
+        sessao.commit()
+
+        logger.info("Leitura dos Agendamentos ok!")
+        for agendamento in agendamentos_relatorio_producao_saude:
+            relatorio_profissional_conduta_atendimento(
+                sessao=sessao,
+                tabela_destino=agendamento.tabela_destino,
+                periodo_competencia=agendamento.periodo_data_inicio,
+                periodo_id=agendamento.periodo_id,
+                unidade_geografica_id=agendamento.unidade_geografica_id
+            )
+
+            if teste:  
+                sessao.rollback()
+                break
+
+            logger.info("Registrando captura bem-sucedida...")
+            requisicao_inserir_historico = capturas_historico.insert(
+                {
+                    "operacao_id": operacao_id,
+                    "periodo_id": agendamento.periodo_id,
+                    "unidade_geografica_id": agendamento.unidade_geografica_id,
+                }
+            )
+            conector = sessao.connection()
+            conector.execute(requisicao_inserir_historico)
+            sessao.commit()
+            
             logger.info("OK.")
