@@ -13,22 +13,23 @@ from prefect import flow
 from impulsoetl import __VERSION__
 from impulsoetl.bd import tabelas, Sessao
 
-from impulsoetl.brasilapi.cep import obter_cep
-from impulsoetl.scnes.habilitacoes import obter_habilitacoes
-from impulsoetl.scnes.vinculos import obter_vinculos
-from impulsoetl.sim.do import obter_do 
+
+#from impulsoetl.brasilapi.cep import obter_cep
+#from impulsoetl.scnes.habilitacoes import obter_habilitacoes
+#from impulsoetl.scnes.vinculos import obter_vinculos
+#from impulsoetl.sim.do import obter_do 
 from impulsoetl.loggers import habilitar_suporte_loguru, logger
 from impulsoetl.scnes.estabelecimentos_identificados.principal import obter_informacoes_estabelecimentos_identificados
 from impulsoetl.scnes.estabelecimentos_horarios.principal import obter_horarios_estabelecimentos
 from impulsoetl.scnes.estabelecimentos_equipes.principal import obter_equipes_cnes
-from impulsoetl.scnes.estabelecimentos_profissionais.principal import obter_profissionais_cnes
-
+from impulsoetl.scnes.estabelecimentos_profissionais_com_ine.principal import obter_profissionais_cnes_com_ine
+from impulsoetl.scnes.estabelecimentos_profissionais_totais.principal import obter_profissionais_cnes_totais
 
 
 agendamentos = tabelas["configuracoes.capturas_agendamentos"]
 capturas_historico = tabelas["configuracoes.capturas_historico"]
 
-
+"""
 @flow(
     name="Rodar Agendamentos de Habilitações do SCNES",
     description=(
@@ -246,6 +247,7 @@ def ceps(teste: bool = False) -> None:
     version=__VERSION__,
     validate_parameters=False,
 )
+"""
 def cnes_estabelecimentos_identificados(teste: bool = False,)-> None:
     
     habilitar_suporte_loguru()
@@ -351,9 +353,9 @@ def cnes_equipes(
 
 
 @flow(
-    name="Rodar Agendamentos de Profissionais do SCNES",
+    name="Rodar Agendamentos de Profissionais com INE do SCNES",
     description=(
-        "Lê as capturas agendadas para ficha de profissionais de saúde "
+        "Lê as capturas agendadas para ficha de profissionais de saúde vinculados à alguma equipe"
     ),
     retries=0,
     retry_delay_seconds=None,
@@ -361,11 +363,11 @@ def cnes_equipes(
     version=__VERSION__,
     validate_parameters=False,
 )
-def cnes_profissionais(
+def cnes_profissionais_com_ine(
     teste: bool = False,
 ) -> None:
 
-    operacao_id = "063c94ab-a2f5-7504-866c-4a5d0d854105"
+    operacao_id = "0642f1cd-083b-783d-b855-c837cfa7439b"
 
     with Sessao() as sessao:
         agendamentos_cnes = (
@@ -381,7 +383,7 @@ def cnes_profissionais(
             codigo_sus_municipio = agendamento.unidade_geografica_id_sus
             periodo_data_inicio = agendamento.periodo_data_inicio
 
-            obter_profissionais_cnes(
+            obter_profissionais_cnes_com_ine(
                 sessao=sessao,
                 tabela_destino=tabela_destino,
                 codigo_municipio=codigo_sus_municipio,
@@ -470,3 +472,61 @@ def cnes_estabelecimentos_horarios(teste: bool = True,)-> None:
             logger.info("OK.")
 
 
+
+@flow(
+    name="Rodar Agendamentos dos Profissionais SCNES",
+    description=(
+        "Lê as capturas agendadas para ficha de profissionais dos estabelecimentos de saúde por município"
+    ),
+    retries=0,
+    retry_delay_seconds=None,
+    timeout_seconds=14400,
+    version=__VERSION__,
+    validate_parameters=False,
+)
+def cnes_profissionais_totais(
+    teste: bool = False,
+) -> None:
+
+    operacao_id = "0643da4f-8562-7520-ba7a-606062b1e1e1"
+
+    with Sessao() as sessao:
+        agendamentos_cnes = (
+            sessao.query(agendamentos)
+            .filter(agendamentos.c.operacao_id == operacao_id)
+            .all()
+        )
+
+        for agendamento in agendamentos_cnes:
+            periodo_id = agendamento.periodo_id
+            unidade_geografica_id = agendamento.unidade_geografica_id
+            tabela_destino = agendamento.tabela_destino
+            codigo_sus_municipio = agendamento.unidade_geografica_id_sus
+            periodo_data_inicio = agendamento.periodo_data_inicio
+
+            obter_profissionais_cnes_totais(
+                sessao=sessao,
+                tabela_destino=tabela_destino,
+                codigo_municipio=codigo_sus_municipio,
+                periodo_id=periodo_id,
+                unidade_geografica_id=unidade_geografica_id,
+                periodo_data_inicio=periodo_data_inicio,
+            )
+
+            if teste:
+                sessao.rollback()
+                break
+
+            logger.info("Registrando captura bem-sucedida...")
+
+            requisicao_inserir_historico = capturas_historico.insert(
+                {
+                    "operacao_id": operacao_id,
+                    "periodo_id": agendamento.periodo_id,
+                    "unidade_geografica_id": agendamento.unidade_geografica_id,
+                }
+            )
+            conector = sessao.connection()
+            conector.execute(requisicao_inserir_historico)
+            sessao.commit()
+            logger.info("OK.")

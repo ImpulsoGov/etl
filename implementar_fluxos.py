@@ -49,12 +49,16 @@ PREFECT_API_URL: Final[str] = os.getenv(
 )
 
 
-logger.info("Configurando conexão com registro `{}`...", DOCKER_REGISTRO_URL)
+logger.info("Configurando bloco de conexão com registro `{}`...", DOCKER_REGISTRO_URL)
 bloco_docker_registro = DockerRegistry(
     username=DOCKER_REGISTRO_USUARIO,
     password=DOCKER_REGISTRO_SENHA,
     registry_url=DOCKER_REGISTRO_URL,
     reauth=True,
+)
+bloco_docker_registro.save(
+    name="docker-registro-impulso",
+    overwrite=True,
 )
 
 logger.info("Configurando bloco de infraestrutura com Docker...")
@@ -75,13 +79,17 @@ bloco_docker_container = DockerContainer(
     name="docker-container-impulsoetl",
     stream_output=True,
 )
+bloco_docker_container.save(
+    name="docker-container-impulsoetl",
+    overwrite=True,
+)
 
 logger.info("Lendo módulos disponíveis...")
-#geral = import_module(".scripts.geral", "impulsoetl")
+geral = import_module(".scripts.geral", "impulsoetl")
 impulso_previne = import_module(".scripts.impulso_previne", "impulsoetl")
 saude_mental = import_module(".scripts.saude_mental", "impulsoetl")
 
-modulos = [impulso_previne,saude_mental] #geral #saude_mental
+modulos = [impulso_previne,geral,saude_mental] 
 
 
 if __name__ == "__main__":

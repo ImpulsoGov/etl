@@ -40,6 +40,12 @@ pandas = "1.4.3"
 pyreaddbc = "1.0.0"
 dbfread = "2.0.7"
 
+[tool.poetry.group.prefect]
+optional = true
+
+[tool.poetry.group.prefect.dependencies]
+prefect = ">=2.6.7, <3.0"
+
 [tool.poetry.group.dev.dependencies]
 
 bandit = "1.7.1"
@@ -58,13 +64,6 @@ reuse = "0.13.0"
 safety = "1.10.3"
 wemake-python-styleguide="0.0.1"
 pytest-testmon = "^1.2.3"
-
-[tool.poetry.group.prefect]
-optional = true
-
-[tool.poetry.group.prefect.dependencies]
-prefect = ">=2.6.7, <3.0"
-
 
 [tool.poetry.extras]
 

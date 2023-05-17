@@ -13,11 +13,11 @@ from prefect import flow
 from impulsoetl import __VERSION__
 from impulsoetl.bd import Sessao, tabelas
 from impulsoetl.loggers import habilitar_suporte_loguru, logger
-from impulsoetl.siasus.bpa_i import obter_bpa_i
-from impulsoetl.siasus.procedimentos import obter_pa
-from impulsoetl.siasus.raas_ps import obter_raas_ps
-from impulsoetl.sihsus.aih_rd import obter_aih_rd
-from impulsoetl.sinan.violencia import obter_agravos_violencia
+#from impulsoetl.siasus.bpa_i import obter_bpa_i
+#from impulsoetl.siasus.procedimentos import obter_pa
+#from impulsoetl.siasus.raas_ps import obter_raas_ps
+#from impulsoetl.sihsus.aih_rd import obter_aih_rd
+#from impulsoetl.sinan.violencia import obter_agravos_violencia
 from impulsoetl.sisab.relatorio_producao_resolutividade_por_condicao.principal import obter_relatorio_resolutividade_por_condicao
 from impulsoetl.sisab.relatorio_tipo_equipe_por_tipo_producao.principal import obter_relatorio_tipo_equipe_por_producao
 
@@ -154,7 +154,7 @@ def tipo_equipe_por_tipo_producao(
                 break
             sessao.commit()
             logger.info("OK.")
-
+"""
 @flow(
     name="Rodar Agendamentos de Arquivos de Disseminação da RAAS-PS",
     description=(
@@ -460,3 +460,4 @@ def agravos_violencia(
             conector.execute(requisicao_inserir_historico)
             sessao.commit()
             logger.info("OK.")
+"""
