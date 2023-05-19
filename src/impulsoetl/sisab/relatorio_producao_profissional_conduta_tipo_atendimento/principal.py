@@ -16,6 +16,19 @@ from impulsoetl.sisab.relatorio_producao_profissional_conduta_tipo_atendimento.t
 from impulsoetl.utilitarios.bd import carregar_dataframe
 
 
+@flow(
+    name="Obter Relatório de Produção por Profissional, Contuta e Tipo de Atendimento (Painel AGP)",
+    description=(
+        "Extrai, transforma e carrega os dados de produção da Atenção Primária à Saúde "
+        +"por problema/condição avaliada, a partir do Sistema de Informação em Saúde da Atenção "
+        + "Básica do SUS."
+    ),
+    retries=0,
+    retry_delay_seconds=None,
+    timeout_seconds=14400,
+    version=__VERSION__,
+    validate_parameters=False,
+)
 def relatorio_profissional_conduta_atendimento(
     sessao: Session,
     tabela_destino: str,
