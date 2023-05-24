@@ -57,7 +57,7 @@ def verifica_linhas(df_extraido: pd.DataFrame) -> int:
 def extrair_indicadores(
     indicador: str,
     visao_equipe: str,
-    quadrimestre: date,
+    periodo_data: date,
     url=(
         "https://sisab.saude.gov.br/paginas/acessoRestrito/relatorio/federal"
         + "/indicadores/indicadorPainel.xhtml"
@@ -84,7 +84,7 @@ def extrair_indicadores(
         + INDICADORES_CODIGOS[indicador]
         + "&selectLinha=ibge"
         + "&estadoMunicipio="
-        + "&quadrimestre={:%Y%m}".format(quadrimestre)
+        + "&quadrimestre={:%Y%m}".format(periodo_data)
         + "&visaoEquipe="
         + VISOES_EQUIPE_CODIGOS[visao_equipe]
         + "&javax.faces.ViewState="
@@ -118,3 +118,4 @@ def extrair_indicadores(
     )
 
     return df_extraido
+

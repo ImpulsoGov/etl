@@ -60,12 +60,9 @@ def obter_indicadores_desempenho(
     for indicador in INDICADORES_CODIGOS:
         try: 
             df_extraido = extrair_indicadores(
-                sessao=sessao,
+                indicador=indicador,
                 visao_equipe=visao_equipe,
                 periodo_data=periodo_data,
-                indicador=indicador,
-                periodo_id=periodo_id,
-                operacao_id=operacao_id,
             )
             df_tratado = transformar_indicadores(
                 sessao=sessao,
@@ -77,7 +74,7 @@ def obter_indicadores_desempenho(
                 operacao_id=operacao_id,
             )
             logger.info("Iniciando carga dos dados no banco...")
-            print(df_tratado.head(5))
+            
             carregar_dataframe(
                 sessao=sessao, df=df_tratado, tabela_destino=tabela_destino
             )
