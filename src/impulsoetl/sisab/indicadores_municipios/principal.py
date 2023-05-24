@@ -10,20 +10,18 @@ from typing import Final
 
 from prefect import flow
 from sqlalchemy.orm import Session
+import pandas as pd
+import traceback
 
 from impulsoetl import __VERSION__
-from impulsoetl.loggers import habilitar_suporte_loguru
-from impulsoetl.sisab.indicadores_municipios.carregamento import (
-    carregar_indicadores,
-)
+from impulsoetl.loggers import habilitar_suporte_loguru, logger
+from impulsoetl.sisab.excecoes import SisabExcecao
+from impulsoetl.utilitarios.bd import carregar_dataframe
 from impulsoetl.sisab.indicadores_municipios.extracao import (
     extrair_indicadores,
 )
 from impulsoetl.sisab.indicadores_municipios.tratamento import (
     transformar_indicadores,
-)
-from impulsoetl.sisab.indicadores_municipios.verificacao import (
-    verificar_indicadores_municipios,
 )
 
 INDICADORES_CODIGOS: Final[dict[str, str]] = {
@@ -52,25 +50,51 @@ INDICADORES_CODIGOS: Final[dict[str, str]] = {
 def obter_indicadores_desempenho(
     sessao: Session,
     visao_equipe: str,
-    quadrimestre: date,
-    teste: bool = False,
+    periodo_data: date,
+    periodo_id: str,
+    periodo_codigo: str,
+    operacao_id: str,
+    tabela_destino: str,
 ) -> None:
     habilitar_suporte_loguru()
     for indicador in INDICADORES_CODIGOS:
-        df = extrair_indicadores(
-            visao_equipe=visao_equipe,
-            quadrimestre=quadrimestre,
-            indicador=indicador,
-        )
-        df_tratado = transformar_indicadores(
-            sessao=sessao,
-            df_extraido=df,
-            periodo=quadrimestre,
-            indicador=indicador,
-        )
-        verificar_indicadores_municipios(df=df, df_tratado=df_tratado)
-        carregar_indicadores(
-            sessao=sessao,
-            indicadores_transformada=df_tratado,
-            visao_equipe=visao_equipe,
-        )
+        try: 
+            df_extraido = extrair_indicadores(
+                sessao=sessao,
+                visao_equipe=visao_equipe,
+                periodo_data=periodo_data,
+                indicador=indicador,
+                periodo_id=periodo_id,
+                operacao_id=operacao_id,
+            )
+            df_tratado = transformar_indicadores(
+                sessao=sessao,
+                df_extraido=df_extraido,
+                periodo_data=periodo_data,
+                indicador=indicador,
+                periodo_id=periodo_id,
+                periodo_codigo=periodo_codigo,
+                operacao_id=operacao_id,
+            )
+            logger.info("Iniciando carga dos dados no banco...")
+            print(df_tratado.head(5))
+            carregar_dataframe(
+                sessao=sessao, df=df_tratado, tabela_destino=tabela_destino
+            )
+            logger.info("Carga dos dados no banco realizada...")
+
+        except pd.errors.ParserError:
+            traceback_str = traceback.format_exc()
+            enviar_erro = SisabExcecao("Competência indisponível no SISAB")
+            enviar_erro.insere_erro_database(sessao=sessao,traceback_str=traceback_str,operacao_id=operacao_id,periodo_id=periodo_id)
+
+            logger.error("Data da competência do relatório não está disponível")
+            break
+    
+        except Exception as mensagem_erro:
+            traceback_str = traceback.format_exc()
+            enviar_erro = SisabExcecao(mensagem_erro)
+            enviar_erro.insere_erro_database(sessao=sessao,traceback_str=traceback_str,operacao_id=operacao_id,periodo_id=periodo_id)
+
+            logger.error(mensagem_erro)
+            break
