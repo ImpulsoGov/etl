@@ -71,6 +71,7 @@ def cadastros_municipios_equipe_validas(
                 periodo_id=agendamento.periodo_id,
                 periodo_codigo=agendamento.periodo_codigo,
                 tabela_destino=agendamento.tabela_destino,
+                operacao_id=operacao_id,
             )
             if teste:
                 sessao.rollback()
@@ -132,6 +133,7 @@ def cadastros_municipios_equipe_homologada(
                 periodo_id=agendamento.periodo_id,
                 periodo_codigo=agendamento.periodo_codigo,
                 tabela_destino=agendamento.tabela_destino,
+                operacao_id=operacao_id,
             )
             if teste:
                 sessao.rollback()
@@ -193,6 +195,7 @@ def cadastros_municipios_equipe_todas(
                 periodo_id=agendamento.periodo_id,
                 periodo_codigo=agendamento.periodo_codigo,
                 tabela_destino=agendamento.tabela_destino,
+                operacao_id=operacao_id,
             )
             if teste:
                 sessao.rollback()
@@ -513,12 +516,14 @@ def indicadores_municipios_equipe_validas(
         )
 
         for agendamento in agendamentos_cadastros:
-            periodo = agendamento.periodo_data_inicio
             obter_indicadores_desempenho(
                 sessao=sessao,
                 visao_equipe=visao_equipe,
-                quadrimestre=periodo,
-                teste=teste,
+                periodo_data=agendamento.periodo_data_fim,
+                periodo_id=agendamento.periodo_id,
+                periodo_codigo=agendamento.periodo_codigo,
+                operacao_id=operacao_id,
+                tabela_destino=agendamento.tabela_destino,
             )
             if teste:
                 sessao.rollback()
@@ -706,6 +711,7 @@ def validacao_producao(
                 periodo_id=agendamento.periodo_id,
                 periodo_codigo=agendamento.periodo_codigo,
                 tabela_destino=agendamento.tabela_destino,
+                operacao_id=operacao_id,
             )
 
             if teste:  # evitar rodar muitas iterações
@@ -780,6 +786,7 @@ def egestor_financiamento(
                     periodo_id=agendamento.periodo_id,
                     tabela_destino=agendamento.tabela_destino,
                     periodo_mes=agendamento.periodo_data_inicio,
+                    operacao_id=operacao_id,
                 )
 
                 if teste:  # evitar rodar muitas iterações
