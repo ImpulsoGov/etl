@@ -13,10 +13,11 @@ from frozendict import frozendict
 from prefect import task
 from sqlalchemy.orm import Session
 
-from impulsoetl.comum.datas import periodo_por_codigo, periodo_por_data
 from impulsoetl.comum.geografias import id_sus_para_id_impulso
 from impulsoetl.loggers import habilitar_suporte_loguru, logger
-from impulsoetl.sisab.indicadores_municipios.modelos import indicadores_regras
+from impulsoetl.bd import tabelas
+
+indicadores_regras = tabelas["previne_brasil.indicadores_regras"]
 
 TIPOS: Final[frozendict] = frozendict(
     {
@@ -37,7 +38,6 @@ INDICADORES_RENOMEIA_COLUNAS: Final[dict[str, str]] = {
     "IBGE": "municipio_id_sus",
     "Numerador": "numerador",
     "Denominador Utilizado": "denominador_utilizado",
-    "2022 Q1 (%)": "nota_porcentagem",
     "Denominador Identificado": "denominador_informado",
     "Denominador Estimado": "denominador_estimado",
     "Cadastro": "cadastro",
@@ -46,6 +46,17 @@ INDICADORES_RENOMEIA_COLUNAS: Final[dict[str, str]] = {
     "População": "populacao",
 }
 
+def renomear_colunas(
+    df_extraido: pd.DataFrame,
+):
+    return df_extraido.rename(columns=INDICADORES_RENOMEIA_COLUNAS).rename(
+        columns={df_extraido.columns[3]: "nota_porcentagem"}
+    )
+
+def garantir_tipos_colunas(
+    df_tratado: pd.DataFrame,
+):
+    return df_tratado.astype(TIPOS)
 
 def indicadores_regras_id_por_periodo(  # noqa: WPS122 - permite argumento data
     sessao: Session,
@@ -62,6 +73,59 @@ def indicadores_regras_id_por_periodo(  # noqa: WPS122 - permite argumento data
     )
 
 
+def definir_coluna_indicadores_regras_id(
+    sessao: Session,
+    indicador: str,
+    df_tratado: pd.DataFrame,
+    periodo: date,
+):
+    df_tratado["indicadores_regras_id"] = indicadores_regras_id_por_periodo(
+            sessao=sessao, indicador=indicador, data=periodo)
+    
+    return df_tratado
+
+def definir_coluna_periodo_codigo(
+    df_tratado: pd.DataFrame,
+    periodo_codigo: str,
+):
+    return df_tratado.insert(
+        1, "periodo_codigo", periodo_codigo, allow_duplicates=True
+    )
+
+
+def definir_coluna_periodo_id(
+    df_tratado: pd.DataFrame,
+    periodo_id: str,
+):
+    return df_tratado.insert(
+        1, "periodo_id", periodo_id, allow_duplicates=True
+    )
+
+def definir_coluna_indicadores_nome(
+    df_tratado: pd.DataFrame,
+    indicador: str,
+):
+    return df_tratado.insert(
+        1, "indicadores_nome", indicador, allow_duplicates=True
+    )
+
+def tratar_coluna_municipio_id_sus(
+    df_tratado: pd.DataFrame,
+):
+    return df_tratado["municipio_id_sus"].astype(int).astype("string")
+
+def definir_coluna_unidade_geografica_id(
+    df_tratado: pd.DataFrame,
+    sessao: Session,
+):
+    df_tratado["unidade_geografica_id"] = df_tratado["municipio_id_sus"].apply(
+        lambda municipio_id_sus: id_sus_para_id_impulso(
+            sessao=sessao,
+            id_sus=municipio_id_sus,
+        )
+    )
+    return df_tratado
+
 @task(
     name="Transformar Indicadores do Previne Brasil",
     description=(
@@ -76,8 +140,11 @@ def indicadores_regras_id_por_periodo(  # noqa: WPS122 - permite argumento data
 def transformar_indicadores(
     sessao: Session,
     df_extraido: pd.DataFrame,
-    periodo: date,
+    periodo_data:date,
     indicador: str,
+    periodo_id:str,
+    periodo_codigo:str,
+    operacao_id=str,
 ) -> pd.DataFrame:
     """Trata dados capturados do relatório de indicadores do SISAB.
 
@@ -108,31 +175,35 @@ def transformar_indicadores(
     """
     habilitar_suporte_loguru()
     logger.info("Iniciando tratamento dos dados...")
-    df_tratado = df_extraido.rename(columns=INDICADORES_RENOMEIA_COLUNAS)
-    df_tratado["indicadores_nome"] = indicador
-    df_tratado["indicadores_regras_id"] = indicadores_regras_id_por_periodo(
-        sessao=sessao, indicador=indicador, data=periodo
-    )
-    df_tratado["periodo_codigo"] = periodo_por_data(
-        sessao=sessao, data=periodo, tipo_periodo="quadrimestral"
-    ).codigo
-    df_tratado["periodo_id"] = periodo_por_codigo(
+
+    logger.info("Renomeando colunas...")
+    df_tratado = renomear_colunas(df_extraido=df_extraido)
+
+    logger.info("Enriquecendo tabela...")
+    definir_coluna_indicadores_nome(df_tratado=df_tratado,indicador=indicador)
+    definir_coluna_periodo_codigo(df_tratado=df_tratado,periodo_codigo=periodo_codigo)
+    definir_coluna_periodo_id(df_tratado=df_tratado,periodo_id=periodo_id)
+    definir_coluna_indicadores_regras_id(
         sessao=sessao,
-        codigo=periodo_por_data(
-            sessao=sessao, data=periodo, tipo_periodo="quadrimestral"
-        ).codigo,
-    ).id
+        indicador=indicador,
+        df_tratado=df_tratado,
+        periodo=periodo_data,
+        )
+    
+    print(df_tratado.columns)
+    
     df_tratado.reset_index(drop=True, inplace=True)
     df_tratado["municipio_id_sus"] = (
         df_tratado["municipio_id_sus"].astype(int).astype("string")
     )
-    df_tratado["unidade_geografica_id"] = df_tratado["municipio_id_sus"].apply(
-        lambda municipio_id_sus: id_sus_para_id_impulso(
-            sessao=sessao,
-            id_sus=municipio_id_sus,
-        )
-    )
-    df_tratado = df_tratado.astype(TIPOS)
+    df_tratado = df_tratado.round()
+    
+    definir_coluna_unidade_geografica_id(sessao=sessao,df_tratado=df_tratado)
+
+
+    logger.info("Garantindo tipo dos dados...")
+    df_tratado = garantir_tipos_colunas(df_tratado=df_tratado)
+
     logger.info(
         f"Tratamento dos dados realizado | Total de registros : {df_tratado.shape[0]}"
     )

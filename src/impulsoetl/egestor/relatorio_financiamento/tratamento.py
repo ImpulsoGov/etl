@@ -7,6 +7,7 @@
 from typing import Final
 
 import pandas as pd
+import numpy as np
 from frozendict import frozendict
 from prefect import task
 from sqlalchemy.orm import Session
@@ -571,7 +572,11 @@ def garantir_tipos_dados(df_extraido: pd.DataFrame) -> pd.DataFrame:
             df_tipos = dict(
                 zip([coluna], [TIPOS_EGESTOR_FINANCIAMENTO[coluna]])
             )
-            df_extraido = df_extraido.astype(df_tipos)
+            df_extraido.astype(df_tipos, errors="ignore").where(
+                df_extraido.notna(), None
+            )
+            print(df_extraido[coluna])
+            
     return df_extraido
 
 

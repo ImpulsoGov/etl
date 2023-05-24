@@ -40,17 +40,6 @@ def obter_lista_registros_inseridos(
     return registros
 
 
-@task(
-    name="Carrega Relatórios de Validação da Produção",
-    description=(
-        "Carrega os dados dos relatórios de validação da produção extraídos "
-        + "extraídos e transformados a partir do portal público do Sistema "
-        + "de Informação em Saúde para a Atenção Básica do SUS."
-    ),
-    tags=["aps", "sisab", "validacao_producao", "carregamento"],
-    retries=0,
-    retry_delay_seconds=None,
-)
 def carregar_dados(
     sessao: Session,
     df_tratado: pd.DataFrame,

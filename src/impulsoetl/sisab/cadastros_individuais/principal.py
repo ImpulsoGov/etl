@@ -8,8 +8,11 @@ import time
 
 from prefect import flow
 from sqlalchemy.orm import Session
+import pandas as pd
+import traceback
 
 from impulsoetl import __VERSION__
+from impulsoetl.sisab.excecoes import SisabExcecao
 from impulsoetl.loggers import habilitar_suporte_loguru, logger
 from impulsoetl.sisab.cadastros_individuais.extracao import (
     extrair_cadastros_individuais,
@@ -37,6 +40,7 @@ def obter_cadastros_individuais(
     periodo_id: str,
     periodo_codigo: str,
     tabela_destino: str,
+    operacao_id: str,
     com_ponderacao: list[bool] = [False, True],
 ) -> None:
     """Extrai, transforma e carrega dados de cadastros de equipes pelo SISAB.
@@ -63,36 +67,53 @@ def obter_cadastros_individuais(
 
     tempo_inicio_etl = time.time()
     for status_ponderacao in com_ponderacao:
-        logger.info("Iniciando extração dos dados...")
-        df_extraido = extrair_cadastros_individuais(
-            visao_equipe=visao_equipe,
-            com_ponderacao=status_ponderacao,
-            competencia=periodo_data,
-        )
-        logger.info("Extração dos dados realizada...")
+        try: 
+            logger.info("Iniciando extração dos dados...")
+            df_extraido = extrair_cadastros_individuais(
+                visao_equipe=visao_equipe,
+                com_ponderacao=status_ponderacao,
+                competencia=periodo_data,
+            )
+            logger.info("Extração dos dados realizada...")
 
-        logger.info("Iniciando tratamento dos dados...")
-        df_tratado = tratar_dados(
-            sessao=sessao,
-            df_extraido=df_extraido,
-            com_ponderacao=status_ponderacao,
-            periodo_id=periodo_id,
-            periodo_codigo=periodo_codigo,
-        )
-        logger.info("Tratamento dos dados realizada...")
+            logger.info("Iniciando tratamento dos dados...")
+            df_tratado = tratar_dados(
+                sessao=sessao,
+                df_extraido=df_extraido,
+                com_ponderacao=status_ponderacao,
+                periodo_id=periodo_id,
+                periodo_codigo=periodo_codigo,
+            )
+            logger.info("Tratamento dos dados realizada...")
 
-        logger.info("Iniciando carga dos dados no banco...")
-        carregar_dataframe(
-            sessao=sessao, df=df_tratado, tabela_destino=tabela_destino
-        )
-        logger.info("Carga dos dados no banco realizada...")
+            logger.info("Iniciando carga dos dados no banco...")
+            carregar_dataframe(
+                sessao=sessao, df=df_tratado, tabela_destino=tabela_destino
+            )
+            logger.info("Carga dos dados no banco realizada...")
+            
+        except pd.errors.ParserError:
+            traceback_str = traceback.format_exc()
+            enviar_erro = SisabExcecao("Competência indisponível no SISAB")
+            enviar_erro.insere_erro_database(sessao=sessao,traceback_str=traceback_str,operacao_id=operacao_id,periodo_id=periodo_id)
+
+            logger.error("Data da competência do relatório não está disponível")
+            break
+        
+        except Exception as mensagem_erro:
+            traceback_str = traceback.format_exc()
+            enviar_erro = SisabExcecao(mensagem_erro)
+            enviar_erro.insere_erro_database(sessao=sessao,traceback_str=traceback_str,operacao_id=operacao_id,periodo_id=periodo_id)
+
+            logger.error(mensagem_erro)
+            break
 
     tempo_final_etl = time.time() - tempo_inicio_etl
     logger.info(
         "Terminou ETL para `{visao_equipe}` "
         + "da comepetência`{periodo_codigo}` "
         + "em {tempo_final_etl}.",
-        tabela_nome=tabela_destino,
+        visao_equipe=visao_equipe,
         periodo_codigo=periodo_codigo,
         tempo_final_etl=tempo_final_etl,
     )
