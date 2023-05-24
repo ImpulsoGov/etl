@@ -9,11 +9,13 @@ from datetime import date
 from typing import Final
 
 import pandas as pd
+import traceback
 from prefect import flow
 from sqlalchemy.orm import Session
 
 from impulsoetl import __VERSION__
 from impulsoetl.loggers import habilitar_suporte_loguru, logger
+from impulsoetl.sisab.excecoes import SisabExcecao
 from impulsoetl.sisab.relatorio_validacao_producao.carregamento import (
     carregar_dados,
 )
@@ -62,6 +64,7 @@ def obter_validacao_producao(
     periodo_id: str,
     periodo_codigo: str,
     tabela_destino: str,
+    operacao_id: str,
 ) -> None:
 
     """Extrai, transforma e carrega os dados do relatório de validação [por produção] do SISAB.
@@ -74,46 +77,59 @@ def obter_validacao_producao(
         df_consolidado = pd.DataFrame()
         for ficha in FICHA_CODIGOS:
             for aplicacao in APLICACAO_CODIGOS:
-                if (
-                    (ficha == "Cadastro Individual" and aplicacao == "PEC")
-                    or (ficha == "Visita Domiciliar" and aplicacao == "PEC")
-                    or (
-                        ficha == "Atendimento Individual"
-                        and aplicacao == "Android ACS"
+                try: 
+                    if (
+                        (ficha == "Cadastro Individual" and aplicacao == "PEC")
+                        or (ficha == "Visita Domiciliar" and aplicacao == "PEC")
+                        or (
+                            ficha == "Atendimento Individual"
+                            and aplicacao == "Android ACS"
+                        )
+                    ):
+                        continue
+                    df_extraido = extrair_dados(
+                        periodo_competencia=periodo_competencia,
+                        envio_prazo=envio_prazo,
+                        ficha=ficha,
+                        aplicacao=aplicacao,
                     )
-                ):
-                    continue
-                df_extraido = extrair_dados(
-                    periodo_competencia=periodo_competencia,
-                    envio_prazo=envio_prazo,
-                    ficha=ficha,
-                    aplicacao=aplicacao,
-                )
-                df_tratado = tratamento_dados(
-                    sessao=sessao,
-                    df_extraido=df_extraido,
-                    periodo_id=periodo_id,
-                    periodo_codigo=periodo_codigo,
-                    envio_prazo=envio_prazo,
-                    ficha=ficha,
-                    aplicacao=aplicacao,
-                )
-                verificar_relatorio_validacao_producao(
-                    df_extraido=df_extraido, df_tratado=df_tratado
-                )
-                df_consolidado = pd.concat(
-                    [df_consolidado, df_tratado], ignore_index=True
-                )
+                    df_tratado = tratamento_dados(
+                        sessao=sessao,
+                        df_extraido=df_extraido,
+                        periodo_id=periodo_id,
+                        periodo_codigo=periodo_codigo,
+                        envio_prazo=envio_prazo,
+                        ficha=ficha,
+                        aplicacao=aplicacao,
+                    )
+                    df_consolidado = pd.concat(
+                        [df_consolidado, df_tratado], ignore_index=True
+                    )
 
-                logger.info(
-                    "Captura realizada e tratada para a ficha de `{ficha}`"
-                    + "com aplicação '{aplicacao}' no período '{periodo_codigo}'"
-                    + "e envio no prazo = {envio_prazo}",
-                    ficha=ficha,
-                    aplicacao=aplicacao,
-                    periodo_codigo=periodo_codigo,
-                    envio_prazo=envio_prazo,
-                )
+                    logger.info(
+                        "Captura realizada e tratada para a ficha de `{ficha}`"
+                        + "com aplicação '{aplicacao}' no período '{periodo_codigo}'"
+                        + "e envio no prazo = {envio_prazo}",
+                        ficha=ficha,
+                        aplicacao=aplicacao,
+                        periodo_codigo=periodo_codigo,
+                        envio_prazo=envio_prazo,
+                    )
+                except pd.errors.ParserError:
+                    traceback_str = traceback.format_exc()
+                    enviar_erro = SisabExcecao("Competência indisponível no SISAB")
+                    enviar_erro.insere_erro_database(sessao=sessao,traceback_str=traceback_str,operacao_id=operacao_id,periodo_id=periodo_id)
+
+                    logger.error("Data da competência do relatório não está disponível")
+                    break
+            
+                except Exception as mensagem_erro:
+                    traceback_str = traceback.format_exc()
+                    enviar_erro = SisabExcecao(mensagem_erro)
+                    enviar_erro.insere_erro_database(sessao=sessao,traceback_str=traceback_str,operacao_id=operacao_id,periodo_id=periodo_id)
+
+                    logger.error(mensagem_erro)
+                    break
 
         carregar_dados(
             sessao=sessao,
