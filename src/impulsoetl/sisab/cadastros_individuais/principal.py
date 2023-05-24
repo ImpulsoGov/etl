@@ -70,12 +70,9 @@ def obter_cadastros_individuais(
         try: 
             logger.info("Iniciando extração dos dados...")
             df_extraido = extrair_cadastros_individuais(
-                sessao=sessao,
                 visao_equipe=visao_equipe,
                 com_ponderacao=status_ponderacao,
                 competencia=periodo_data,
-                operacao_id=operacao_id,
-                periodo_id=periodo_id,
             )
             logger.info("Extração dos dados realizada...")
 

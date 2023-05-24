@@ -12,7 +12,7 @@ import pandas as pd
 import requests
 from prefect import task
 
-from impulsoetl.loggers import habilitar_suporte_loguru, logger
+from impulsoetl.loggers import habilitar_suporte_loguru
 from impulsoetl.sisab.parametros_requisicao import head
 
 VISOES_EQUIPE_CODIGOS: Final[dict[str, str]] = {
@@ -136,18 +136,14 @@ def extrair_cadastros_individuais(
     header = definir_posicao_cabecalho(
         visao_equipe=visao_equipe, com_ponderacao=com_ponderacao
     )
-    try:
-        df_extraido = pd.read_csv(
-            StringIO(resposta),
-            delimiter=";",
-            header=header,
-            encoding="ISO-8859-1",
-            engine="python",
-            skipfooter=4,
-            thousands=".",
-            dtype="object",
-        )
-        return df_extraido
-
-    except pd.errors.ParserError:
-        logger.error("Data da competência do relatório não está disponível")
+    df_extraido = pd.read_csv(
+        StringIO(resposta),
+        delimiter=";",
+        header=header,
+        encoding="ISO-8859-1",
+        engine="python",
+        skipfooter=4,
+        thousands=".",
+        dtype="object",
+    )
+    return df_extraido
