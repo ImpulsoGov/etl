@@ -28,7 +28,7 @@ def extrair_relatorio(
         
         df_consolidado = df_consolidado.append(df_parcial)
 
-    except Exception as e:
+    except ValueError as e:
         logger.error(e)
         pass
 
