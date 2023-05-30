@@ -581,12 +581,14 @@ def indicadores_municipios_equipes_homologadas(
         )
 
         for agendamento in agendamentos_cadastros:
-            periodo = agendamento.periodo_data_inicio
             obter_indicadores_desempenho(
                 sessao=sessao,
                 visao_equipe=visao_equipe,
-                quadrimestre=periodo,
-                teste=teste,
+                periodo_data=agendamento.periodo_data_fim,
+                periodo_id=agendamento.periodo_id,
+                periodo_codigo=agendamento.periodo_codigo,
+                operacao_id=operacao_id,
+                tabela_destino=agendamento.tabela_destino,
             )
             if teste:
                 sessao.rollback()
@@ -642,12 +644,14 @@ def indicadores_municipios_equipe_todas(
         )
 
         for agendamento in agendamentos_cadastros:
-            periodo = agendamento.periodo_data_inicio
             obter_indicadores_desempenho(
                 sessao=sessao,
                 visao_equipe=visao_equipe,
-                quadrimestre=periodo,
-                teste=teste,
+                periodo_data=agendamento.periodo_data_fim,
+                periodo_id=agendamento.periodo_id,
+                periodo_codigo=agendamento.periodo_codigo,
+                operacao_id=operacao_id,
+                tabela_destino=agendamento.tabela_destino,
             )
             if teste:
                 sessao.rollback()
@@ -927,3 +931,4 @@ def relatorio_producao_saude_profissionais_outros(
             sessao.commit()
 
             logger.info("OK.")
+            
