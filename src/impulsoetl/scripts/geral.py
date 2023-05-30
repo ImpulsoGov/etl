@@ -14,10 +14,10 @@ from impulsoetl import __VERSION__
 from impulsoetl.bd import tabelas, Sessao
 
 
-#from impulsoetl.brasilapi.cep import obter_cep
-#from impulsoetl.scnes.habilitacoes import obter_habilitacoes
-#from impulsoetl.scnes.vinculos import obter_vinculos
-#from impulsoetl.sim.do import obter_do 
+from impulsoetl.brasilapi.cep import obter_cep
+from impulsoetl.scnes.habilitacoes import obter_habilitacoes
+from impulsoetl.scnes.vinculos import obter_vinculos
+from impulsoetl.sim.do import obter_do 
 from impulsoetl.loggers import habilitar_suporte_loguru, logger
 from impulsoetl.scnes.estabelecimentos_identificados.principal import obter_informacoes_estabelecimentos_identificados
 from impulsoetl.scnes.estabelecimentos_horarios.principal import obter_horarios_estabelecimentos
@@ -29,7 +29,6 @@ from impulsoetl.scnes.estabelecimentos_profissionais_totais.principal import obt
 agendamentos = tabelas["configuracoes.capturas_agendamentos"]
 capturas_historico = tabelas["configuracoes.capturas_historico"]
 
-"""
 @flow(
     name="Rodar Agendamentos de Habilitações do SCNES",
     description=(
@@ -247,7 +246,7 @@ def ceps(teste: bool = False) -> None:
     version=__VERSION__,
     validate_parameters=False,
 )
-"""
+
 def cnes_estabelecimentos_identificados(teste: bool = False,)-> None:
     
     habilitar_suporte_loguru()

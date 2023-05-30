@@ -13,11 +13,11 @@ from prefect import flow
 from impulsoetl import __VERSION__
 from impulsoetl.bd import Sessao, tabelas
 from impulsoetl.loggers import habilitar_suporte_loguru, logger
-#from impulsoetl.siasus.bpa_i import obter_bpa_i
-#from impulsoetl.siasus.procedimentos import obter_pa
-#from impulsoetl.siasus.raas_ps import obter_raas_ps
-#from impulsoetl.sihsus.aih_rd import obter_aih_rd
-#from impulsoetl.sinan.violencia import obter_agravos_violencia
+from impulsoetl.siasus.bpa_i import obter_bpa_i
+from impulsoetl.siasus.procedimentos import obter_pa
+from impulsoetl.siasus.raas_ps import obter_raas_ps
+from impulsoetl.sihsus.aih_rd import obter_aih_rd
+from impulsoetl.sinan.violencia import obter_agravos_violencia
 from impulsoetl.sisab.relatorio_producao_resolutividade_por_condicao.principal import obter_relatorio_resolutividade_por_condicao
 from impulsoetl.sisab.relatorio_tipo_equipe_por_tipo_producao.principal import obter_relatorio_tipo_equipe_por_producao
 
@@ -60,7 +60,6 @@ def resolutividade_aps_por_condicao(
         for agendamento in agendamentos_resolutividade_por_condicao:
             obter_relatorio_resolutividade_por_condicao(
                 sessao = sessao,
-                teste = teste,
                 tabela_destino = agendamento.tabela_destino,
                 periodo_id = agendamento.periodo_id,
                 unidade_geografica_id = agendamento.unidade_geografica_id,
@@ -99,7 +98,7 @@ def resolutividade_aps_por_condicao(
     validate_parameters=False,
 )
 def tipo_equipe_por_tipo_producao(
-    teste:bool = True,
+    teste:bool = False,
 ) -> None:
 
     """Número de contatos assistenciais na APS por tipo de produção e equipe.
@@ -132,7 +131,6 @@ def tipo_equipe_por_tipo_producao(
         for agendamento in agendamentos_producao_por_equipe:
             obter_relatorio_tipo_equipe_por_producao(
                 sessao = sessao,
-                teste = teste,
                 tabela_destino = agendamento.tabela_destino,
                 periodo_id = agendamento.periodo_id,
                 unidade_geografica_id = agendamento.unidade_geografica_id,
@@ -154,7 +152,7 @@ def tipo_equipe_por_tipo_producao(
                 break
             sessao.commit()
             logger.info("OK.")
-"""
+
 @flow(
     name="Rodar Agendamentos de Arquivos de Disseminação da RAAS-PS",
     description=(
@@ -460,4 +458,3 @@ def agravos_violencia(
             conector.execute(requisicao_inserir_historico)
             sessao.commit()
             logger.info("OK.")
-"""
