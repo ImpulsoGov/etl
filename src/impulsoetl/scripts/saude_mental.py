@@ -224,7 +224,7 @@ def raas_disseminacao(
     ),
     retries=0,
     retry_delay_seconds=None,
-    timeout_seconds=14400,
+    timeout_seconds=54000,
     version=__VERSION__,
     validate_parameters=False,
 )
@@ -288,7 +288,7 @@ def bpa_i_disseminacao(
     ),
     retries=0,
     retry_delay_seconds=None,
-    timeout_seconds=14400,
+    timeout_seconds=54000,
     version=__VERSION__,
     validate_parameters=False,
 )
@@ -350,7 +350,7 @@ def procedimentos_disseminacao(
     ),
     retries=0,
     retry_delay_seconds=None,
-    timeout_seconds=14400,
+    timeout_seconds=54000,
     version=__VERSION__,
     validate_parameters=False,
 )
