@@ -208,20 +208,20 @@ def extrair_dbc_lotes(
                     shutil.copyfileobj(resposta, arquivo)
             logger.info("Download concluído.")
 
-            if _checar_arquivo_corrompido(
-                tamanho_arquivo_ftp=cast(
-                    int,
-                    cliente_ftp.size(arquivo_compativel_nome),
-                ),
-                tamanho_arquivo_local=arquivo_dbc.stat().st_size,
-            ):
-                raise RuntimeError(
-                    "A extração da fonte `{}{}` ".format(
-                        ftp,
-                        caminho_diretorio,
-                    )
-                    + "falhou porque o arquivo baixado está corrompido."
-                )
+            # if _checar_arquivo_corrompido(
+            #     tamanho_arquivo_ftp=cast(
+            #         int,
+            #         cliente_ftp.size(arquivo_compativel_nome),
+            #     ),
+            #     tamanho_arquivo_local=arquivo_dbc.stat().st_size,
+            # ):
+            #     raise RuntimeError(
+            #         "A extração da fonte `{}{}` ".format(
+            #             ftp,
+            #             caminho_diretorio,
+            #         )
+            #         + "falhou porque o arquivo baixado está corrompido."
+            #     )
 
             logger.info("Descompactando arquivo DBC...")
             arquivo_dbf_caminho = Path(diretorio_temporario, arquivo_dbf_nome)
