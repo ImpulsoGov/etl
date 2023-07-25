@@ -46,7 +46,8 @@ ENV PATH="/home/appuser/.local/bin:$PATH"
 # Instalar dependências Python
 COPY pyproject.toml ./pyproject.toml
 COPY poetry.lock ./poetry.lock
-RUN poetry install -q -n --no-root --without dev --no-cache
+RUN poetry config installer.max-workers 10
+RUN poetry install -q -n --no-root --without dev --no-cache --no-interaction
 
 # Versão sem prefect
 FROM dependencias-python AS fonte
@@ -54,11 +55,11 @@ FROM dependencias-python AS fonte
 # Copiar código-fonte e instalar pacote impulsoetl
 COPY README.md ./README.md
 COPY src ./src
-RUN poetry install -q -n --only-root --no-cache
+RUN poetry install -q -n --only-root --no-cache --no-interaction
 
 # Versão do ETL orquestrado com prefect
 FROM fonte as prefect-agent
 
 # Instalar Prefect
-RUN poetry install -q -n --only prefect --no-cache
+RUN poetry install -n --only prefect --no-cache --no-interaction -vvv
 COPY implementar_fluxos.py ./implementar_fluxos.py
