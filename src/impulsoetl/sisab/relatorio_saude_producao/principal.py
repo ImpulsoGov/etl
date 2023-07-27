@@ -37,7 +37,6 @@ def obter_relatorio_producao_por_profissionais_reduzidos(
     periodo_id: str,
     unidade_geografica_id: str,
 ) -> None:
-
     """
     Extrai, transforma e carrega os dados do Relatório de Produção do SISAB
      Argumentos:
