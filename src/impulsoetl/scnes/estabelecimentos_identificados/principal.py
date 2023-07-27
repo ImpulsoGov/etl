@@ -75,7 +75,7 @@ def obter_informacoes_estabelecimentos_identificados(
         df_extraido=df_extraido, df_tratado=df_tratado
     )
     carregar_dataframe(
-        sessao=sessao, df_tratado=df_tratado, tabela_destino=tabela_destino
+        sessao=sessao, df=df_tratado, tabela_destino=tabela_destino
     )
 
     return df_tratado

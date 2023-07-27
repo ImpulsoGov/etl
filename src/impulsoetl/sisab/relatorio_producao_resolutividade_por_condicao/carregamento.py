@@ -18,14 +18,14 @@ def obter_lista_registros_inseridos(
         acessar a base de dados da ImpulsoGov.
         tabela_destino: Tabela que irá acondicionar os dados.
     Retorna:
-        Lista de períodos que já constam na tabela destino 
+        Lista de períodos que já constam na tabela destino
     [`sqlalchemy.orm.session.Session`]: https://docs.sqlalchemy.org/en/14/orm/session_api.html#sqlalchemy.orm.Session
     """
 
     tabela = tabelas[tabela_destino]
-    registros = sessao.query(tabela.c.periodo_id, tabela.c.unidade_geografica_id).distinct(
+    registros = sessao.query(
         tabela.c.periodo_id, tabela.c.unidade_geografica_id
-    )
+    ).distinct(tabela.c.periodo_id, tabela.c.unidade_geografica_id)
 
     logger.info("Leitura dos períodos inseridos no banco Impulso OK!")
     return registros
@@ -63,7 +63,10 @@ def carregar_dados(
         limpar = (
             delete(tabela_relatorio_producao)
             .where(tabela_relatorio_producao.c.periodo_id == periodo_id)
-            .where(tabela_relatorio_producao.c.unidade_geografica_id == unidade_geografica_id)
+            .where(
+                tabela_relatorio_producao.c.unidade_geografica_id
+                == unidade_geografica_id
+            )
         )
         logger.debug(limpar)
         sessao.execute(limpar)
