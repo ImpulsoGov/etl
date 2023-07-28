@@ -3,52 +3,56 @@ import warnings
 warnings.filterwarnings("ignore")
 from datetime import date
 
-import pandas as pd
 import numpy as np
-
+import pandas as pd
 from prefect import task
 
-from impulsoetl.loggers import logger, habilitar_suporte_loguru
-from impulsoetl.sisab.utilitarios_sisab_relatorio_producao import extrair_producao_por_municipio
-from impulsoetl.sisab.utilitarios_sisab_relatorio_producao import transformar_producao_por_municipio
-
+from impulsoetl.loggers import habilitar_suporte_loguru, logger
+from impulsoetl.sisab.utilitarios_sisab_relatorio_producao import (
+    extrair_producao_por_municipio,
+    transformar_producao_por_municipio,
+)
 
 CATEGORIA_PROFISSIONAL_REDUZIDA = [
-    'Cirurgião dentista',
-    'Enfermeiro',
-    'Fisioterapeuta',
-    'Médico',
-    'Psicólogo',
-    'Técnico e auxiliar de enfermagem',
-    'Técnico e auxiliar de saúde bucal',
-    ]
+    "Cirurgião dentista",
+    "Enfermeiro",
+    "Fisioterapeuta",
+    "Médico",
+    "Psicólogo",
+    "Técnico e auxiliar de enfermagem",
+    "Técnico e auxiliar de saúde bucal",
+]
 
-def obter_relatorio_reduzido(
-    periodo_competencia: date)-> pd.DataFrame():
+
+def obter_relatorio_reduzido(periodo_competencia: date) -> pd.DataFrame():
 
     df_consolidado = pd.DataFrame()
-    
+
+    logger.info("Iniciando extraçção do relatório...")
+
     try:
         df_parcial = extrair_producao_por_municipio(
             tipo_producao="Atendimento individual",
             competencias=[periodo_competencia],
             selecoes_adicionais={
-                "Problema/Condição Avaliada": "Selecionar Todos", 
-                "Conduta":"Selecionar Todos",
-                "Categoria do Profissional":CATEGORIA_PROFISSIONAL_REDUZIDA, 
+                "Problema/Condição Avaliada": "Selecionar Todos",
+                "Conduta": "Selecionar Todos",
+                "Categoria do Profissional": CATEGORIA_PROFISSIONAL_REDUZIDA,
             },
+        ).pipe(transformar_producao_por_municipio)
 
-            ).pipe(transformar_producao_por_municipio)
-        
         print(df_parcial)
 
         df_consolidado = df_consolidado.append(df_parcial)
+
+        logger.info("Extração concluída")
 
     except Exception as e:
         logger.error(e)
         pass
 
     return df_consolidado
+
 
 
 @task(
@@ -60,14 +64,12 @@ def obter_relatorio_reduzido(
     retries=2,
     retry_delay_seconds=120,
 )
-def extrair_relatorio(
-    periodo_competencia: date)-> pd.DataFrame():
+
+
+def extrair_relatorio(periodo_competencia: date) -> pd.DataFrame():
 
     habilitar_suporte_loguru()
-    logger.info("Iniciando extraçção do relatório...")
 
     df_extraido = obter_relatorio_reduzido(periodo_competencia)
-    
-    logger.info("Extração concluída")
 
     return df_extraido
