@@ -482,6 +482,7 @@ def procedimentos_disseminacao(
     retries=0,
     retry_delay_seconds=None,
     timeout_seconds=54000,
+    timeout_seconds=54000,
     version=__VERSION__,
     validate_parameters=False,
 )

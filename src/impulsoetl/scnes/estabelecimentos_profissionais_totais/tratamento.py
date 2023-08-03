@@ -11,9 +11,9 @@ from frozendict import frozendict
 from prefect import task
 
 from impulsoetl.loggers import habilitar_suporte_loguru, logger
-<<<<<<<< HEAD:src/impulsoetl/scnes/estabelecimentos_profissionais_totais/tratamento.py
 from impulsoetl.scnes.estabelecimentos_equipes.extracao import extrair_equipes
 from impulsoetl.scnes.extracao_lista_cnes import extrair_lista_cnes
+
 
 COLUNAS_EXCLUIR = [
     "tpSusNaoSus",
@@ -21,36 +21,20 @@ COLUNAS_EXCLUIR = [
     "artigo3",
     "artigo5",
     "cnsMaster",
-========
-from impulsoetl.scnes.extracao_lista_cnes import extrair_lista_cnes
-
-COLUNAS_EXCLUIR = [
-    "coArea",
-    "stEquipeMinima", 
-    "diferenciada", 
-    "complementar"
->>>>>>>> 8fb7452 (ETL dos profissinais de saúde com INE):src/impulsoetl/scnes/estabelecimentos_profissionais_com_ine/tratamento.py
 ]
 
-
 COLUNAS_RENOMEAR: Final[dict[str, str]] = {
-<<<<<<<< HEAD:src/impulsoetl/scnes/estabelecimentos_profissionais_totais/tratamento.py
     "nome": "profissional_nome",
-========
-    "INE": "equipe_id_ine",
-    "noProfissional": "profissional_nome",
->>>>>>>> 8fb7452 (ETL dos profissinais de saúde com INE):src/impulsoetl/scnes/estabelecimentos_profissionais_com_ine/tratamento.py
     "cns": "profissional_cns",
     "cbo": "profissional_cbo",
     "dsCbo": "profissional_ocupacao",
+    "vinculacao": "profissional_vinculacao",
+    "vinculo": "profissional_vinculo_tipo",
+    "subVinculo": "profissional_vinculo_subptipo",
     "chHosp": "carga_horaria_hospitalar",
     "chAmb": "carga_horaria_ambulatorial",
     "chOutros": "carga_horaria_outras",
     "dtEntrada": "periodo_data_entrada",
-<<<<<<<< HEAD:src/impulsoetl/scnes/estabelecimentos_profissionais_totais/tratamento.py
-========
-    "dtDesligamento": "periodo_data_desligamento",
->>>>>>>> 8fb7452 (ETL dos profissinais de saúde com INE):src/impulsoetl/scnes/estabelecimentos_profissionais_com_ine/tratamento.py
 }
 
 COLUNAS_TIPOS: Final[frozendict] = frozendict(
@@ -61,6 +45,9 @@ COLUNAS_TIPOS: Final[frozendict] = frozendict(
         "profissional_cns": "str",
         "profissional_cbo": "str",
         "profissional_ocupacao": "str",
+        "profissional_vinculacao": "str",
+        "profissional_vinculo_tipo": "str",
+        "profissional_vinculo_subptipo": "str",
         "carga_horaria_hospitalar": "Int64",
         "carga_horaria_ambulatorial": "Int64",
         "carga_horaria_outras": "Int64",
@@ -71,6 +58,7 @@ COLUNAS_TIPOS: Final[frozendict] = frozendict(
 COLUNAS_DATA = ["periodo_data_entrada"]
 
 COLUNAS_CARGA_HORARIA = ["carga_horaria_hospitalar","carga_horaria_ambulatorial", "carga_horaria_outras"]
+
 
 def renomear_colunas(df_extraido: pd.DataFrame) -> pd.DataFrame:
     df_extraido.rename(columns=COLUNAS_RENOMEAR, inplace=True)
@@ -87,9 +75,9 @@ def tratar_tipos(df_extraido: pd.DataFrame) -> pd.DataFrame:
         df_extraido[coluna] = pd.to_datetime(
             df_extraido[coluna], infer_datetime_format=True, errors="coerce"
         )
-
+    
     for coluna in COLUNAS_CARGA_HORARIA:
-        df_extraido[coluna] =  df_extraido[coluna].astype(float).round(0)
+        df_extraido[coluna] =  df_extraido[coluna].round(0)
 
     df_extraido = df_extraido.astype(COLUNAS_TIPOS, errors="ignore").where(
         df_extraido.notna(), None
@@ -104,16 +92,18 @@ def ordenar_colunas(df_extraido: pd.DataFrame, COLUNAS_TIPOS: dict):
 
     return df_extraido
 
+"""
 @task(
-    name="Trata os dados dos profissionais de saúde com INE por estabelecimento",
+    name="Tratar Informações dos Profissionais de Saúde",
     description=(
-        "Realiza o tratamento dos dados dos profissionais vinculados à alguma equipe de saúde"
-        + "a partir da página do CNES"
+        "Trata os dados dos profisisonais de saúde dos estabelecimentos de cada município"
+        + "a partir da página do CNES."
     ),
     tags=["cnes", "profissionais", "tratamento"],
-    retries=0,
-    retry_delay_seconds=None,
+    retries=2,
+    retry_delay_seconds=120,
 )
+"""
 def tratamento_dados(
     df_extraido: pd.DataFrame, periodo_id: str, unidade_geografica_id: str
 ) -> pd.DataFrame:
