@@ -11,7 +11,7 @@ from prefect import task
 from impulsoetl.loggers import habilitar_suporte_loguru, logger
 from impulsoetl.scnes.extracao_lista_cnes import extrair_lista_cnes
 
-
+"""
 @task(
     name="Extrair Informações das Equipes",
     description=(
@@ -21,7 +21,7 @@ from impulsoetl.scnes.extracao_lista_cnes import extrair_lista_cnes
     tags=["cnes", "equipes", "extracao"],
     retries=2,
     retry_delay_seconds=120,
-)
+)"""
 def extrair_equipes(
     codigo_municipio: str, lista_cnes: list, periodo_data_inicio: date
 ) -> pd.DataFrame:
