@@ -6,6 +6,8 @@
 """ETL das equipes dos estabelecimentos de saúde do CNES por município."""
 
 import warnings
+import pandas as pd
+
 from datetime import date
 
 warnings.filterwarnings("ignore")
@@ -15,6 +17,7 @@ from sqlalchemy.orm import Session
 from impulsoetl import __VERSION__
 from impulsoetl.bd import Sessao
 from impulsoetl.loggers import logger
+from impulsoetl.sisab.excecoes import SisabErroCompetenciaInexistente
 from impulsoetl.scnes.estabelecimentos_equipes.extracao import extrair_equipes
 from impulsoetl.scnes.estabelecimentos_equipes.tratamento import (
     tratamento_dados,
@@ -53,24 +56,37 @@ def obter_equipes_cnes(
         unidade_geografica_id: Código de identificação da unidade geográfica.
     """
 
-    lista_cnes = extrair_lista_cnes(codigo_municipio=codigo_municipio)
+    operacao_id = "063c6b40-ab9a-7459-b59c-6ebaa34f1bfd"
 
-    df_extraido = extrair_equipes(
-        codigo_municipio=codigo_municipio,
-        lista_cnes=lista_cnes,
-        periodo_data_inicio=periodo_data_inicio,
-    )
+    try:
 
-    df_tratado = tratamento_dados(
-        df_extraido=df_extraido,
-        periodo_id=periodo_id,
-        unidade_geografica_id=unidade_geografica_id,
-    )
+        lista_cnes = extrair_lista_cnes(codigo_municipio=codigo_municipio)
 
-    verificar_dados(df_extraido=df_extraido, df_tratado=df_tratado)
+        df_extraido = extrair_equipes(
+            codigo_municipio=codigo_municipio,
+            lista_cnes=lista_cnes,
+            periodo_data_inicio=periodo_data_inicio,
+        )
+        
+        df_tratado = tratamento_dados(
+            df_extraido=df_extraido,
+            periodo_id=periodo_id,
+            unidade_geografica_id=unidade_geografica_id,
+        )
 
-    carregar_dataframe(
-        sessao=sessao, df=df_tratado, tabela_destino=tabela_destino
-    )
+        verificar_dados(df_extraido=df_extraido, df_tratado=df_tratado)
 
-    return df_tratado
+        carregar_dataframe(
+            sessao=sessao, df=df_tratado, tabela_destino=tabela_destino
+        )
+
+    except (KeyError, pd.errors.ParserError):
+        mensagem_erro = "Data da competência do relatório não está disponível"
+        traceback_str = "A extração retornou um dataframe vazio devido à indisponibilidade dos dados da competência solicitada no CNES, não sendo possível seguir com as outrsa etapas do ETL"
+        enviar_erro = SisabErroCompetenciaInexistente(mensagem_erro)
+        enviar_erro.insere_erro_database(sessao=sessao,traceback_str=traceback_str,operacao_id=operacao_id,periodo_id=periodo_id, unidade_geografica_id = unidade_geografica_id)
+
+        logger.error("Data da competência do relatório não está disponível")
+
+        return 0
+

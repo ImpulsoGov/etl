@@ -3,34 +3,34 @@ import warnings
 warnings.filterwarnings("ignore")
 from datetime import date
 from typing import Final
+
+import numpy as np
+import pandas as pd
 from frozendict import frozendict
 from prefect import task
 
-import pandas as pd
-import numpy as np
+from impulsoetl.loggers import habilitar_suporte_loguru, logger
 
-from impulsoetl.loggers import logger, habilitar_suporte_loguru
+COLUNAS_EXCLUIR = ["uf_sigla", "municipio_nome"]
 
-
-COLUNAS_EXCLUIR = ['uf_sigla','municipio_nome']
-
-COLUNAS_RENOMEAR : Final[dict[str, str]] = {
-    'Categoria do Profissional':'categoria_profissional',
-    'Problema/Condição Avaliada':'problema_condicao_avaliada',
-    'Conduta':'conduta',
-    'quantidade_aprovada':'quantidade',
+COLUNAS_RENOMEAR: Final[dict[str, str]] = {
+    "Categoria do Profissional": "categoria_profissional",
+    "Problema/Condição Avaliada": "problema_condicao_avaliada",
+    "Conduta": "conduta",
+    "quantidade_aprovada": "quantidade",
 }
 
 COLUNAS_TIPOS: Final[frozendict] = frozendict(
     {
-    'municipio_id_sus':'str',
-    'periodo_data_inicio':'str',
-    'categoria_profissional':'str',
-    'problema_condicao_avaliada':'str',
-    'conduta':'str',
-    'quantidade':'Int64'
+        "municipio_id_sus": "str",
+        "periodo_data_inicio": "str",
+        "categoria_profissional": "str",
+        "problema_condicao_avaliada": "str",
+        "conduta": "str",
+        "quantidade": "Int64",
     }
 )
+
 
 def renomear_colunas(df_extraido: pd.DataFrame) -> pd.DataFrame:
     df_extraido.rename(columns=COLUNAS_RENOMEAR, inplace=True)
@@ -41,9 +41,11 @@ def excluir_colunas(df_extraido: pd.DataFrame) -> pd.DataFrame:
     df_extraido.drop(columns=COLUNAS_EXCLUIR, inplace=True)
     return df_extraido
 
-def tratamento_valores_negativos(df_extraido:pd.DataFrame) -> pd.DataFrame:
-    df_extraido['quantidade'] = df_extraido['quantidade'].abs()
+
+def tratamento_valores_negativos(df_extraido: pd.DataFrame) -> pd.DataFrame:
+    df_extraido["quantidade"] = df_extraido["quantidade"].abs()
     return df_extraido
+
 
 def tratar_tipos(df_extraido: pd.DataFrame) -> pd.DataFrame:
     df_extraido = df_extraido.astype(COLUNAS_TIPOS, errors="ignore").where(
@@ -51,11 +53,13 @@ def tratar_tipos(df_extraido: pd.DataFrame) -> pd.DataFrame:
     )
     return df_extraido
 
+
 def ordenar_colunas(df_extraido: pd.DataFrame, COLUNAS_TIPOS: dict):
     ordem_colunas = list(COLUNAS_TIPOS.keys())
     df_extraido = df_extraido[ordem_colunas]
 
     return df_extraido
+
 
 @task(
     name="Transformar Relatório de Produção de Saúde ",
@@ -80,7 +84,7 @@ def tratamento_dados(
      Retorna:
         Objeto [`pandas.DataFrame`] com os dados enriquecidos e tratados.
     """
-    
+
     habilitar_suporte_loguru()
     logger.info("Iniciando o tratamento dos dados...")
 
