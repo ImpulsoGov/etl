@@ -306,21 +306,21 @@ def ceps(teste: bool = False) -> None:
         ceps_pendentes = ceps_pendentes_query.all()
 
         try:
-                checar_escrita_liberada(
-                    sessao=sessao,
-                    tabela_destino=agendamento.tabela_destino,
-                    unidade_geografica_id=agendamento.unidade_geografica_id,
-                    periodo_id=agendamento.periodo_id,
-                )
-            except EscritaBloqueadaExcecao:
-                logger.warning("Pulando...")
-                continue
-            bloquear_escrita(
+            checar_escrita_liberada(
                 sessao=sessao,
                 tabela_destino=agendamento.tabela_destino,
                 unidade_geografica_id=agendamento.unidade_geografica_id,
                 periodo_id=agendamento.periodo_id,
             )
+        except EscritaBloqueadaExcecao:
+            logger.warning("Pulando...")
+            continue
+        bloquear_escrita(
+            sessao=sessao,
+            tabela_destino=agendamento.tabela_destino,
+            unidade_geografica_id=agendamento.unidade_geografica_id,
+            periodo_id=agendamento.periodo_id,
+        )
 
         obter_cep(sessao=sessao, ceps_pendentes=ceps_pendentes, teste=teste)
 
