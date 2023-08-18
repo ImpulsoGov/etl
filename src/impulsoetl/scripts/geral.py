@@ -314,7 +314,7 @@ def ceps(teste: bool = False) -> None:
             )
         except EscritaBloqueadaExcecao:
             logger.warning("Pulando...")
-            continue
+            return
         bloquear_escrita(
             sessao=sessao,
             tabela_destino=agendamento.tabela_destino,
