@@ -20,6 +20,12 @@ from impulsoetl.sihsus.aih_rd import obter_aih_rd
 from impulsoetl.sinan.violencia import obter_agravos_violencia
 from impulsoetl.sisab.relatorio_producao_resolutividade_por_condicao.principal import obter_relatorio_resolutividade_por_condicao
 from impulsoetl.sisab.relatorio_tipo_equipe_por_tipo_producao.principal import obter_relatorio_tipo_equipe_por_producao
+from impulsoetl.utilitarios.semaforos import (
+    bloquear_escrita,
+    checar_escrita_liberada,
+    EscritaBloqueadaExcecao,
+    liberar_escrita,
+)
 
 agendamentos = tabelas["configuracoes.capturas_agendamentos"]
 capturas_historico = tabelas["configuracoes.capturas_historico"]
@@ -58,6 +64,22 @@ def resolutividade_aps_por_condicao(
         )
 
         for agendamento in agendamentos_resolutividade_por_condicao:
+            try:
+                checar_escrita_liberada(
+                    sessao=sessao,
+                    tabela_destino=agendamento.tabela_destino,
+                    unidade_geografica_id=agendamento.unidade_geografica_id,
+                    periodo_id=agendamento.periodo_id,
+                )
+            except EscritaBloqueadaExcecao:
+                logger.warning("Pulando...")
+                continue
+            bloquear_escrita(
+                sessao=sessao,
+                tabela_destino=agendamento.tabela_destino,
+                unidade_geografica_id=agendamento.unidade_geografica_id,
+                periodo_id=agendamento.periodo_id,
+            )
             obter_relatorio_resolutividade_por_condicao(
                 sessao = sessao,
                 tabela_destino = agendamento.tabela_destino,
@@ -76,10 +98,17 @@ def resolutividade_aps_por_condicao(
             )
             conector = sessao.connection()
             conector.execute(requisicao_inserir_historico)
+
             if teste:
                 sessao.rollback()
                 break
             sessao.commit()
+            liberar_escrita(
+                sessao=sessao,
+                tabela_destino=agendamento.tabela_destino,
+                unidade_geografica_id=agendamento.unidade_geografica_id,
+                periodo_id=agendamento.periodo_id,
+            )
             logger.info("OK.")
 
 
@@ -129,6 +158,22 @@ def tipo_equipe_por_tipo_producao(
         )
 
         for agendamento in agendamentos_producao_por_equipe:
+            try:
+                checar_escrita_liberada(
+                    sessao=sessao,
+                    tabela_destino=agendamento.tabela_destino,
+                    unidade_geografica_id=agendamento.unidade_geografica_id,
+                    periodo_id=agendamento.periodo_id,
+                )
+            except EscritaBloqueadaExcecao:
+                logger.warning("Pulando...")
+                continue
+            bloquear_escrita(
+                sessao=sessao,
+                tabela_destino=agendamento.tabela_destino,
+                unidade_geografica_id=agendamento.unidade_geografica_id,
+                periodo_id=agendamento.periodo_id,
+            )
             obter_relatorio_tipo_equipe_por_producao(
                 sessao = sessao,
                 tabela_destino = agendamento.tabela_destino,
@@ -147,11 +192,31 @@ def tipo_equipe_por_tipo_producao(
             )
             conector = sessao.connection()
             conector.execute(requisicao_inserir_historico)
+
             if teste:
                 sessao.rollback()
                 break
-            sessao.commit()
-            logger.info("OK.")
+
+            try:
+                checar_escrita_liberada(
+                    sessao=sessao,
+                    tabela_destino=agendamento.tabela_destino,
+                    unidade_geografica_id=agendamento.unidade_geografica_id,
+                    periodo_id=agendamento.periodo_id,
+                )
+            except EscritaBloqueadaExcecao:
+                logger.error("Revertendo alterações realizadas...")
+                sessao.rollback()
+            else:
+                sessao.commit()
+                liberar_escrita(
+                    sessao=sessao,
+                    tabela_destino=agendamento.tabela_destino,
+                    unidade_geografica_id=agendamento.unidade_geografica_id,
+                    periodo_id=agendamento.periodo_id,
+                )
+                logger.info("OK.")
+
 
 @flow(
     name="Rodar Agendamentos de Arquivos de Disseminação da RAAS-PS",
@@ -184,6 +249,22 @@ def raas_disseminacao(
             .all()
         )
         for agendamento in agendamentos_raas:
+            try:
+                checar_escrita_liberada(
+                    sessao=sessao,
+                    tabela_destino=agendamento.tabela_destino,
+                    unidade_geografica_id=agendamento.unidade_geografica_id,
+                    periodo_id=agendamento.periodo_id,
+                )
+            except EscritaBloqueadaExcecao:
+                logger.warning("Pulando...")
+                continue
+            bloquear_escrita(
+                sessao=sessao,
+                tabela_destino=agendamento.tabela_destino,
+                unidade_geografica_id=agendamento.unidade_geografica_id,
+                periodo_id=agendamento.periodo_id,
+            )
             obter_raas_ps(
                 sessao=sessao,
                 uf_sigla=agendamento.uf_sigla,
@@ -211,6 +292,12 @@ def raas_disseminacao(
             conector = sessao.connection()
             conector.execute(requisicao_inserir_historico)
             sessao.commit()
+            liberar_escrita(
+                sessao=sessao,
+                tabela_destino=agendamento.tabela_destino,
+                unidade_geografica_id=agendamento.unidade_geografica_id,
+                periodo_id=agendamento.periodo_id,
+            )
             logger.info("OK.")
 
 
@@ -246,6 +333,22 @@ def bpa_i_disseminacao(
             .all()
         )
         for agendamento in agendamentos_bpa_i:
+            try:
+                checar_escrita_liberada(
+                    sessao=sessao,
+                    tabela_destino=agendamento.tabela_destino,
+                    unidade_geografica_id=agendamento.unidade_geografica_id,
+                    periodo_id=agendamento.periodo_id,
+                )
+            except EscritaBloqueadaExcecao:
+                logger.warning("Pulando...")
+                continue
+            bloquear_escrita(
+                sessao=sessao,
+                tabela_destino=agendamento.tabela_destino,
+                unidade_geografica_id=agendamento.unidade_geografica_id,
+                periodo_id=agendamento.periodo_id,
+            )
             obter_bpa_i(
                 sessao=sessao,
                 uf_sigla=agendamento.uf_sigla,
@@ -273,6 +376,12 @@ def bpa_i_disseminacao(
             conector = sessao.connection()
             conector.execute(requisicao_inserir_historico)
             sessao.commit()
+            liberar_escrita(
+                sessao=sessao,
+                tabela_destino=agendamento.tabela_destino,
+                unidade_geografica_id=agendamento.unidade_geografica_id,
+                periodo_id=agendamento.periodo_id,
+            )
             logger.info("OK.")
 
 
@@ -310,6 +419,22 @@ def procedimentos_disseminacao(
             .all()
         )
         for agendamento in agendamentos_pa:
+            try:
+                checar_escrita_liberada(
+                    sessao=sessao,
+                    tabela_destino=agendamento.tabela_destino,
+                    unidade_geografica_id=agendamento.unidade_geografica_id,
+                    periodo_id=agendamento.periodo_id,
+                )
+            except EscritaBloqueadaExcecao:
+                logger.warning("Pulando...")
+                continue
+            bloquear_escrita(
+                sessao=sessao,
+                tabela_destino=agendamento.tabela_destino,
+                unidade_geografica_id=agendamento.unidade_geografica_id,
+                periodo_id=agendamento.periodo_id,
+            )
             obter_pa(
                 sessao=sessao,
                 uf_sigla=agendamento.uf_sigla,
@@ -337,6 +462,12 @@ def procedimentos_disseminacao(
             conector = sessao.connection()
             conector.execute(requisicao_inserir_historico)
             sessao.commit()
+            liberar_escrita(
+                sessao=sessao,
+                tabela_destino=agendamento.tabela_destino,
+                unidade_geografica_id=agendamento.unidade_geografica_id,
+                periodo_id=agendamento.periodo_id,
+            )
             logger.info("OK.")
 
 
@@ -369,6 +500,22 @@ def aih_reduzida_disseminacao(
             .all()
         )
         for agendamento in agendamentos_aih_rd:
+            try:
+                checar_escrita_liberada(
+                    sessao=sessao,
+                    tabela_destino=agendamento.tabela_destino,
+                    unidade_geografica_id=agendamento.unidade_geografica_id,
+                    periodo_id=agendamento.periodo_id,
+                )
+            except EscritaBloqueadaExcecao:
+                logger.warning("Pulando...")
+                continue
+            bloquear_escrita(
+                sessao=sessao,
+                tabela_destino=agendamento.tabela_destino,
+                unidade_geografica_id=agendamento.unidade_geografica_id,
+                periodo_id=agendamento.periodo_id,
+            )
             obter_aih_rd(
                 sessao=sessao,
                 uf_sigla=agendamento.uf_sigla,
@@ -395,6 +542,12 @@ def aih_reduzida_disseminacao(
             conector = sessao.connection()
             conector.execute(requisicao_inserir_historico)
             sessao.commit()
+            liberar_escrita(
+                sessao=sessao,
+                tabela_destino=agendamento.tabela_destino,
+                unidade_geografica_id=agendamento.unidade_geografica_id,
+                periodo_id=agendamento.periodo_id,
+            )
             logger.info("OK.")
 
 
@@ -430,6 +583,22 @@ def agravos_violencia(
             .all()
         )
         for agendamento in agendamentos_agravos_violencia:
+            try:
+                checar_escrita_liberada(
+                    sessao=sessao,
+                    tabela_destino=agendamento.tabela_destino,
+                    unidade_geografica_id=agendamento.unidade_geografica_id,
+                    periodo_id=agendamento.periodo_id,
+                )
+            except EscritaBloqueadaExcecao:
+                logger.warning("Pulando...")
+                continue
+            bloquear_escrita(
+                sessao=sessao,
+                tabela_destino=agendamento.tabela_destino,
+                unidade_geografica_id=agendamento.unidade_geografica_id,
+                periodo_id=agendamento.periodo_id,
+            )
             obter_agravos_violencia(
                 sessao=sessao,
                 periodo_id=agendamento.periodo_id,
@@ -457,4 +626,10 @@ def agravos_violencia(
             conector = sessao.connection()
             conector.execute(requisicao_inserir_historico)
             sessao.commit()
+            liberar_escrita(
+                sessao=sessao,
+                tabela_destino=agendamento.tabela_destino,
+                unidade_geografica_id=agendamento.unidade_geografica_id,
+                periodo_id=agendamento.periodo_id,
+            )
             logger.info("OK.")
