@@ -85,8 +85,9 @@ def resolutividade_aps_por_condicao(
                 tabela_destino = agendamento.tabela_destino,
                 periodo_id = agendamento.periodo_id,
                 unidade_geografica_id = agendamento.unidade_geografica_id,
-                unidade_geografica_id_sus= agendamento.unidade_geografica_id_sus,
+                unidade_geografica_id_sus = agendamento.unidade_geografica_id_sus,
                 periodo_competencia = agendamento.periodo_data_inicio,
+                teste = teste,
             )
             logger.info("Registrando captura bem-sucedida...")
             requisicao_inserir_historico = capturas_historico.insert(
