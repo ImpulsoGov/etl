@@ -191,32 +191,19 @@ def tipo_equipe_por_tipo_producao(
                     "unidade_geografica_id": agendamento.unidade_geografica_id,
                 }
             )
-            conector = sessao.connection()
-            conector.execute(requisicao_inserir_historico)
-
             if teste:
                 sessao.rollback()
                 break
-
-            try:
-                checar_escrita_liberada(
-                    sessao=sessao,
-                    tabela_destino=agendamento.tabela_destino,
-                    unidade_geografica_id=agendamento.unidade_geografica_id,
-                    periodo_id=agendamento.periodo_id,
-                )
-            except EscritaBloqueadaExcecao:
-                logger.error("Revertendo alterações realizadas...")
-                sessao.rollback()
-            else:
-                sessao.commit()
-                liberar_escrita(
-                    sessao=sessao,
-                    tabela_destino=agendamento.tabela_destino,
-                    unidade_geografica_id=agendamento.unidade_geografica_id,
-                    periodo_id=agendamento.periodo_id,
-                )
-                logger.info("OK.")
+            conector = sessao.connection()
+            conector.execute(requisicao_inserir_historico)
+            sessao.commit()
+            liberar_escrita(
+                sessao=sessao,
+                tabela_destino=agendamento.tabela_destino,
+                unidade_geografica_id=agendamento.unidade_geografica_id,
+                periodo_id=agendamento.periodo_id,
+            )
+            logger.info("OK.")
 
 
 @flow(
