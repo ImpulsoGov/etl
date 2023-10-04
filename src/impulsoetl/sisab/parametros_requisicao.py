@@ -58,9 +58,9 @@ def head(url):
         "Sec-Fetch-User": "?1",
         "Sec-Fetch-Dest": "document",
         "Accept-Language": "pt-BR,pt;q=0.9,en-US;q=0.8,en;q=0.7",
-        "Cookie": "BIGipServerpool_sisab_jboss="
-        + cookies[0]["BIGipServerpool_sisab_jboss"]
-        + ";JSESSIONID="
-        + cookies[0]["JSESSIONID"],
+        "Cookie": "JSESSIONID="
+        + cookies[0]["JSESSIONID"]
+        + ";BIGipServerEI216T7OCd1WTwga/7fQVQ="
+        + cookies[0]["BIGipServerEI216T7OCd1WTwga/7fQVQ"],
     }
     return headers, vs
