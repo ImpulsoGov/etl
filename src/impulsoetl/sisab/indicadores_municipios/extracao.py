@@ -33,6 +33,25 @@ VISOES_EQUIPE_CODIGOS: Final[dict[str, str]] = {
 }
 
 
+def contar_linhas_cabecalho(resposta_requisicao, colunas_alvo):
+    """Conta o número de linhas que compõe o cabeçalho do arquivo csv"""
+
+    linhas_cabecalho = 0
+    linhas = resposta_requisicao.splitlines()
+
+    for linha in linhas:
+
+        if not linha.strip():
+            continue
+
+        if all(coluna in linha for coluna in colunas_alvo):
+            break
+
+        linhas_cabecalho += 1
+
+    return linhas_cabecalho
+
+
 def verifica_colunas(df_extraido: pd.DataFrame) -> int:
     """Verifica se 'Dataframe' possui 13 colunas como esperado"""
     return df_extraido.shape[1]
@@ -100,10 +119,23 @@ def extrair_indicadores(
         data=payload,
         timeout=120,
     )
+
+    resposta_requisicao = response.text
+    colunas_alvo = [
+        "Denominador Utilizado",
+        "Denominador Identificado",
+        "Denominador Estimado",
+        "Cadastro",
+        "Base Externa",
+    ]
+    numero_linhas_cabecalho = contar_linhas_cabecalho(
+        resposta_requisicao, colunas_alvo
+    )
+
     df_extraido = pd.read_csv(
         StringIO(response.text),
         delimiter=";",
-        header=10,
+        header=numero_linhas_cabecalho,
         encoding="ISO-8859-1",
     )
     df_extraido = df_extraido.drop(
@@ -118,4 +150,3 @@ def extrair_indicadores(
     )
 
     return df_extraido
-
