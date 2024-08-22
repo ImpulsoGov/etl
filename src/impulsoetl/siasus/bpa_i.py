@@ -18,6 +18,7 @@ from frozendict import frozendict
 from prefect import flow, task
 from sqlalchemy.orm import Session
 from uuid6 import uuid7
+import re
 
 from impulsoetl import __VERSION__
 from impulsoetl.comum.datas import (
@@ -156,13 +157,25 @@ def extrair_bpa_i(
     [`datetime.date`]: https://docs.python.org/3/library/datetime.html#date-objects
     """
 
+    # yield from extrair_dbc_lotes(
+    #     ftp="ftp.datasus.gov.br",
+    #     caminho_diretorio="/dissemin/publicos/SIASUS/200801_/Dados",
+    #     arquivo_nome="BI{uf_sigla}{periodo_data_inicio:%y%m}.dbc".format(
+    #         uf_sigla=uf_sigla,
+    #         periodo_data_inicio=periodo_data_inicio,
+    #     ),
+    #     passo=passo,
+    # )
+
+    arquivo_padrao = "BI{uf_sigla}{periodo_data_inicio:%y%m}(?:_\d+)?.dbc".format(
+        uf_sigla=uf_sigla,
+        periodo_data_inicio=periodo_data_inicio,
+    )
+
     yield from extrair_dbc_lotes(
         ftp="ftp.datasus.gov.br",
         caminho_diretorio="/dissemin/publicos/SIASUS/200801_/Dados",
-        arquivo_nome="BI{uf_sigla}{periodo_data_inicio:%y%m}.dbc".format(
-            uf_sigla=uf_sigla,
-            periodo_data_inicio=periodo_data_inicio,
-        ),
+        arquivo_nome=re.compile(arquivo_padrao, re.IGNORECASE),
         passo=passo,
     )
 

@@ -115,11 +115,21 @@ def _listar_arquivos(
             if arquivo == arquivo_nome_ou_padrao
         ]
 
+    # Checar por arquivos particionados e não particionados em BPA
+    unpartitioned_files = [
+        arquivo for arquivo in arquivos_compativeis if not re.search(r"_\d+\.dbc$", arquivo)
+    ]
+    partitioned_files = [
+        arquivo for arquivo in arquivos_compativeis if re.search(r"_\d+\.dbc$", arquivo)
+    ]
+    if unpartitioned_files and partitioned_files:
+        # Ignorar arquivos não particionados se existirem
+        arquivos_compativeis = partitioned_files
+
     arquivos_compativeis_num = len(arquivos_compativeis)
     if arquivos_compativeis_num > 0:
         logger.info(
-            "Encontrados {numero_arquivos} arquivos.",
-            numero_arquivos=arquivos_compativeis_num,
+            f"Encontrados {arquivos_compativeis_num} arquivos."
         )
         return arquivos_compativeis
     else:
@@ -128,6 +138,7 @@ def _listar_arquivos(
             + "encontrado no diretório do servidor FTP."
         )
         raise error_perm
+
 
 
 def extrair_dbc_lotes(
